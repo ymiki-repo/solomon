@@ -130,8 +130,9 @@
 ///
 #if defined(OFFLOAD_BY_OPENACC)
 #define ASYNC_QUEUE(id) ACC_CLAUSE_ASYNC(id)
-#else   // defined(OFFLOAD_BY_OPENACC)
-_Pragma("message (\"ASYNC_QUEUE(id) is ignored: explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC).\")")
+#else  // defined(OFFLOAD_BY_OPENACC)
+#warning "ASYNC_QUEUE(id) is ignored: explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC)."
+#define ASYNC_QUEUE(id)
 #endif  // defined(OFFLOAD_BY_OPENACC)
 
 ///
@@ -146,8 +147,9 @@ _Pragma("message (\"ASYNC_QUEUE(id) is ignored: explicit queue IDs for asynchron
 ///
 #if defined(OFFLOAD_BY_OPENACC)
 #define WAIT_QUEUE(id) PRAGMA_ACC_WAIT(id)
-#else   // defined(OFFLOAD_BY_OPENACC)
-    _Pragma("message (\"WAIT_QUEUE(id) is ignored: explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC).\")")
+#else  // defined(OFFLOAD_BY_OPENACC)
+#warning "WAIT_QUEUE(id) is ignored: explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC)."
+#define WAIT_QUEUE(id)
 #endif  // defined(OFFLOAD_BY_OPENACC)
 
 ///
