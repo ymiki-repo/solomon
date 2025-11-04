@@ -123,9 +123,32 @@
 #define AS_ASYNC(...) ACC_CLAUSE_ASYNC(__VA_ARGS__)
 
 ///
+/// @brief launch kernels asynchronously with the specified queue ID
+/// @details In OpenACC, ASYNC_QUEUE(id) is converted to async(id) and launches work asynchronously on queue id.
+///          WAIT_QUEUE(id) waits for completion of that queue.
+///          In OpenMP target directives, explicit queue IDs are not supported; therefore, ASYNC_QUEUE(id) is ignored.
+///
+#if defined(OFFLOAD_BY_OPENACC)
+#define ASYNC_QUEUE(id) ACC_CLAUSE_ASYNC(id)
+#else   // defined(OFFLOAD_BY_OPENACC)
+_Pragma("message (\"ASYNC_QUEUE(id) is ignored: explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC).\")")
+#endif  // defined(OFFLOAD_BY_OPENACC)
+
+///
 /// @brief synchronize asynchronously launched kernel
 ///
 #define SYNCHRONIZE(...) PRAGMA_ACC_WAIT(__VA_ARGS__)
+
+///
+/// @brief synchronize asynchronously launched kernels with the specified queue ID
+/// @details In OpenACC, WAIT_QUEUE(id) is converted to wait(id) and waits for completion of asynchronously launched kernels on queue id.
+///          In OpenMP target directives, explicit queue IDs are not supported; therefore, WAIT_QUEUE(id) is ignored.
+///
+#if defined(OFFLOAD_BY_OPENACC)
+#define WAIT_QUEUE(id) PRAGMA_ACC_WAIT(id)
+#else   // defined(OFFLOAD_BY_OPENACC)
+    _Pragma("message (\"WAIT_QUEUE(id) is ignored: explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC).\")")
+#endif  // defined(OFFLOAD_BY_OPENACC)
 
 ///
 /// @brief atomic construct

@@ -33,7 +33,7 @@
 * Solomon はプリプロセッサマクロを用いた指示文への展開機能までを提供します
   * 実際のバイナリ生成はGPUベンダー製のコンパイラなどに任せるため，コンパイラの性能向上や機能拡張の恩恵をそのまま受けられます
   * 単なるマクロの集積なので，更新が停滞したとしてもユーザーコードが動かなくなるような悪影響はありません
-  * ユーザサイドでマクロを付け足すことも簡単です
+  * ユーザーサイドでマクロを付け足すことも簡単です
 
 ## 使い方
 
@@ -118,9 +118,21 @@
 
      | 推奨実装 | 対応実装（非推奨） |
      | ---- | ---- |
-     | `OFFLOAD(...)` <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` | <br> `PRAGMA_ACC_KERNELS(...) PRAGMA_ACC_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL(...) PRAGMA_ACC_LOOP(...)` |
-     | `DECLARE_DATA_ON_DEVICE(...)` <br> `PRAGMA_ACC_DATA_PRESENT(...)` | <br> `PRAGMA_ACC_DATA(ACC_CLAUSE_PRESENT(...))` |
+     | **`OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` | <br> `PRAGMA_ACC_KERNELS(...) PRAGMA_ACC_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL(...) PRAGMA_ACC_LOOP(...)` |
+     | **`DECLARE_DATA_ON_DEVICE(...)`** <br> `PRAGMA_ACC_DATA_PRESENT(...)` | <br> `PRAGMA_ACC_DATA(ACC_CLAUSE_PRESENT(...))` |
      | `OMP_TARGET_CLAUSE_MAP_TO(...)` | `OMP_TARGET_CLAUSE_MAP(OMP_TARGET_CLAUSE_TO(...))` |
+
+   * カーネルの非同期実行および同期処理については下記のマクロが提供されているので，用途に合わせて使い分けてください
+     * OpenACC/OpenMP target間の互換性向上のため，非同期実行および同期処理についてもSolomonが提供する簡易記法の使用をおすすめします
+     * バックエンドに依らず非同期処理を実行したい場合には`AS_ASYNC(...)`および`SYNCHRONIZE(...)`を用いてください．キューIDの指定は無視される場合がある点にご注意ください
+     * キューIDを指定した細やかな非同期処理を実行したい場合には`ASYNC_QUEUE(id)`および`WAIT_QUEUE(id)`を用いてください．非同期実行がなされない場合がある点にご注意ください
+
+     | 使用可能なマクロ | 出力 | 使用されるバックエンド | 備考 |
+     | ---- | ---- | ---- | ---- |
+     | **`AS_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | <br> `async(__VA_ARGS__)` <br> `nowait` | <br> OpenACC <br> OpenMP | 両バックエンドで共通して非同期実行される <br> OpenACC においてはキューIDを指定可能 <br> OpenMP においてはキューIDは無視される |
+     | **`SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `_Pragma("acc wait __VA_ARGS__")` <br> `_Pragma("omp taskwait __VA_ARGS__")` | <br> OpenACC <br> OpenMP | 両バックエンドで共通して同期処理が実行される．`AS_ASYNC(...)` に対応して記述する |
+     | **`ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | <br> `async(id)` <br> N/A（OpenMP target 使用時には無視される） | <br> OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して非同期実行 <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した非同期実行がサポートされていないため，無視される |
+     | **`WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | <br> `wait(id)` <br> N/A（OpenMP target 使用時には無視される） | <br> OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して同期処理を実行．`ASYNC_QUEUE(id)` に対応して記述する <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した同期処理がサポートされていないため，無視される |
 
 ### Solomon を使ったコードのコンパイル方法
 
@@ -178,6 +190,7 @@
   | ---- | ---- | ---- |
   | **`OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...)` | <br> `_Pragma("acc kernels __VA_ARGS__") _Pragma("acc loop __VA_ARGS__")` <br> `_Pragma("acc parallel __VA_ARGS__") _Pragma("acc loop __VA_ARGS__")` <br> `_Pragma("omp target teams loop __VA_ARGS__")` <br> `_Pragma("omp target teams distribute parallel for __VA_ARGS__")` | <br> OpenACC (kernels) <br> OpenACC (parallel) <br> OpenMP (loop) <br> OpenMP (distribute) |
   | **`SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `_Pragma("acc wait __VA_ARGS__")` <br> `_Pragma("omp taskwait __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
+  | **`WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | <br> `_Pragma("acc wait id")` | <br> OpenACC (only) |
   | **`DECLARE_OFFLOADED(...)`** <br> `PRAGMA_ACC_ROUTINE(...)` <br> `PRAGMA_OMP_DECLARE_TARGET(...)` | <br> `_Pragma("acc routine __VA_ARGS__")` <br> `_Pragma("omp declare target __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
   | **`DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | <br> `_Pragma("omp end declare target")` | <br> OpenMP (only) |
   | **`ATOMIC(...)`** <br> `PRAGMA_ACC_ATOMIC(...)` <br> `PRAGMA_OMP_TARGET_ATOMIC(...)` | <br> `_Pragma("acc atomic __VA_ARGS__")` <br> `_Pragma("omp atomic __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
@@ -350,6 +363,7 @@
   | **`AS_GRID`** <br> `ACC_CLAUSE_GANG` | <br> `gang` | <br> OpenACC (only) |
   | **`COLLAPSE(n)`** <br> `ACC_CLAUSE_COLLAPSE(n)` <br> `OMP_TARGET_CLAUSE_COLLAPSE(n)` | <br> `collapse(n)` <br> `collapse(n)` | <br> OpenACC <br> OpenMP |
   | **`AS_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | <br> `async(__VA_ARGS__)` <br> `nowait` | <br> OpenACC <br> OpenMP |
+  | **`ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | <br> `async(id)` | <br> OpenACC (only) |
   | **`REDUCTION(...)`** <br> `ACC_CLAUSE_REDUCTION(...)` <br> `OMP_TARGET_CLAUSE_REDUCTION(...)` | <br> `reduction(__VA_ARGS__)` <br> `reduction(__VA_ARGS__)` | <br> OpenACC <br> OpenMP |
   | **`ENABLE_IF(condition)`** <br> `ACC_CLAUSE_IF(condition)` <br> `OMP_TARGET_CLAUSE_IF(condition)` | <br> `if(condition)` <br> `if(condition)` | <br> OpenACC <br> OpenMP |
   | **`AS_PRIVATE(...)`** <br> `ACC_CLAUSE_PRIVATE(...)` <br> `OMP_TARGET_CLAUSE_PRIVATE(...)` | <br> `private(__VA_ARGS__)` <br> `private(__VA_ARGS__)` | <br> OpenACC <br> OpenMP |
