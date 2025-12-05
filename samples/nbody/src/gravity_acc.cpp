@@ -16,7 +16,7 @@
 #include "type.hpp"
 
 void calc_acc(const int Ni, position *ipos, acceleration *iacc, const int Nj, position *jpos, const float eps) {
-  PRAGMA_ACC_KERNELS_LOOP(ACC_CLAUSE_INDEPENDENT, ACC_CLAUSE_VECTOR_LENGTH(NTHREADS))
+  PRAGMA_ACC_KERNELS_LOOP(ACC_CLAUSE_VECTOR_LENGTH(NTHREADS), ACC_CLAUSE_INDEPENDENT)
   for (std::remove_const_t<decltype(Ni)> ii = 0; ii < Ni; ii++) {
     // initialization
     position pi = ipos[ii];

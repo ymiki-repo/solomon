@@ -14,6 +14,12 @@
 #define PRAGMA_STR1(x) #x
 #define PRAGMA_STR(x) PRAGMA_STR1(x)
 
+#if defined(__clang__) || defined(__GNUC__) || defined(__NVCOMPILER)
+#define SOLOMON_EMIT_WARNING(msg) _Pragma(SOLOMON_STRINGIFY(GCC warning msg))
+#else//defined(__clang__) || defined(__GNUC__) || defined(__NVCOMPILER)
+#define SOLOMON_EMIT_WARNING(msg) _Pragma(SOLOMON_STRINGIFY(message msg))
+#endif//defined(__clang__) || defined(__GNUC__) || defined(__NVCOMPILER)
+
 ///
 /// @brief print generated pragma
 ///

@@ -24,6 +24,10 @@
 #define UTIL_CLOAK_BITAND_0(y) 0
 #define UTIL_CLOAK_BITAND_1(y) y
 
+#define UTIL_CLOAK_BITOR(x) _UTIL_CLOAK_CAT(UTIL_CLOAK_BITOR_, x)
+#define UTIL_CLOAK_BITOR_0(y) y
+#define UTIL_CLOAK_BITOR_1(y) 1
+
 #define UTIL_CLOAK_CHECK_N(x, n, ...) n
 #define UTIL_CLOAK_CHECK(...) UTIL_CLOAK_CHECK_N(__VA_ARGS__, 0, )
 #define UTIL_CLOAK_PROBE(x) x, 1,

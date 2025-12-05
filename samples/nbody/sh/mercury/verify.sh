@@ -27,7 +27,7 @@ module purge
 hostname
 
 # recipe for NVIDIA GPU
-module load cuda/12.3
+module load cuda/13.0
 nvcc --version
 VENDER=nvidia
 ARCH=90
@@ -35,7 +35,7 @@ ARCH=90
 # recipe for NVIDIA HPC SDK
 if [ $USE_NVHPC == 1 ]; then
 	COMPILER=nvhpc
-	module load nvidia
+	module load nvidia/25.7
 	nvc++ --version
 	MODEL_ID_LIST+=(`seq $(($MAX_MODEL_ID + 1)) 7`) # OpenACC: kernels/parallel, w/ or w/o dedicated options
 fi

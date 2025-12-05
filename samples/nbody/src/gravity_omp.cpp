@@ -16,7 +16,7 @@
 #include "type.hpp"
 
 void calc_acc(const int Ni, position *ipos, acceleration *iacc, const int Nj, position *jpos, const float eps) {
-  PRAGMA_OMP_TARGET_TEAMS_LOOP(OMP_TARGET_CLAUSE_SIMD, OMP_TARGET_CLAUSE_THREAD_LIMIT(NTHREADS))
+  PRAGMA_OMP_TARGET_TEAMS_LOOP(OMP_TARGET_CLAUSE_THREAD_LIMIT(NTHREADS), OMP_TARGET_CLAUSE_SIMD)
   for (std::remove_const_t<decltype(Ni)> ii = 0; ii < Ni; ii++) {
     // initialization
     position pi = ipos[ii];

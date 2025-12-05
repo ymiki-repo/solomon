@@ -112,7 +112,7 @@
       ```
 
       * 簡易記法，OpenACC/OpenMP的記法を混ぜても問題ありません
-      * `AS_INDEPENDENT`（及びこれに対応する `ACC_CLAUSE_INDEPENDENT` や `OMP_TARGET_CLAUSE_SIMD`）については，全ての指示節・指示句の先頭に記載してください
+      * ~~`AS_INDEPENDENT`（およびこれに対応する `ACC_CLAUSE_INDEPENDENT` や `OMP_TARGET_CLAUSE_SIMD`）については，全ての指示節・指示句の先頭に記載してください~~ **[更新 v1.1.0]** この制約は自動的に処理されるようになりました．どの順番で記述されていても，`AS_INDEPENDENT`（及びその同義語）を Solomon が自動的に先頭に並び替えます
       * 指示文に対応していない指示節・指示句については，Solomon が自動的に無視します
    * OpenACC/OpenMP target間の互換性向上のため，（個々のマクロを直接使うよりも）下記に示す統合マクロの使用をおすすめします
 
@@ -152,18 +152,26 @@
   * LLVMではwarning扱いとなるため，`-Werror`を指定している際には`-Wno-error=pragma-messages`も渡してこのメッセージがエラー扱いにならないようにしてください
 * 使用例： [N体計算用の Makefile](samples/nbody/Makefile) および [拡散方程式用の Makefile](samples/diffusion/Makefile)
 
-### Solomon の拡張方法
+### Solomon の拡張方法（コードジェネレータを用いた更新方法）
 
 * Solomon では，1つの指示文ごとに 32 個の指示節・指示句（候補）を受け付ける仕様となっています
   * 32 という上限値では不足する場合には，下記の手順で上限値を増やしてください
 
     ```sh
-    cd solomon/util # このディレクトリには，jl/ および pickup.hpp が格納されています
-    julia jl/check_clause.jl --max 64 >> pickup.hpp # この例は，上限値を 64 に増やす場合です
-    # pickup.hpp の中身を適切に編集してください（古い CHECK_CLAUSE_* および APPEND_CLAUSE を削除し，新たに追加された CHECK_CLAUSE_* および APPEND_CLAUSE を使用してください）
+    cd solomon/util # このディレクトリには，jl/*.jl が格納されています
+    julia jl/check_clause.jl --max 64 # この例は，上限値を 64 に増やす場合です
     ```
 
   * 同様の制限が他の内部マクロに存在することがありますが，同様の手順で上限値を増やせます
+  * 提供済みのコードジェネレータは下記の通りでで，すべて `solomon/util/jl/` に配置されています
+
+  | ジェネレータ | 目的 | デフォルト最大値 |
+  |--------------|------|-----------------|
+  | `check_clause.jl` | 節チェックマクロの生成 | 32 |
+  | `num_args.jl` | 入力数読取マクロの生成 | 1024 |
+  | `pickup_clause.jl` | 節フィルタリングマクロの生成 | 99 |
+  | `retrieve_args.jl` | 入力フィルタリングマクロの生成 | 128 |
+  | `sort_clause.jl` | 節ソートマクロの生成 | 32 |
 
 ## サンプルコード
 

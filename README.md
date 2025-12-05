@@ -87,7 +87,7 @@
       ```
 
       * Mixture of intuitive and OpenACC/OpenMP-like notations are enabled
-      * `AS_INDEPENDENT` (or the correspondences: `ACC_CLAUSE_INDEPENDENT` and `OMP_TARGET_CLAUSE_SIMD`) must be specified at the head of all optional clauses
+      * ~~`AS_INDEPENDENT` (or the correspondences: `ACC_CLAUSE_INDEPENDENT` and `OMP_TARGET_CLAUSE_SIMD`) must be specified at the head of all optional clauses~~ **[UPDATE v1.1.0]** This constraint is now automatically handled. Solomon will automatically reorder clauses to place `AS_INDEPENDENT` (and its equivalents) at the front, regardless of where you write them in your code.
       * Solomon automatically drops incompatible clauses
    * We encourage the adoption of combined macros (instead of individual macros separately) for better conversion between OpenACC and OpenMP target
 
@@ -127,18 +127,26 @@
   * In LLVM, this is treated as a warning, so when specifying `-Werror`, also pass `-Wno-error=pragma-messages` to prevent these messages from being treated as errors
 * See examples: [Makefile for nbody](samples/nbody/Makefile) and [Makefile for diffusion](samples/diffusion/Makefile)
 
-### How to extend capability of Solomon
+### How to extend capability of Solomon (Code Generators)
 
 * Solomon accepts up to 32 clause candidates per directive
   * If the current limitation (32) does not fit your implementation, increase the value as follows
 
     ```sh
-    cd solomon/util # you will find jl/ and pickup.hpp in the directory
-    julia jl/check_clause.jl --max 64 >> pickup.hpp # example to reset the limitation as 64
-    # edit pickup.hpp appropriately (remove old CHECK_CLAUSE_* and APPEND_CLAUSE, and use new CHECK_CLAUSE_* and APPEND_CLAUSE)
+    cd solomon/util # This directory contains jl/*.jl
+    julia jl/check_clause.jl --max 64 # Example to increase the limit to 64
     ```
 
-  * Similar limitations exsit for some internal macros, and you can also increase such limitations
+  * Similar limitations exist for other internal macros, which can also be increased using the same procedure
+  * Available code generators are all located in `solomon/util/jl/`:
+
+  | Generator | Purpose | Default Maximum |
+  |-----------|---------|----------------|
+  | `check_clause.jl` | Generate clause checking macros | 32 |
+  | `num_args.jl` | Generate input counting macros | 1024 |
+  | `pickup_clause.jl` | Generate clause filtering macros | 99 |
+  | `retrieve_args.jl` | Generate input filtering macros | 128 |
+  | `sort_clause.jl` | Generate clause sorting macros | 32 |
 
 ## Samples
 
@@ -564,4 +572,3 @@
   | `OMP_CLAUSE_IN_REDUCTION(...)` | `in_reduction(__VA_ARGS__)` |
 
   </details>
-

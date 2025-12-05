@@ -12,7 +12,7 @@
 #if !defined(SOLOMON_SOLOMON_HPP)
 #define SOLOMON_SOLOMON_HPP
 
-#define SOLOMON_VERSION 1.0.0
+#define SOLOMON_VERSION 1.1.0
 
 // OpenMP for multicore CPU is always available
 #if defined(_OPENMP)
