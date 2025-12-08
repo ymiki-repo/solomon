@@ -30,6 +30,11 @@
 #define PRAGMA_OMP_TARGET_DATA_USE_DEVICE_PTR(...) PRAGMA_OMP_TARGET_DATA(OMP_TARGET_CLAUSE_USE_DEVICE_PTR(__VA_ARGS__))
 
 ///
+/// @brief _Pragma("omp target data use_device_addr (list)")
+///
+#define PRAGMA_OMP_TARGET_DATA_USE_DEVICE_ADDR(...) PRAGMA_OMP_TARGET_DATA(OMP_TARGET_CLAUSE_USE_DEVICE_ADDR(__VA_ARGS__))
+
+///
 /// @brief _Pragma("omp target update from (list)")
 /// @remarks memcpy_D2H
 ///

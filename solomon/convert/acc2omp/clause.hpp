@@ -166,11 +166,20 @@
 ///
 #define ACC_CLAUSE_DETACH(...) MISSING_CLAUSE
 
+#if _OPENMP >= 201811
+///
+/// @brief add OpenACC clause "use_device (list)" if applicable
+/// @details replace to OpenMP clause "use_device_addr (list)"
+/// @note use_device_addr is introduced in OpenMP 5.0 (_OPENMP = 201811) and use_device_ptr is deprecated
+///
+#define ACC_CLAUSE_USE_DEVICE(...) OMP_TARGET_CLAUSE_USE_DEVICE_ADDR(__VA_ARGS__)
+#else  // _OPENMP >= 201811
 ///
 /// @brief add OpenACC clause "use_device (list)" if applicable
 /// @details replace to OpenMP clause "use_device_ptr (list)"
 ///
 #define ACC_CLAUSE_USE_DEVICE(...) OMP_TARGET_CLAUSE_USE_DEVICE_PTR(__VA_ARGS__)
+#endif  // _OPENMP >= 201811
 
 ///
 /// @brief add OpenACC clause "if_present" if applicable
