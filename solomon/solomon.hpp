@@ -90,17 +90,17 @@
 ///
 /// @brief suggest parallelization hierarchy: thread(CUDA)/vector(OpenACC)/SIMD(OpenMP target)
 ///
-#define AS_THREAD PRAGMA_ACC_VECTOR
+#define AS_THREAD ACC_CLAUSE_VECTOR
 
 ///
 /// @brief suggest parallelization hierarchy: block(CUDA)/worker(OpenACC)/thread(OpenMP target)
 ///
-#define AS_BLOCK PRAGMA_ACC_WORKER
+#define AS_BLOCK ACC_CLAUSE_WORKER
 
 ///
 /// @brief suggest parallelization hierarchy: grid(CUDA)/gang(OpenACC)/teams(OpenMP target)
 ///
-#define AS_GRID PRAGMA_ACC_GANG
+#define AS_GRID ACC_CLAUSE_GANG
 
 ///
 /// @brief collapse tightly-nested loops
