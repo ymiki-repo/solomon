@@ -93,7 +93,8 @@
 /// @brief _Pragma("acc wait [(expression_list)] [clause [[,] clause] ... ]")
 /// @details The wait directive causes the local thread to wait for completion of asynchronous device activities, or for asynchronous activities on one async queue to synchronize with one or more other async queues. With no expression, it will wait for all outstanding asynchronous regions or data movement.
 ///
-#define PRAGMA_ACC_WAIT(...) PRAGMA_ACC(wait APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_ACC_WAIT), __VA_ARGS__))
+// #define PRAGMA_ACC_WAIT(...) PRAGMA_ACC(wait APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_ACC_WAIT), __VA_ARGS__))
+#define PRAGMA_ACC_WAIT(...) PRAGMA_ACC(wait APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_ACC_WAIT), ACC_PASS_LIST(__VA_ARGS__)))
 
 ///
 /// @brief _Pragma("acc routine [clause [[,] clause] ... ]")
