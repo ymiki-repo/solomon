@@ -24,13 +24,13 @@
 /// @details A declarative directive that specifies that variables, functions, and subroutines are mapped to a device.
 /// @note use OMP_PASS_LIST(...) to pass extended_list
 ///
-#define PRAGMA_OMP_DECLARE_TARGET(...) PRAGMA_OMP(declare target APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_TARGET), __VA_ARGS__))
+#define PRAGMA_OMP_DECLARE_TARGET(...) PRAGMA_OMP(declare target APPEND_CLAUSES_WITHOUT_SORTING(ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_TARGET), OMP_PASS_LIST(__VA_ARGS__)))
 
 ///
 /// @brief _Pragma("omp begin declare target [clause [[,] clause] ... ]")
 /// @details A declarative directive that specifies that variables, functions, and subroutines are mapped to a device.
 ///
-#define PRAGMA_OMP_BEGIN_DECLARE_TARGET(...) PRAGMA_OMP(begin declare target APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_TARGET), __VA_ARGS__))
+#define PRAGMA_OMP_BEGIN_DECLARE_TARGET(...) PRAGMA_OMP(begin declare target APPEND_CLAUSES_WITHOUT_SORTING(ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_TARGET), OMP_PASS_LIST(__VA_ARGS__)))
 
 ///
 /// @brief _Pragma("omp end declare target")

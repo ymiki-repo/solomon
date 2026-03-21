@@ -51,6 +51,14 @@
 ///                   (where N >= your clause count)
 ///
 #define APPEND_CLAUSES(...) SORT_AND_OUTPUT(CHECK_CLAUSE_32(__VA_ARGS__))
-// #define APPEND_CLAUSES(...) CHECK_CLAUSE_32(__VA_ARGS__)
 
-#endif // !defined(SOLOMON_UTIL_IMPL_CHECK_CLAUSE_HPP)
+///
+/// @brief Apply automatic checking valid clauses
+/// @warning Passing more than 32 clauses will cause a compile error:
+///          - Error message: 'CHECK_CLAUSE_*' was not declared in this scope
+///          - To fix: cd solomon/util && julia jl/check_clause.jl --max N
+///                   (where N >= your clause count)
+///
+#define APPEND_CLAUSES_WITHOUT_SORTING(...) CHECK_CLAUSE_32(__VA_ARGS__)
+
+#endif  // !defined(SOLOMON_UTIL_IMPL_CHECK_CLAUSE_HPP)

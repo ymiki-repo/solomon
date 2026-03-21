@@ -262,13 +262,13 @@
 /// @brief _Pragma("omp flush [memory_order_clause] [(list)]")
 /// @details Makes a thread’s temporary view of memory consistent with memory, and enforces an order on the memory operations of the variables.
 ///
-#define PRAGMA_OMP_FLUSH(...) PRAGMA_OMP(flush APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_FLUSH), __VA_ARGS__))
+#define PRAGMA_OMP_FLUSH(...) PRAGMA_OMP(flush APPEND_CLAUSES_WITHOUT_SORTING(ARGS_WITH_NUM(CLAUSE_TAG_OMP_FLUSH), OMP_PASS_LIST(__VA_ARGS__)))
 
 ///
 /// @brief _Pragma("omp depobj (depend_object) clause")
 /// @details Stand-alone directive that initializes, updates, or destroys an OpenMP depend object.
 ///
-#define PRAGMA_OMP_DEPOBJ(...) PRAGMA_OMP(depobj APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_DEPOBJ), __VA_ARGS__))
+#define PRAGMA_OMP_DEPOBJ(...) PRAGMA_OMP(depobj APPEND_CLAUSES_WITHOUT_SORTING(ARGS_WITH_NUM(CLAUSE_TAG_OMP_DEPOBJ), OMP_PASS_LIST(__VA_ARGS__)))
 
 ///
 /// @brief _Pragma("omp atomic [clause [[,] clause] ... ]")
