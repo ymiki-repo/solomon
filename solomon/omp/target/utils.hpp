@@ -89,9 +89,21 @@
 // #define PRAGMA_OMP_TARGET_LOOP(...) PRAGMA_OMP_TARGET(teams distribute parallel for __VA_ARGS__)
 // #endif  // OMP_TARGET_HAS_LOOP_DIRECTIVE
 
+///
+/// @brief _Pragma("omp target atomic update")
+///
 #define PRAGMA_OMP_TARGET_ATOMIC_UPDATE PRAGMA_OMP_TARGET_ATOMIC(OMP_TARGET_CLAUSE_UPDATE)
+///
+/// @brief _Pragma("omp target atomic read")
+///
 #define PRAGMA_OMP_TARGET_ATOMIC_READ PRAGMA_OMP_TARGET_ATOMIC(OMP_TARGET_CLAUSE_READ)
+///
+/// @brief _Pragma("omp target atomic write")
+///
 #define PRAGMA_OMP_TARGET_ATOMIC_WRITE PRAGMA_OMP_TARGET_ATOMIC(OMP_TARGET_CLAUSE_WRITE)
+///
+/// @brief _Pragma("omp target atomic capture")
+///
 #define PRAGMA_OMP_TARGET_ATOMIC_CAPTURE PRAGMA_OMP_TARGET_ATOMIC(OMP_TARGET_CLAUSE_CAPTURE)
 
 #endif  // !defined(SOLOMON_OMP_TARGET_UTILS_HPP)

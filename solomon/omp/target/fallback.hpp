@@ -77,88 +77,101 @@
 ///
 
 ///
-/// @brief _Pragma("omp target parallel [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct containing a parallel construct and no other statements.
-/// @note clause: Clauses used for target or parallel except for copyin.
+/// @brief _Pragma("omp parallel [clause [[,] clause] ... ]")
+/// @details Creates a team of OpenMP threads that execute the region.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL(...) PRAGMA_OMP_PARALLEL(__VA_ARGS__)
 
 ///
-/// @brief _Pragma("omp target parallel for [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct with a parallel worksharing-loop construct and no other statements.
-/// @note clause: Clauses used for target or parallel for except for copyin.
+/// @brief _Pragma("omp parallel for [clause [[,] clause] ... ]")
+/// @details Specifies a parallel construct containing a worksharing-loop construct with a canonical loop nest and no other statements.
+/// @note clause: Any clause used for parallel or for except the nowait clause.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL_FOR(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
+///
+/// @brief _Pragma("omp parallel do [clause [[,] clause] ... ]")
+/// @details Specifies a parallel construct containing a worksharing-loop construct with a canonical loop nest and no other statements.
+/// @note clause: Any clause used for parallel or do except the nowait clause.
+///
 #define PRAGMA_OMP_TARGET_PARALLEL_DO(...) PRAGMA_OMP_PARALLEL_DO(__VA_ARGS__)
 
 ///
-/// @brief _Pragma("omp target parallel for simd [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct with a parallel worksharing-loop SIMD construct and no other statements.
-/// @note clause: Clauses used for target or parallel for simd except for copyin.
+/// @brief _Pragma("omp parallel for simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a parallel construct containing only one worksharing-loop SIMD construct.
+/// @note clause: Any clause used for parallel or for simd except the nowait clause.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(...) PRAGMA_OMP_PARALLEL_FOR_SIMD(__VA_ARGS__)
+///
+/// @brief _Pragma("omp parallel do simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a parallel construct containing only one worksharing-loop SIMD construct.
+/// @note clause: Any clause used for parallel or do simd except the nowait clause.
+///
 #define PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(...) PRAGMA_OMP_PARALLEL_DO_SIMD(__VA_ARGS__)
 
 ///
-/// @brief _Pragma("omp target parallel loop [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct containing a parallel loop construct and no other statements.
-/// @note clause: Clauses used for target or parallel loop except copyin.
+/// @brief _Pragma("omp parallel loop [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a parallel construct containing a loop construct with a canonical loop nest and no other statements.
+/// @note clause: Any clause used for parallel or loop.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL_LOOP(...) PRAGMA_OMP_PARALLEL_LOOP(__VA_ARGS__)
 
 ///
-/// @brief _Pragma("omp target simd [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct containing a simd construct and no other statements.
-/// @note clause: Any clause used for target or simd.
+/// @brief _Pragma("omp simd [clause [[,] clause] ... ]")
+/// @details Applied to a loop to indicate that the loop can be transformed into a SIMD loop.
 ///
 #define PRAGMA_OMP_TARGET_SIMD(...) PRAGMA_OMP_SIMD(__VA_ARGS__)
 
 ///
-/// @brief _Pragma("omp target teams [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct containing a teams construct and no other statements.
-/// @note clause: Any clause used for target or teams.
+/// @brief _Pragma("omp teams [clause [[,] clause] ... ]")
+/// @details Creates a league of initial teams where the initial thread of each team executes the region.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS(...) PRAGMA_OMP_TEAMS(__VA_ARGS__)
 
 ///
-/// @brief _Pragma("omp target teams distribute [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct containing a teams distribute construct and no other statements.
-/// @note clause: Any clause used for target or teams distribute.
+/// @brief _Pragma("omp teams distribute [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a teams construct containing a distribute construct and no other statements.
+/// @note clause: Any clause used for teams or distribute.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(...) PRAGMA_OMP_TEAMS_DISTRIBUTE(__VA_ARGS__)
 
 ///
-/// @brief _Pragma("omp target teams distribute simd [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct containing a teams distribute simd construct and no other statements.
-/// @note clause: Any clause used for target or teams distribute simd.
+/// @brief _Pragma("omp teams distribute simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a teams construct containing a distribute simd construct and no other statements.
+/// @note clause: Any clause used for teams or distribute simd.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_SIMD(...) PRAGMA_OMP_TEAMS_DISTRIBUTE_SIMD(__VA_ARGS__)
 
 ///
-/// @brief _Pragma("omp target teams loop [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct containing a teams loop construct and no other statements.
-/// @note clause: Any clause used for target or teams loop.
+/// @brief _Pragma("omp parallel for [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a teams construct containing a loop construct and no other statements.
+/// @note clause: Any clause used for teams or loop.
 ///
-#if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_TARGET_TEAMS_LOOP(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
-#else  // !defined(SOLOMON_FORTRAN)
-#define PRAGMA_OMP_TARGET_TEAMS_LOOP(...) PRAGMA_OMP_PARALLEL_DO(__VA_ARGS__)
-#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
-/// @brief _Pragma("omp target teams distribute parallel for [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct containing teams distribute parallel for and no other statements.
-/// @note clause: Any clause used for target or teams distribute parallel for.
+/// @brief _Pragma("omp teams distribute parallel for [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a teams construct containing a distribute parallel worksharing-loop construct and no other statements.
+/// @note clause: Any clause used for teams or distribute parallel for.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
+///
+/// @brief _Pragma("omp teams distribute parallel do [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a teams construct containing a distribute parallel worksharing-loop construct and no other statements.
+/// @note clause: Any clause used for teams or distribute parallel do.
+///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...) PRAGMA_OMP_PARALLEL_DO(__VA_ARGS__)
 
 ///
-/// @brief _Pragma("omp target teams distribute parallel for simd [clause [[,] clause] ... ]")
-/// @details Shortcut for specifying a target construct containing a teams distribute parallel worksharing-loop SIMD construct and no other statements.
-/// @note clause: Any clause used for target or teams distribute parallel for simd.
+/// @brief _Pragma("omp teams distribute parallel for simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a teams construct containing a distribute parallel for simd construct and no other statements.
+/// @note clause: Any clause used for teams or distribute parallel for simd.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(...) PRAGMA_OMP_PARALLEL_FOR_SIMD(__VA_ARGS__)
+///
+/// @brief _Pragma("omp teams distribute parallel do simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a teams construct containing a distribute parallel do simd construct and no other statements.
+/// @note clause: Any clause used for teams or distribute parallel do simd.
+///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(...) PRAGMA_OMP_PARALLEL_DO_SIMD(__VA_ARGS__)
 
 ///

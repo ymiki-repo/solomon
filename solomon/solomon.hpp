@@ -12,6 +12,9 @@
 #if !defined(SOLOMON_SOLOMON_HPP)
 #define SOLOMON_SOLOMON_HPP
 
+///
+/// @brief version of Solomon
+///
 #define SOLOMON_VERSION 2.0.0
 
 // OpenMP for multicore CPU is always available
@@ -61,6 +64,10 @@
 /// @brief offload the specified loop
 ///
 #define OFFLOAD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
+
+///
+/// @brief finalize the offloading of the specified loop
+///
 #if !defined(SOLOMON_FORTRAN)
 #define END_OFFLOAD
 #else  // !defined(SOLOMON_FORTRAN)
@@ -121,6 +128,9 @@
 /// @brief declaration of the specified functions are mapped to device
 ///
 #define DECLARE_OFFLOADED_END PRAGMA_OMP_END_DECLARE_TARGET
+///
+/// @brief declaration of the specified functions are mapped to device
+///
 #define DECLARE_END_OFFLOADED PRAGMA_OMP_END_DECLARE_TARGET
 
 ///
@@ -231,7 +241,6 @@
 /// @brief allocate device memory
 ///
 #define MALLOC_ON_DEVICE(...) PRAGMA_ACC_ENTER_DATA_CREATE(__VA_ARGS__)
-
 ///
 /// @brief allocate device memory
 ///
@@ -241,7 +250,6 @@
 /// @brief release device memory
 ///
 #define FREE_FROM_DEVICE(...) PRAGMA_ACC_EXIT_DATA_DELETE(__VA_ARGS__)
-
 ///
 /// @brief release device memory
 ///

@@ -13,6 +13,9 @@
 #if !defined(SOLOMON_FORTRAN)
 #include <omp.h>
 #else  // !defined(SOLOMON_FORTRAN)
+///
+/// @brief use OpenMP runtime library in Fortran
+///
 #define USE_SOLOMON_RUNTIME use omp_lib
 #endif  // !defined(SOLOMON_FORTRAN)
 

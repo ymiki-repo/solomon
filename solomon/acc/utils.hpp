@@ -25,6 +25,9 @@
 ///
 #if !defined(OFFLOAD_BY_OPENACC_PARALLEL)
 #define PRAGMA_ACC_LAUNCH_DEFAULT(...) PRAGMA_ACC_KERNELS(__VA_ARGS__)
+///
+/// @brief finalize the offloaded region launched as default mode
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_ACC_END_LAUNCH_DEFAULT
 #else  // !defined(SOLOMON_FORTRAN)
@@ -32,6 +35,9 @@
 #endif  // !defined(SOLOMON_FORTRAN)
 #else   //! defined(OFFLOAD_BY_OPENACC_PARALLEL)
 #define PRAGMA_ACC_LAUNCH_DEFAULT(...) PRAGMA_ACC_PARALLEL(__VA_ARGS__)
+///
+/// @brief finalize the offloaded region launched as default mode
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_ACC_END_LAUNCH_DEFAULT
 #else  // !defined(SOLOMON_FORTRAN)
@@ -43,6 +49,9 @@
 /// @brief offload the specified loop as default mode
 ///
 #define PRAGMA_ACC_OFFLOADING_DEFAULT(...) PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__) PRAGMA_ACC_LOOP(__VA_ARGS__)
+///
+/// @brief finalize the offloaded loop launched as default mode
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_ACC_END_OFFLOADING_DEFAULT
 #else  // !defined(SOLOMON_FORTRAN)
@@ -93,9 +102,21 @@
 ///
 #define PRAGMA_ACC_EXIT_DATA_COPYOUT(...) PRAGMA_ACC_EXIT_DATA(ACC_CLAUSE_COPYOUT(__VA_ARGS__))
 
+///
+/// @brief _Pragma("acc atomic update")
+///
 #define PRAGMA_ACC_ATOMIC_UPDATE PRAGMA_ACC_ATOMIC(ACC_CLAUSE_UPDATE)
+///
+/// @brief _Pragma("acc atomic read")
+///
 #define PRAGMA_ACC_ATOMIC_READ PRAGMA_ACC_ATOMIC(ACC_CLAUSE_READ)
+///
+/// @brief _Pragma("acc atomic write")
+///
 #define PRAGMA_ACC_ATOMIC_WRITE PRAGMA_ACC_ATOMIC(ACC_CLAUSE_WRITE)
+///
+/// @brief _Pragma("acc atomic capture")
+///
 #define PRAGMA_ACC_ATOMIC_CAPTURE PRAGMA_ACC_ATOMIC(ACC_CLAUSE_CAPTURE)
 
 #endif  // !defined(SOLOMON_ACC_UTILS_HPP)

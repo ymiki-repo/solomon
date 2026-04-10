@@ -28,6 +28,9 @@
 /// @details A parallel construct launches a number of gangs executing in parallel, where each gang may support multiple workers, each with vector or SIMD operations.
 ///
 #define PRAGMA_ACC_PARALLEL(...) PRAGMA_ACC(parallel APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_ACC_PARALLEL), __VA_ARGS__))
+///
+/// @brief finalize the acc parallel region
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_ACC_END_PARALLEL
 #else  // !defined(SOLOMON_FORTRAN)
@@ -39,6 +42,9 @@
 /// @details A kernels construct surrounds loops to be executed on the device, typically as a sequence of kernel operations.
 ///
 #define PRAGMA_ACC_KERNELS(...) PRAGMA_ACC(kernels APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_ACC_KERNELS), __VA_ARGS__))
+///
+/// @brief finalize the acc kernels region
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_ACC_END_KERNELS
 #else  // !defined(SOLOMON_FORTRAN)
@@ -50,6 +56,9 @@
 /// @details A serial construct surrounds loops or code to be executed serially on the device.
 ///
 #define PRAGMA_ACC_SERIAL(...) PRAGMA_ACC(serial APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_ACC_SERIAL), __VA_ARGS__))
+///
+/// @brief finalize the acc serial region
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_ACC_END_SERIAL
 #else  // !defined(SOLOMON_FORTRAN)
@@ -61,6 +70,9 @@
 /// @details A device data construct defines a region of the program within which data is accessible by the device.
 ///
 #define PRAGMA_ACC_DATA(...) PRAGMA_ACC(data APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_ACC_DATA), __VA_ARGS__))
+///
+/// @brief finalize the acc data region
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_ACC_END_DATA
 #else  // !defined(SOLOMON_FORTRAN)
@@ -84,6 +96,9 @@
 /// @details A host_data construct makes the address of device data available on the host.
 ///
 #define PRAGMA_ACC_HOST_DATA(...) PRAGMA_ACC(host_data APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_ACC_HOST_DATA), __VA_ARGS__))
+///
+/// @brief finalize the acc host_data region
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_ACC_END_HOST_DATA
 #else  // !defined(SOLOMON_FORTRAN)
@@ -125,6 +140,9 @@
 /// @details The routine directive tells the compiler to compile a procedure for the device and gives the execution context for calls to the procedure. Such a procedure is called a device routine.
 ///
 #define PRAGMA_ACC_ROUTINE(...) PRAGMA_ACC(routine APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_ACC_ROUTINE), __VA_ARGS__))
+///
+/// @brief finalize the device routine
+///
 #define PRAGMA_ACC_END_ROUTINE
 
 ///

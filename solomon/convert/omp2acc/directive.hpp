@@ -99,6 +99,9 @@
 /// @note clause: Clauses used for target or parallel except for copyin.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL(...) PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)
+///
+/// @brief finalize the acc offloaded region launched as default mode
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_TARGET_PARALLEL
 #else  // !defined(SOLOMON_FORTRAN)
@@ -111,6 +114,11 @@
 /// @note clause: Clauses used for target or parallel for except for copyin.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL_FOR(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
+///
+/// @brief _Pragma("omp target parallel do [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct with a parallel worksharing-loop construct and no other statements.
+/// @note clause: Clauses used for target or parallel do except for copyin.
+///
 #define PRAGMA_OMP_TARGET_PARALLEL_DO(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
 
 ///
@@ -119,6 +127,11 @@
 /// @note clause: Clauses used for target or parallel for simd except for copyin.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT APPEND_ARGS(__VA_ARGS__))
+///
+/// @brief _Pragma("omp target parallel do simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct with a parallel worksharing-loop SIMD construct and no other statements.
+/// @note clause: Clauses used for target or parallel do simd except for copyin.
+///
 #define PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT APPEND_ARGS(__VA_ARGS__))
 
 ///
@@ -134,6 +147,9 @@
 /// @note clause: Any clause used for target or simd.
 ///
 #define PRAGMA_OMP_TARGET_SIMD(...) PRAGMA_ACC_LAUNCH_DEFAULT(ACC_CLAUSE_INDEPENDENT APPEND_ARGS(__VA_ARGS__))
+///
+/// @brief finalize the acc offloaded region launched as default mode
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_TARGET_SIMD
 #else  // !defined(SOLOMON_FORTRAN)
@@ -146,6 +162,9 @@
 /// @note clause: Any clause used for target or teams.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS(...) PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)
+///
+/// @brief finalize the acc offloaded region launched as default mode
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_TARGET_TEAMS
 #else  // !defined(SOLOMON_FORTRAN)
@@ -179,6 +198,11 @@
 /// @note clause: Any clause used for target or teams distribute parallel for.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
+///
+/// @brief _Pragma("omp target teams distribute parallel do [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct containing teams distribute parallel do and no other statements.
+/// @note clause: Any clause used for target or teams distribute parallel do.
+///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
 
 ///
@@ -187,6 +211,11 @@
 /// @note clause: Any clause used for target or teams distribute parallel for simd.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT APPEND_ARGS(__VA_ARGS__))
+///
+/// @brief _Pragma("omp target teams distribute parallel do simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct containing a teams distribute parallel worksharing-loop SIMD construct and no other statements.
+/// @note clause: Any clause used for target or teams distribute parallel do simd.
+///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT APPEND_ARGS(__VA_ARGS__))
 
 #endif  // !defined(SOLOMON_CONVERT_OMP2ACC_DIRECTIVE_HPP)

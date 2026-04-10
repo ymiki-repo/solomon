@@ -48,6 +48,9 @@
 /// @details Maps variables to a device data environment for the extent of the region.
 ///
 #define PRAGMA_OMP_TARGET_DATA(...) PRAGMA_OMP(target data APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET_DATA), __VA_ARGS__))
+///
+/// @brief finalize the omp target data region
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_TARGET_DATA
 #else  // !defined(SOLOMON_FORTRAN)
@@ -106,36 +109,69 @@
 /// @note clause: Clauses used for target or parallel except for copyin.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL(...) PRAGMA_OMP(target parallel APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL), __VA_ARGS__))
+///
+/// @brief finalize the omp target parallel region
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_TARGET_PARALLEL
 #else  // !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_TARGET_PARALLEL PRAGMA_OMP(end target parallel)
 #endif  // !defined(SOLOMON_FORTRAN)
 
+#if !defined(SOLOMON_FORTRAN)
 ///
 /// @brief _Pragma("omp target parallel for [clause [[,] clause] ... ]")
 /// @details Shortcut for specifying a target construct with a parallel worksharing-loop construct and no other statements.
 /// @note clause: Clauses used for target or parallel for except for copyin.
 ///
-#if !defined(SOLOMON_FORTRAN)
-#define PRAGMA_OMP_TARGET_PARALLEL_DO(...)  PRAGMA_OMP(target parallel for APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_FOR), __VA_ARGS__))
 #define PRAGMA_OMP_TARGET_PARALLEL_FOR(...) PRAGMA_OMP(target parallel for APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_FOR), __VA_ARGS__))
+///
+/// @brief _Pragma("omp target parallel for [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct with a parallel worksharing-loop construct and no other statements.
+/// @note clause: Clauses used for target or parallel for except for copyin.
+///
+#define PRAGMA_OMP_TARGET_PARALLEL_DO(...) PRAGMA_OMP_TARGET_PARALLEL_FOR(__VA_ARGS__)
 #else  // !defined(SOLOMON_FORTRAN)
+///
+/// @brief _Pragma("omp target parallel do [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct with a parallel worksharing-loop construct and no other statements.
+/// @note clause: Clauses used for target or parallel do except for copyin.
+///
 #define PRAGMA_OMP_TARGET_PARALLEL_DO(...) PRAGMA_OMP(target parallel do APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_FOR), __VA_ARGS__))
-#define PRAGMA_OMP_TARGET_PARALLEL_FOR(...) PRAGMA_OMP(target parallel do APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_FOR), __VA_ARGS__))
+///
+/// @brief _Pragma("omp target parallel do [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct with a parallel worksharing-loop construct and no other statements.
+/// @note clause: Clauses used for target or parallel do except for copyin.
+///
+#define PRAGMA_OMP_TARGET_PARALLEL_FOR(...) PRAGMA_OMP_TARGET_PARALLEL_DO(__VA_ARGS__)
 #endif  // !defined(SOLOMON_FORTRAN)
 
+#if !defined(SOLOMON_FORTRAN)
 ///
 /// @brief _Pragma("omp target parallel for simd [clause [[,] clause] ... ]")
 /// @details Shortcut for specifying a target construct with a parallel worksharing-loop SIMD construct and no other statements.
 /// @note clause: Clauses used for target or parallel for simd except for copyin.
 ///
-#if !defined(SOLOMON_FORTRAN)
-#define PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(...)  PRAGMA_OMP(target parallel for simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD)__VA_ARGS__))
-#define PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(...) PRAGMA_OMP(target parallel for simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD)__VA_ARGS__))
+#define PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(...) PRAGMA_OMP(target parallel for simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD), __VA_ARGS__))
+///
+/// @brief _Pragma("omp target parallel for simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct with a parallel worksharing-loop SIMD construct and no other statements.
+/// @note clause: Clauses used for target or parallel for simd except for copyin.
+///
+#define PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(...) PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(__VA_ARGS__)
 #else  // !defined(SOLOMON_FORTRAN)
-#define PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(...) PRAGMA_OMP(target parallel do simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD) __VA_ARGS__))
-#define PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(...) PRAGMA_OMP(target parallel do simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD) __VA_ARGS__))
+///
+/// @brief _Pragma("omp target parallel do simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct with a parallel worksharing-loop SIMD construct and no other statements.
+/// @note clause: Clauses used for target or parallel do simd except for copyin.
+///
+#define PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(...) PRAGMA_OMP(target parallel do simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD), __VA_ARGS__))
+///
+/// @brief _Pragma("omp target parallel do simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct with a parallel worksharing-loop SIMD construct and no other statements.
+/// @note clause: Clauses used for target or parallel do simd except for copyin.
+///
+#define PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(...) PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(__VA_ARGS__)
 #endif  // !defined(SOLOMON_FORTRAN)
 
 ///
@@ -151,6 +187,9 @@
 /// @note clause: Any clause used for target or simd.
 ///
 #define PRAGMA_OMP_TARGET_SIMD(...) PRAGMA_OMP(target simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_SIMD) __VA_ARGS__))
+///
+/// @brief finalize the omp target simd region
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_TARGET_SIMD
 #else  // !defined(SOLOMON_FORTRAN)
@@ -163,6 +202,9 @@
 /// @note clause: Any clause used for target or teams.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS(...) PRAGMA_OMP(target teams APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TEAMS), __VA_ARGS__))
+///
+/// @brief finalize the omp target teams region
+///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_TARGET_TEAMS
 #else  // !defined(SOLOMON_FORTRAN)
@@ -190,30 +232,60 @@
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_LOOP(...) PRAGMA_OMP(target teams loop APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TEAMS, CLAUSE_TAG_OMP_LOOP), __VA_ARGS__))
 
+#if !defined(SOLOMON_FORTRAN)
 ///
 /// @brief _Pragma("omp target teams distribute parallel for [clause [[,] clause] ... ]")
 /// @details Shortcut for specifying a target construct containing teams distribute parallel for and no other statements.
 /// @note clause: Any clause used for target or teams distribute parallel for.
 ///
-#if !defined(SOLOMON_FORTRAN)
-#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...)  PRAGMA_OMP(target teams distribute parallel for APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TEAMS, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_COPYIN, CLAUSE_TAG_OMP_FOR), __VA_ARGS__))
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_OMP(target teams distribute parallel for APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TEAMS, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_COPYIN, CLAUSE_TAG_OMP_FOR), __VA_ARGS__))
+///
+/// @brief _Pragma("omp target teams distribute parallel for [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct containing teams distribute parallel for and no other statements.
+/// @note clause: Any clause used for target or teams distribute parallel for.
+///
+#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...) PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(__VA_ARGS__)
 #else  // !defined(SOLOMON_FORTRAN)
+///
+/// @brief _Pragma("omp target teams distribute parallel do [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct containing teams distribute parallel do and no other statements.
+/// @note clause: Any clause used for target or teams distribute parallel do.
+///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...) PRAGMA_OMP(target teams distribute parallel do APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TEAMS, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_COPYIN, CLAUSE_TAG_OMP_FOR), __VA_ARGS__))
-#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_OMP(target teams distribute parallel do APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TEAMS, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_COPYIN, CLAUSE_TAG_OMP_FOR), __VA_ARGS__))
+///
+/// @brief _Pragma("omp target teams distribute parallel do [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct containing teams distribute parallel do and no other statements.
+/// @note clause: Any clause used for target or teams distribute parallel do.
+///
+#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(__VA_ARGS__)
 #endif  // !defined(SOLOMON_FORTRAN)
 
+#if !defined(SOLOMON_FORTRAN)
 ///
 /// @brief _Pragma("omp target teams distribute parallel for simd [clause [[,] clause] ... ]")
 /// @details Shortcut for specifying a target construct containing a teams distribute parallel worksharing-loop SIMD construct and no other statements.
 /// @note clause: Any clause used for target or teams distribute parallel for simd.
 ///
-#if !defined(SOLOMON_FORTRAN)
-#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(...)  PRAGMA_OMP(target teams distribute parallel for simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TEAMS, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_COPYIN, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD), __VA_ARGS__))
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(...) PRAGMA_OMP(target teams distribute parallel for simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TEAMS, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_COPYIN, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD), __VA_ARGS__))
+///
+/// @brief _Pragma("omp target teams distribute parallel for simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct containing a teams distribute parallel worksharing-loop SIMD construct and no other statements.
+/// @note clause: Any clause used for target or teams distribute parallel for simd.
+///
+#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(...) PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(__VA_ARGS__)
 #else  // !defined(SOLOMON_FORTRAN)
+///
+/// @brief _Pragma("omp target teams distribute parallel do simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct containing a teams distribute parallel worksharing-loop SIMD construct and no other statements.
+/// @note clause: Any clause used for target or teams distribute parallel do simd.
+///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(...) PRAGMA_OMP(target teams distribute parallel do simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TEAMS, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_COPYIN, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD), __VA_ARGS__))
-#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(...) PRAGMA_OMP(target teams distribute parallel do simd APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TEAMS, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_COPYIN, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD), __VA_ARGS__))
+///
+/// @brief _Pragma("omp target teams distribute parallel do simd [clause [[,] clause] ... ]")
+/// @details Shortcut for specifying a target construct containing a teams distribute parallel worksharing-loop SIMD construct and no other statements.
+/// @note clause: Any clause used for target or teams distribute parallel do simd.
+///
+#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(...) PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(__VA_ARGS__)
 #endif  // !defined(SOLOMON_FORTRAN)
 
 #endif  // !defined(SOLOMON_OMP_TARGET_DIRECTIVE_HPP)

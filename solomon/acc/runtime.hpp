@@ -10,10 +10,13 @@
 #if !defined(SOLOMON_ACC_RUNTIME_HPP)
 #define SOLOMON_ACC_RUNTIME_HPP
 
-#if defined(SOLOMON_FORTRAN)
-#define USE_SOLOMON_RUNTIME use openacc
-#else  // defined(SOLOMON_FORTRAN)
+#if !defined(SOLOMON_FORTRAN)
 #include <openacc.h>
+#else  // defined(SOLOMON_FORTRAN)
+///
+/// @brief use OpenACC runtime library in Fortran
+///
+#define USE_SOLOMON_RUNTIME use openacc
 #endif  // defined(SOLOMON_FORTRAN)
 
 ///
