@@ -4,9 +4,9 @@ SOLOMON_DEF = $(shell mkdir -p spp && printf "\
 \#endif\n\
 \#ifdef _OPENACC\n\
 	-D_OPENACC=_OPENACC\n\
-\#endif\n" > spp/_solomon_probe.f90 && \
-$(SOLOMON_FC) $(SOLOMON_FLAGS) -E spp/_solomon_probe.f90 2>/dev/null | grep -- "-D_" && \
-rm -f spp/_solomon_probe.f90)
+\#endif\n" > spp/_solomon.F && \
+$(SOLOMON_FC) $(SOLOMON_FLAGS) -E spp/_solomon.F 2>/dev/null | grep -- "-D_" && \
+rm -f spp/_solomon.F)
 
 SOLOMON_DEF += $(filter -D% -I%,$(SOLOMON_FC) $(SOLOMON_FLAGS))
 

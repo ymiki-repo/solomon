@@ -187,7 +187,7 @@
 
 * **Semi-automatic code generation and compilation method**
 
-  1. Locate the section where the Fortran compiler, its options, and the target files for compilation (.f90) are specified as follows:
+  1. Locate the section in the Makefile where the Fortran compiler, its options, and the target files for compilation (.f90) are specified as follows:
 
      ```Makefile
      FC = nvfortran
@@ -215,21 +215,28 @@
      ```
 
      * Specify the path to Solomon as `SOLOMON_DIR`.
-     * Add the options to enable OpenACC or OpenMP target features to the `FLAGS` variable in the Makefile.
-     * Add the preprocessor flags for the Solomon execution mode to the compiler options variable `FLAGS`.
-     * Assign the contents of `FC` and `FLAGS` to the variables `SOLOMON_FC` and `SOLOMON_FLAGS`, respectively.
-     * Change the target files for compilation to the `.f90` files located under the `spp` directory.
-     * Specify an absolute or relative path to include `fortran.mk`, the auxiliary Makefile for Solomon.
+     * Add the options to enable OpenACC or OpenMP target features to the `FLAGS` variable in the Makefile
+     * Add the preprocessor flags for the Solomon execution mode to the compiler options variable `FLAGS`
+     * Assign the contents of `FC` and `FLAGS` to the variables `SOLOMON_FC` and `SOLOMON_FLAGS`, respectively
+     * Change the target files for compilation to the `.f90` files located under the `spp` directory
+     * Specify an absolute or relative path to include `fortran.mk`, the auxiliary Makefile for Solomon
 
   3. With these changes, `make` will generate a GPU-enabled program using OpenACC or OpenMP target through Solomon
 
 * Manual code generation and compilation method
-  * This section describes how to manually perform all the steps that were previously simplified by `include $(SOLOMON_DIR)/fortran.mk` in the semi-automatic method mentioned above.
+  * This section describes how to manually perform all the steps that were previously simplified by `include $(SOLOMON_DIR)/fortran.mk` in the semi-automatic method mentioned above
+    * The following steps (2 and 3) can also be executed using a simple script (prototype), after creating the output directory (`spp` in the example below) in advance in Step 1:
 
+      ```sh
+      export SOLOMON_DIR=/path/to/Solomon
+      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90
+      ```
+
+      * Regarding `$(SOLOMON_DIR)/spp.sh`, you can also add the Solomon path to your `PATH` environment variable and execute it simply as `spp.sh`
   1. Create a dedicated directory named `spp` under the Fortran source directory to store the files processed by Solomon, using the following command:
 
      ```sh
-     mkdir spp
+     mkdir -p spp
      ```
 
   2. Use the following two commands to check the year-month string representing the OpenACC or OpenMP target version supported by the compiler you are using:

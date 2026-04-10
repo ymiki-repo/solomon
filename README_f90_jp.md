@@ -187,7 +187,7 @@
 
 * **半自動コード生成・コンパイル方法**
 
-  1. 以下のようにFortranのコンパイラとそのオプション、さらにコンパイルの対象のファイル(.f90)を実施している箇所を探してください
+  1. Makefile中で以下のようにFortranのコンパイラとそのオプション、さらにコンパイルの対象のファイル(.f90)を実施している箇所を探してください
 
      ```Makefile
      FC = nvfortran
@@ -225,6 +225,14 @@
 
 * 手動コード生成・コンパイル方法
   * 前述の半自動コード生成・コンパイル方法において `include $(SOLOMON_DIR)/fortran.mk` によって簡略化していた手順を，全て自分で実施するという内容です
+    * 下記手順（2, 3）については，事前に手順1で出力先ディレクトリ（以下の例では`spp`）を作成した上で，簡易スクリプト（試作版）を用いて実行することもできます：
+
+      ```sh
+      export SOLOMON_DIR=/path/to/Solomon
+      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90
+      ```
+
+      * `$(SOLOMON_DIR)/spp.sh` については，Solomonのパスに`PATH`を通した上で`spp.sh`として実行することもできます
 
   1. Fortranのソースファイルのディレクトリの下にSolomonによる処理結果を保存する専用のディレクトリ `spp` を以下のコマンドで作成してください
 

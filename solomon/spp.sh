@@ -93,13 +93,13 @@ rm -f $CONFTEST
 
 case "$SRC" in
     *.c|*.C)
-	cpp $MACRO $INCS $DEFS $SRC
+	cpp -P $MACRO $INCS $DEFS $SRC
 	;;
     *.cc|*.cpp|*.cxx|*.CC|*.CPP)
-	cpp $MACRO $INCS $DEFS $SRC
+	cpp -P $MACRO $INCS $DEFS $SRC
 	;;
     *.f|*.for|*.f90|*.f95|*.f03|*.f08|*.F|*.F90|*.F95|*.F03|*.F08)
-	cpp $MACRO -DSOLOMON_FORTRAN $INCS $DEFS $SRC -o _$SRC.i
+	cpp -P $MACRO -DSOLOMON_FORTRAN $INCS $DEFS $SRC -o _$SRC.i
 	rc=$?
 	if [ "$rc" -eq 0 ]; then
 	    sed 's/^#pragma /!$/g'  _$SRC.i
