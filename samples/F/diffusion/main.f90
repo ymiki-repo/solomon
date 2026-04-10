@@ -6,7 +6,7 @@ program main
   use misc
   implicit none
 
-  real(dp), parameter :: byte_per_flop = storage_size(0.0_sp)*8.0_dp/13.0_dp
+  real(dp), parameter :: byte_per_flop = real(storage_size(0.0_sp) / 8, dp) * 8.0_dp / 13.0_dp
   integer  :: nx, ny, nz, n
 #if defined(APPLY_FIRST_TOUCH)
   integer  :: i, j, k
