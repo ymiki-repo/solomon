@@ -443,8 +443,8 @@
 
   | 入力 | 出力 | バックエンドとして用いる指示文 |
   | ---- | ---- | ---- |
-  | **`MALLOC_ON_DEVICE(...)`** <br> `PRAGMA_ACC_ENTER_DATA_CREATE(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA_MAP_ALLOC(...)` | `!$acc enter data create(__VA_ARGS__)` <br> `!$omp target enter data map(alloc: __VA_ARGS__)` | OpenACC <br> OpenMP |
-  | **`FREE_FROM_DEVICE(...)`** <br> `PRAGMA_ACC_EXIT_DATA_DELETE(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA_MAP_DELETE(...)` | `!$acc exit data delete(__VA_ARGS__)` <br> `!$omp target exit data map(delete: __VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`ALLOCATE_ON_DEVICE(...)`** <br> `PRAGMA_ACC_ENTER_DATA_CREATE(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA_MAP_ALLOC(...)` | `!$acc enter data create(__VA_ARGS__)` <br> `!$omp target enter data map(alloc: __VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`DEALLOCATE_ON_DEVICE(...)`** <br> `PRAGMA_ACC_EXIT_DATA_DELETE(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA_MAP_DELETE(...)` | `!$acc exit data delete(__VA_ARGS__)` <br> `!$omp target exit data map(delete: __VA_ARGS__)` | OpenACC <br> OpenMP |
   | **`MEMCPY_D2H(...)`** <br> `PRAGMA_ACC_UPDATE_HOST(...)` <br> `PRAGMA_OMP_TARGET_UPDATE_FROM(...)` | `!$acc update host(__VA_ARGS__)` <br> `!$omp target update from(__VA_ARGS__)` | OpenACC <br> OpenMP |
   | **`MEMCPY_H2D(...)`** <br> `PRAGMA_ACC_UPDATE_DEVICE(...)` <br> `PRAGMA_OMP_TARGET_UPDATE_TO(...)` | `!$acc update device(__VA_ARGS__)` <br> `!$omp target update to(__VA_ARGS__)` | OpenACC <br> OpenMP |
   | `PRAGMA_ACC_ENTER_DATA(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA(...)` | `!$acc enter data __VA_ARGS__` <br> `!$omp target enter data __VA_ARGS__` | OpenACC <br> OpenMP |

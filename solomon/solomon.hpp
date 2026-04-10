@@ -233,9 +233,19 @@
 #define MALLOC_ON_DEVICE(...) PRAGMA_ACC_ENTER_DATA_CREATE(__VA_ARGS__)
 
 ///
+/// @brief allocate device memory
+///
+#define ALLOCATE_ON_DEVICE(...) MALLOC_ON_DEVICE(__VA_ARGS__)
+
+///
 /// @brief release device memory
 ///
 #define FREE_FROM_DEVICE(...) PRAGMA_ACC_EXIT_DATA_DELETE(__VA_ARGS__)
+
+///
+/// @brief release device memory
+///
+#define DEALLOCATE_ON_DEVICE(...) FREE_FROM_DEVICE(__VA_ARGS__)
 
 ///
 /// @brief memcpy from device to host
