@@ -25,14 +25,29 @@
 ///
 #if !defined(OFFLOAD_BY_OPENACC_PARALLEL)
 #define PRAGMA_ACC_LAUNCH_DEFAULT(...) PRAGMA_ACC_KERNELS(__VA_ARGS__)
-#else  //! defined(OFFLOAD_BY_OPENACC_PARALLEL)
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_LAUNCH_DEFAULT
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_LAUNCH_DEFAULT PRAGMA_ACC_END_KERNELS
+#endif  // !defined(SOLOMON_FORTRAN)
+#else   //! defined(OFFLOAD_BY_OPENACC_PARALLEL)
 #define PRAGMA_ACC_LAUNCH_DEFAULT(...) PRAGMA_ACC_PARALLEL(__VA_ARGS__)
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_LAUNCH_DEFAULT
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_LAUNCH_DEFAULT PRAGMA_ACC_END_PARALLEL
+#endif  // !defined(SOLOMON_FORTRAN)
 #endif  //! defined(OFFLOAD_BY_OPENACC_PARALLEL)
 
 ///
 /// @brief offload the specified loop as default mode
 ///
 #define PRAGMA_ACC_OFFLOADING_DEFAULT(...) PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__) PRAGMA_ACC_LOOP(__VA_ARGS__)
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_OFFLOADING_DEFAULT
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_OFFLOADING_DEFAULT PRAGMA_ACC_END_LAUNCH_DEFAULT
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("acc host_data use_device (list)")

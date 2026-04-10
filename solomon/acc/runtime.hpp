@@ -10,7 +10,11 @@
 #if !defined(SOLOMON_ACC_RUNTIME_HPP)
 #define SOLOMON_ACC_RUNTIME_HPP
 
+#if defined(SOLOMON_FORTRAN)
+#define USE_SOLOMON_RUNTIME use openacc
+#else  // defined(SOLOMON_FORTRAN)
 #include <openacc.h>
+#endif  // defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief get number of accelerator devices

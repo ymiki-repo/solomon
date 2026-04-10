@@ -12,7 +12,7 @@
 #if !defined(SOLOMON_SOLOMON_HPP)
 #define SOLOMON_SOLOMON_HPP
 
-#define SOLOMON_VERSION 1.1.0
+#define SOLOMON_VERSION 2.0.0
 
 // OpenMP for multicore CPU is always available
 #if defined(_OPENMP)
@@ -61,6 +61,11 @@
 /// @brief offload the specified loop
 ///
 #define OFFLOAD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
+#if !defined(SOLOMON_FORTRAN)
+#define END_OFFLOAD
+#else  // !defined(SOLOMON_FORTRAN)
+#define END_OFFLOAD PRAGMA_ACC_END_OFFLOADING_DEFAULT
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief indicate parallelism to compiler
@@ -116,6 +121,7 @@
 /// @brief declaration of the specified functions are mapped to device
 ///
 #define DECLARE_OFFLOADED_END PRAGMA_OMP_END_DECLARE_TARGET
+#define DECLARE_END_OFFLOADED PRAGMA_OMP_END_DECLARE_TARGET
 
 ///
 /// @brief launch kernels asynchronously

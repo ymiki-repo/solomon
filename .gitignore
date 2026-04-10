@@ -5,5 +5,7 @@ typescript
 *build/
 *bench/
 *debug/
+# temporary files
+tmp/
 # old files
 samples/miniFE-2.2.0/

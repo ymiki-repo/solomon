@@ -1,0 +1,7 @@
+slurm-*.out
+*.o
+*.d
+fig/
+*_nvhpc_nvidia_*/
+*_amdflang_amd_gfx*/
+*_ifx_intel_pvc/

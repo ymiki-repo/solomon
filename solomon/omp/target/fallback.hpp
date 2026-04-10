@@ -89,6 +89,7 @@
 /// @note clause: Clauses used for target or parallel for except for copyin.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL_FOR(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
+#define PRAGMA_OMP_TARGET_PARALLEL_DO(...) PRAGMA_OMP_PARALLEL_DO(__VA_ARGS__)
 
 ///
 /// @brief _Pragma("omp target parallel for simd [clause [[,] clause] ... ]")
@@ -96,6 +97,7 @@
 /// @note clause: Clauses used for target or parallel for simd except for copyin.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(...) PRAGMA_OMP_PARALLEL_FOR_SIMD(__VA_ARGS__)
+#define PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(...) PRAGMA_OMP_PARALLEL_DO_SIMD(__VA_ARGS__)
 
 ///
 /// @brief _Pragma("omp target parallel loop [clause [[,] clause] ... ]")
@@ -137,7 +139,11 @@
 /// @details Shortcut for specifying a target construct containing a teams loop construct and no other statements.
 /// @note clause: Any clause used for target or teams loop.
 ///
+#if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_TARGET_TEAMS_LOOP(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_TARGET_TEAMS_LOOP(...) PRAGMA_OMP_PARALLEL_DO(__VA_ARGS__)
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("omp target teams distribute parallel for [clause [[,] clause] ... ]")
@@ -145,6 +151,7 @@
 /// @note clause: Any clause used for target or teams distribute parallel for.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
+#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...) PRAGMA_OMP_PARALLEL_DO(__VA_ARGS__)
 
 ///
 /// @brief _Pragma("omp target teams distribute parallel for simd [clause [[,] clause] ... ]")
@@ -152,6 +159,7 @@
 /// @note clause: Any clause used for target or teams distribute parallel for simd.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(...) PRAGMA_OMP_PARALLEL_FOR_SIMD(__VA_ARGS__)
+#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(...) PRAGMA_OMP_PARALLEL_DO_SIMD(__VA_ARGS__)
 
 ///
 /// @brief add OpenMP target clause "thread_limit (num)" if applicable

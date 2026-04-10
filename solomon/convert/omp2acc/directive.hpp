@@ -99,6 +99,11 @@
 /// @note clause: Clauses used for target or parallel except for copyin.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL(...) PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_TARGET_PARALLEL
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_TARGET_PARALLEL PRAGMA_ACC_END_LAUNCH_DEFAULT
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("omp target parallel for [clause [[,] clause] ... ]")
@@ -106,6 +111,7 @@
 /// @note clause: Clauses used for target or parallel for except for copyin.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL_FOR(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
+#define PRAGMA_OMP_TARGET_PARALLEL_DO(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
 
 ///
 /// @brief _Pragma("omp target parallel for simd [clause [[,] clause] ... ]")
@@ -113,6 +119,7 @@
 /// @note clause: Clauses used for target or parallel for simd except for copyin.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT APPEND_ARGS(__VA_ARGS__))
+#define PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT APPEND_ARGS(__VA_ARGS__))
 
 ///
 /// @brief _Pragma("omp target parallel loop [clause [[,] clause] ... ]")
@@ -127,6 +134,11 @@
 /// @note clause: Any clause used for target or simd.
 ///
 #define PRAGMA_OMP_TARGET_SIMD(...) PRAGMA_ACC_LAUNCH_DEFAULT(ACC_CLAUSE_INDEPENDENT APPEND_ARGS(__VA_ARGS__))
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_TARGET_SIMD
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_TARGET_SIMD PRAGMA_ACC_END_LAUNCH_DEFAULT
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("omp target teams [clause [[,] clause] ... ]")
@@ -134,6 +146,11 @@
 /// @note clause: Any clause used for target or teams.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS(...) PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_TARGET_TEAMS
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_TARGET_TEAMS PRAGMA_ACC_END_LAUNCH_DEFAULT
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("omp target teams distribute [clause [[,] clause] ... ]")
@@ -162,6 +179,7 @@
 /// @note clause: Any clause used for target or teams distribute parallel for.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
+#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
 
 ///
 /// @brief _Pragma("omp target teams distribute parallel for simd [clause [[,] clause] ... ]")
@@ -169,5 +187,6 @@
 /// @note clause: Any clause used for target or teams distribute parallel for simd.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT APPEND_ARGS(__VA_ARGS__))
+#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT APPEND_ARGS(__VA_ARGS__))
 
 #endif  // !defined(SOLOMON_CONVERT_OMP2ACC_DIRECTIVE_HPP)

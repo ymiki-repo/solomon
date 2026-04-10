@@ -21,24 +21,38 @@
 /// @details replace to _Pragma("omp target teams loop [clause [[,] clause] ... ]") or _Pragma("omp target teams distribute parallel for [clause [[,] clause] ... ]")
 ///
 #define PRAGMA_ACC_PARALLEL(...) PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(__VA_ARGS__)
+#if defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_PARALLEL
+#endif  // defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("acc kernels [clause [[,] clause] ... ]")
 /// @details replace to _Pragma("omp target teams loop [clause [[,] clause] ... ]") or _Pragma("omp target teams distribute parallel for [clause [[,] clause] ... ]")
 ///
 #define PRAGMA_ACC_KERNELS(...) PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(__VA_ARGS__)
+#if defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_KERNELS
+#endif  // defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("acc serial [clause [[,] clause] ... ]")
 /// @details ignore the construct
 ///
 #define PRAGMA_ACC_SERIAL(...)
+#if defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_SERIAL
+#endif  // defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("acc data [clause [[,] clause] ... ]")
 /// @details replace to _Pragma("omp target data [clause [[,] clause] ... ]")
 ///
 #define PRAGMA_ACC_DATA(...) PRAGMA_OMP_TARGET_DATA(__VA_ARGS__)
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_DATA
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_DATA PRAGMA_OMP_END_TARGET_DATA
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("acc enter data [clause [[,] clause] ... ]")
@@ -57,6 +71,11 @@
 /// @details replace to _Pragma("omp target data [clause [[,] clause] ... ]")
 ///
 #define PRAGMA_ACC_HOST_DATA(...) PRAGMA_OMP_TARGET_DATA(__VA_ARGS__)
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_HOST_DATA
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_HOST_DATA PRAGMA_OMP_END_TARGET_DATA
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("acc loop [clause [[,] clause] ... ]")
@@ -93,6 +112,11 @@
 /// @details replace to _Pragma("omp declare target [clause [[,] clause] ... ]")
 ///
 #define PRAGMA_ACC_ROUTINE(...) PRAGMA_OMP_DECLARE_TARGET(__VA_ARGS__)
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_ROUTINE
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_ROUTINE PRAGMA_OMP_END_DECLARE_TARGET
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("acc declare [clause [[,] clause] ... ]")

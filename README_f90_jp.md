@@ -2,8 +2,8 @@
 
 | | English | 日本語 |
 | ---- | ---- | ---- |
-| C/C++ | [README](README.md) | [このファイル](README_jp.md) |
-| Fortran（v2.0.0から追加） | [README](README_f90.md) | [README](README_f90_jp.md) |
+| Fortran（**v2.0.0から追加**） | [README](README_f90.md) | [このファイル](README_f90_jp.md) |
+| C/C++ | [README](README.md) | [README](README_jp.md) |
 
 ## 概要
 
@@ -42,75 +42,99 @@
 
 ### Solomon を用いたコードの開発方法
 
-1. Solomon のヘッダファイルをインクルードする
+1. Solomon のモジュールファイルをインクルードする
 
-   ```c++
+   各ソースファイルの冒頭でSolomonのインクルードファイルをインクルードしてください
+   続いて、各モジュール、プログラムの冒頭で`USE_SOLOMON_RUNTIME`としてください
+
+   ```Fortran
+   ! file main.f90
    #include <solomon.hpp>
+
+   program main
+     USE_SOLOMON_RUNTIME
+     use sub
+     implicit none
+     ! ...
+   end program main
+   ```
+
+   ```Fortran
+   ! file sub.f90
+   #include <solomon.hpp>
+
+   module sub
+     USE_SOLOMON_RUNTIME
+     implicit none
+   contains
+     ! ...
+   end module sub
    ```
 
 2. OpenACC/OpenMP target 指示文のかわりに Solomon が提供するマクロを挿入する
 
    * GPU化を始めたばかりの方には，`OFFLOAD(...)` などの簡易記法の利用をおすすめします
    * OpenACC あるいは OpenMP target を用いた開発に慣れている方は，OpenACC/OpenMP 的な記法を使うこともできます
-     * OpenMP 的記法を使った場合には，`PRAGMA_OMP_TARGET_*` や `OMP_TARGET_CLAUSE_*` のように `_TARGET_` をつけたものだけが OpenACC 使用時における変換対象となります（例えば `PRAGMA_OMP_ATOMIC(...)` は `_Pragma("omp atomic __VA_ARGS__")` へと変換されるため，`_Pragma("acc atomic __VA_ARGS__")` には変換されません）
+     * OpenMP 的記法を使った場合には，`PRAGMA_OMP_TARGET_*` や `OMP_TARGET_CLAUSE_*` のように `_TARGET_` をつけたものだけが OpenACC 使用時における変換対象となります（例えば `PRAGMA_OMP_ATOMIC(...)` は `!$omp atomic __VA_ARGS__` へと変換されるため，`!$acc atomic __VA_ARGS__` には変換されません）
      * `PRAGMA_OMP_TARGET_DATA(...)` という記法は使わないでください
        * 演算加速器（GPU）からアクセスするデータについては `DATA_ACCESS_BY_DEVICE(...)` か `PRAGMA_ACC_DATA(...)`，ホスト（CPU）からアクセスするデータについては `DATA_ACCESS_BY_HOST(...)` か `PRAGMA_ACC_HOST_DATA(...)` をお使いください
      * OpenACC 的記法における`PRAGMA_ACC_ROUTINE(...)`（や`DECLARE_OFFLOADED(...)`などの対応するマクロ）を使用した際には，対象リージョンの最後に`DECLARE_OFFLOADED_END` （や`PRAGMA_OMP_END_DECLARE_TARGET`）も挿入してください
    * GPU実行時には無視してほしい指示文については，`IF_NOT_OFFLOADED(arg)` の中に記入してください
      * <details><summary> 実装例: `arg` については，縮退モード（OpenACC と OpenMP target 両方を無効化した場合）のみ実体化されます</summary>
 
-       ```c++
-       OFFLOAD()
-       for(int i = 0; i < num; i++){
+       ```Fortran
+       OFFLOAD(AS_PRIVATE(i,j))
+       do i=1, num
          IF_NOT_OFFLOADED(PRAGMA_OMP_SIMD())
-         for(int j = 0; j < 16; j++){
-           // computation
-         }
-       }
+         do j=1, 16
+           ! computation
+         end do
+       end do
+       END_OFFLOAD
        ```
 
        * OpenACC 使用時
 
-         ```c++
-         _Pragma("acc kernels")
-         _Pragma("acc loop")
-         for(int i = 0; i < num; i++){
+         ```Fortran
+         !$acc kernels private(i,j)
+         !$acc loop
+         do i=1, num
 
-           for(int j = 0; j < 16; j++){
-             // computation
-           }
-         }
+           do j=1, 16
+             ! computation
+           end do
+         end do
          ```
 
        * OpenMP target 使用時
 
-         ```c++
-         _Pragma("omp target teams loop")
-         for(int i = 0; i < num; i++){
+         ```Fortran
+         !$omp target teams loop private(i,j)
+         do i=1, num
 
-           for(int j = 0; j < 16; j++){
-             // computation
-           }
-         }
+           do j=1, 16
+             ! computation
+           end do
+         end do
          ```
 
        * 縮退モード
 
-         ```c++
-         _Pragma("omp parallel for")
-         for(int i = 0; i < num; i++){
-           _Pragma("omp simd")
-           for(int j = 0; j < 16; j++){
-             // computation
-           }
-         }
+         ```Fortran
+         !$omp parallel do private(i,j)
+         do i=1, num
+           !$omp simd
+           do j=1, 16
+             ! computation
+           end do
+         end do
          ```
 
      </details>
 
    * 指示文に付与する指示節・指示句については，下記の例のようにカンマ区切りで渡してください：
 
-      ```c++
+      ```Fortran
       OFFLOAD(AS_INDEPENDENT, ACC_CLAUSE_VECTOR_LENGTH(128), OMP_TARGET_CLAUSE_COLLAPSE(3))
       ```
 
@@ -122,8 +146,8 @@
 
      | 推奨実装 | 対応実装（非推奨） |
      | ---- | ---- |
-     | **`OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` | <br> `PRAGMA_ACC_KERNELS(...) PRAGMA_ACC_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL(...) PRAGMA_ACC_LOOP(...)` |
-     | **`DECLARE_DATA_ON_DEVICE(...)`** <br> `PRAGMA_ACC_DATA_PRESENT(...)` | <br> `PRAGMA_ACC_DATA(ACC_CLAUSE_PRESENT(...))` |
+     | **`OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` | `PRAGMA_ACC_KERNELS(...) PRAGMA_ACC_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL(...) PRAGMA_ACC_LOOP(...)` |
+     | **`DECLARE_DATA_ON_DEVICE(...)`** <br> `PRAGMA_ACC_DATA_PRESENT(...)` | `PRAGMA_ACC_DATA(ACC_CLAUSE_PRESENT(...))` |
      | `OMP_TARGET_CLAUSE_MAP_TO(...)` | `OMP_TARGET_CLAUSE_MAP(OMP_TARGET_CLAUSE_TO(...))` |
 
    * カーネルの非同期実行および同期処理については下記のマクロが提供されているので，用途に合わせて使い分けてください
@@ -133,10 +157,10 @@
 
      | 使用可能なマクロ | 出力 | 使用されるバックエンド | 備考 |
      | ---- | ---- | ---- | ---- |
-     | **`AS_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | <br> `async(__VA_ARGS__)` <br> `nowait` | <br> OpenACC <br> OpenMP | 両バックエンドで共通して非同期実行される <br> OpenACC においてはキューIDを指定可能 <br> OpenMP においてはキューIDは無視される |
-     | **`SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `_Pragma("acc wait __VA_ARGS__")` <br> `_Pragma("omp taskwait __VA_ARGS__")` | <br> OpenACC <br> OpenMP | 両バックエンドで共通して同期処理が実行される．`AS_ASYNC(...)` に対応して記述する |
-     | **`ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | <br> `async(id)` <br> N/A（OpenMP target 使用時には無視される） | <br> OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して非同期実行 <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した非同期実行がサポートされていないため，無視される |
-     | **`WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | <br> `wait(id)` <br> N/A（OpenMP target 使用時には無視される） | <br> OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して同期処理を実行．`ASYNC_QUEUE(id)` に対応して記述する <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した同期処理がサポートされていないため，無視される |
+     | **`AS_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | `async(__VA_ARGS__)` <br> `nowait` | OpenACC <br> OpenMP | 両バックエンドで共通して非同期実行される <br> OpenACC においてはキューIDを指定可能 <br> OpenMP においてはキューIDは無視される |
+     | **`SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | OpenACC <br> OpenMP | 両バックエンドで共通して同期処理が実行される．`AS_ASYNC(...)` に対応して記述する |
+     | **`ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | `async(id)` <br> N/A（OpenMP target 使用時には無視される） | OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して非同期実行 <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した非同期実行がサポートされていないため，無視される |
+     | **`WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | `wait(id)` <br> N/A（OpenMP target 使用時には無視される） | OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して同期処理を実行．`ASYNC_QUEUE(id)` に対応して記述する <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した同期処理がサポートされていないため，無視される |
 
 ### Solomon を使ったコードのコンパイル方法
 
@@ -149,11 +173,11 @@
 
 * Solomon のパス（`solomon.hpp` があるディレクトリ）を確認し，コンパイル時に `-I/path/to/solomon` などとして指定してください
   * コンパイルするディレクトリからの相対パス(`../../../solomon`など)による指定，絶対パス( `/usr/local/solomon/include`など)はどちらでも受け付けられます
-  * 拡散方程式サンプルコードの場合には，コンパイルするディレクトリ（`samples/C/diffusion/Makefile`が置いてある`samples/C/diffusion/`）からのSolomonヘッダーファイル`solomon/solomon.hpp` への相対パスは`../../../solomon`です
+  * 拡散方程式サンプルコードの場合には，コンパイルするディレクトリ（`samples/F/diffusion/Makefile`が置いてある`samples/F/diffusion/`）からのSolomonヘッダーファイル`solomon/solomon.hpp` への相対パスは`../../../solomon`です
 
-* 下記のコンパイルフラグを用いて，Solomon の動作モードを指定してください
+* Solomon の動作モードを決めて、そのプリプロセスフラグを下記から選んでください
 
-  | コンパイルフラグ | 使用されるバックエンド | 備考 |
+  | プリプロセスフラグ | 使用されるバックエンド | 備考 |
   | ---- | ---- | ---- |
   | `-DOFFLOAD_BY_OPENACC` | OpenACC | デフォルトでは `kernels` 構文を使用 |
   | `-DOFFLOAD_BY_OPENACC -DOFFLOAD_BY_OPENACC_PARALLEL` | OpenACC | デフォルトでは `parallel` 構文を使用 |
@@ -161,9 +185,89 @@
   | `-DOFFLOAD_BY_OPENMP_TARGET -DOFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE` | OpenMP target | デフォルトでは `distribute` 指示文を使用 |
   | | 縮退モード | OpenMP を用いたマルチコアCPU向けのスレッド並列 |
 
-* コンパイルフラグとして`-DPRINT_GENERATED_PRAGMA`を追加すると，実際に生成される指示文をコンパイル時メッセージに出力できます
-  * LLVMではwarning扱いとなるため，`-Werror`を指定している際には`-Wno-error=pragma-messages`も渡してこのメッセージがエラー扱いにならないようにしてください
-* 使用例： [N体計算用の Makefile](samples/C/nbody/Makefile) および [拡散方程式用の Makefile](samples/C/diffusion/Makefile)
+* **半自動コード生成・コンパイル方法**
+
+  1. 以下のようにFortranのコンパイラとそのオプション、さらにコンパイルの対象のファイル(.f90)を実施している箇所を探してください
+
+     ```Makefile
+     FC = nvfortran
+     FLAGS = -O3
+
+     %.o: %.f90
+          $(FC) -c $(FLAGS) $< -o $@
+     ```
+
+  2. これらの箇所をそれぞれ以下のように変更してください
+
+     ```Makefile
+     SOLOMON_DIR = ../../../solomon
+     FC = nvfortran -acc=gpu
+     FLAGS = -O3 -DOFFLOAD_BY_OPENACC
+     INC = -I$(SOLOMON_DIR)
+
+     SOLOMON_FC    = $(FC)
+     SOLOMON_FLAGS = $(FLAGS) $(INC)
+
+     %.o: spp/%.f90
+          $(FC) -c $(FLAGS) $< -o $@
+
+     include $(SOLOMON_DIR)/fortran.mk
+     ```
+
+     * Solomonのパスを`SOLOMON_DIR`として指定
+     * Makefile中の変数`FLAGS`にOpenACC または OpenMP target の機能を有効化するオプションを追加
+     * コンパイルオプションの変数`FLAGS`にSolomonの動作モードのプリプロセスフラグを追加
+     * `FC`および`FLAGS`の内容を変数`SOLOMON_FC`と`SOLOMON_FLAGS`にそれぞれ指定
+     * コンパイルの対象のファイルをsppディレクトリの下にある.f90に変更
+     * Solomonの補助Makefileである`fortran.mk`をincludeするように絶対パスあるいは相対パスで指定
+
+  3. 以上の変更により，makeコマンドでSolomonを用いて実装したコードから，バックエンドとしてOpenACCまたはOpenMP targetを用いてGPU化したプログラムが生成され，コンパイル・リンクされるようになります
+
+* 手動コード生成・コンパイル方法
+  * 前述の半自動コード生成・コンパイル方法において `include $(SOLOMON_DIR)/fortran.mk` によって簡略化していた手順を，全て自分で実施するという内容です
+
+  1. Fortranのソースファイルのディレクトリの下にSolomonによる処理結果を保存する専用のディレクトリ `spp` を以下のコマンドで作成してください
+
+     ```sh
+     mkdir -p spp
+     ```
+
+  2. 用いるコンパイラが対応できるOpenACC または OpenMP target のversionを表す年月の文字列を以下の2つのコマンドで確認してください
+
+     ```sh
+     echo "OPENACC=_OPENACC OPENMP=_OPENMP" > spp/solomon.F
+     nvfortran -E -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)] spp/solomon.F # NVIDIA HPC SDK の場合
+     amdflang -E -fopenmp --offload-arch=[target GPU architecture (e.g., gfx942)] spp/solomon.F # AMD ROCm の場合
+     ifx -E -fiopenmp -fopenmp-targets=spir64_gen -Xs "-device [target GPU architecture (e.g., pvc)]" spp/solomon.F # Intel oneAPI の場合
+     ```
+
+     * 2-4行目のコンパイラおよびコンパイルオプションは，使用する環境に応じて適宜置き換えてください
+     * コンパイラのそれぞれの機能が有効化できる場合には，この出力としてOpenACCとOpenMPのversionを表す年月の文字列が`OPENACC=201711 OPENMP=202011` のように表示されます
+       * 有効化できない場合は`OPENMP=202011 OPENACC=_OPENACC` のように元の文字列のまま表示されます
+
+  3. FortranのソースファイルをC言語用のプリプロセッサを用いた以下の2つのコマンドでプリプロセスを実行してください
+
+     ```sh
+     cpp -P -DSOLOMON_FORTRAN -D_OPENACC=201711 -I../../../solomon -DOFFLOAD_BY_OPENACC mysrc.f90 > spp/mysrc.i.f90
+     sed 's/^#pragma /!$/g' spp/mysrc.i.f90 > spp/mysrc.f90
+     ```
+
+  4. 最後に，以下のようにコンパイルを実行してください
+
+     ```sh
+     nvfortran -O3 -acc=gpu -gpu=[target GPU architecture (e.g., cc90)] spp/mysrc.f90 -o myprog # NVIDIA HPC SDK（OpenACC）の場合
+     nvfortran -O3 -mp=gpu -gpu=[target GPU architecture (e.g., cc90)] spp/mysrc.f90 -o myprog # NVIDIA HPC SDK（OpenMP target）の場合
+     amdflang -O3 -fopenmp --offload-arch=[target GPU architecture (e.g., gfx942)] spp/mysrc.f90 -o myprog  # AMD ROCm（OpenMP target）の場合
+     ifx -O3 -fiopenmp -fopenmp-targets=spir64_gen -Xs "-device [target GPU architecture (e.g., pvc)]" spp/mysrc.f90 -o myprog  # Intel oneAPI（OpenMP target）の場合
+     ```
+
+* 実際に生成される指示文を確認する方法
+  * 中間ファイル `spp/*.f90` が生成されているので，このファイルを開くと実際に生成された指示文が確認できます
+  * 先のプリプロセスの際にプリプロセスフラグとして`-DPRINT_GENERATED_PRAGMA`を追加すると，実際に生成される指示文をコンパイル時メッセージに出力できます
+    * LLVMではwarning扱いとなるため，コンパイルで`-Werror`を指定している場合には`-Wno-error=pragma-messages`も渡してこのメッセージがエラー扱いにならないようにしてください
+
+* 使用例：[拡散方程式用の Makefile](samples/F/diffusion/Makefile)
+  * 半自動コード生成・コンパイル方法の手順例です
 
 ### Solomon の拡張方法（コードジェネレータを用いた更新方法）
 
@@ -188,16 +292,9 @@
 
 ## サンプルコード
 
-### nbody: 演算律速な問題の実装例
-
-* [直接法に基づく無衝突系$N$体計算](samples/C/nbody/)
-  * 簡易記法を用いた実装例: `samples/C/nbody/src/[nbody gravity].cpp`
-  * OpenACC 的記法を用いた実装例: `samples/C/nbody/src/[nbody gravity]_acc.cpp`
-  * OpenMP 的記法を用いた実装例: `samples/C/nbody/src/[nbody gravity]_omp.cpp`
-
 ### diffusion: メモリ律速な問題の実装例
 
-* [3次元拡散方程式](samples/C/diffusion/)
+* [3次元拡散方程式](samples/F/diffusion)
   * [OpenACC を用いた実装（名古屋大学の星野哲也氏による実装）](https://github.com/hoshino-UTokyo/lecture_openacc) を改変したものです
   * Solomon 化以外に，簡単な性能最適化やコード改編も施してあります
 
@@ -209,17 +306,34 @@
 
   | 入力 | 出力 | バックエンドとして用いる指示文 |
   | ---- | ---- | ---- |
-  | **`OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...)` | <br> `_Pragma("acc kernels __VA_ARGS__") _Pragma("acc loop __VA_ARGS__")` <br> `_Pragma("acc parallel __VA_ARGS__") _Pragma("acc loop __VA_ARGS__")` <br> `_Pragma("omp target teams loop __VA_ARGS__")` <br> `_Pragma("omp target teams distribute parallel for __VA_ARGS__")` | <br> OpenACC (kernels) <br> OpenACC (parallel) <br> OpenMP (loop) <br> OpenMP (distribute) |
-  | **`SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `_Pragma("acc wait __VA_ARGS__")` <br> `_Pragma("omp taskwait __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
-  | **`WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | <br> `_Pragma("acc wait id")` | <br> OpenACC (only) |
-  | **`DECLARE_OFFLOADED(...)`** <br> `PRAGMA_ACC_ROUTINE(...)` <br> `PRAGMA_OMP_DECLARE_TARGET(...)` | <br> `_Pragma("acc routine __VA_ARGS__")` <br> `_Pragma("omp declare target __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
-  | **`DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | <br> `_Pragma("omp end declare target")` | <br> OpenMP (only) |
-  | **`ATOMIC(...)`** <br> `PRAGMA_ACC_ATOMIC(...)` <br> `PRAGMA_OMP_TARGET_ATOMIC(...)` | <br> `_Pragma("acc atomic __VA_ARGS__")` <br> `_Pragma("omp atomic __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
-  | **`ATOMIC_UPDATE`** <br> `PRAGMA_ACC_ATOMIC_UPDATE` <br> `PRAGMA_OMP_TARGET_ATOMIC_UPDATE` | <br> `_Pragma("acc atomic update")` <br> `_Pragma("omp atomic update")` | <br> OpenACC <br> OpenMP |
-  | **`ATOMIC_READ`** <br> `PRAGMA_ACC_ATOMIC_READ` <br> `PRAGMA_OMP_TARGET_ATOMIC_READ` | <br> `_Pragma("acc atomic read")` <br> `_Pragma("omp atomic read")` | <br> OpenACC <br> OpenMP |
-  | **`ATOMIC_WRITE`** <br> `PRAGMA_ACC_ATOMIC_WRITE` <br> `PRAGMA_OMP_TARGET_ATOMIC_WRITE` | <br> `_Pragma("acc atomic write")` <br> `_Pragma("omp atomic write")` | <br> OpenACC <br> OpenMP |
-  | **`ATOMIC_CAPTURE`** <br> `PRAGMA_ACC_ATOMIC_CAPTURE` <br> `PRAGMA_OMP_TARGET_ATOMIC_CAPTURE` | <br> `_Pragma("acc atomic capture")` <br> `_Pragma("omp atomic capture")` | <br> OpenACC <br> OpenMP |
-
+  | **`OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...)` | `!$acc kernels __VA_ARGS__` <br> `!$acc loop __VA_ARGS__` <br> `!$acc parallel __VA_ARGS__` <br> `!$acc loop __VA_ARGS__` <br> `!$omp target teams loop __VA_ARGS__` <br> `!$omp target teams distribute parallel do __VA_ARGS__` | OpenACC (kernels) <br><br> OpenACC (parallel) <br><br> OpenMP (loop) <br> OpenMP (distribute) |
+  | **`SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | `!$acc wait id` | OpenACC (only) |
+  | **`DECLARE_OFFLOADED(...)`** <br> `PRAGMA_ACC_ROUTINE(...)` <br> `PRAGMA_OMP_DECLARE_TARGET(...)` | `!$acc routine __VA_ARGS__` <br> `!$omp declare target __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | `!$omp end declare target` | OpenMP (only) |
+  | **`ATOMIC(...)`** <br> `PRAGMA_ACC_ATOMIC(...)` <br> `PRAGMA_OMP_TARGET_ATOMIC(...)` | `!$acc atomic __VA_ARGS__` <br> `!$omp atomic __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`ATOMIC_UPDATE`** <br> `PRAGMA_ACC_ATOMIC_UPDATE` <br> `PRAGMA_OMP_TARGET_ATOMIC_UPDATE` | `!$acc atomic update` <br> `!$omp atomic update` | OpenACC <br> OpenMP |
+  | **`ATOMIC_READ`** <br> `PRAGMA_ACC_ATOMIC_READ` <br> `PRAGMA_OMP_TARGET_ATOMIC_READ` | `!$acc atomic read` <br> `!$omp atomic read` | OpenACC <br> OpenMP |
+  | **`ATOMIC_WRITE`** <br> `PRAGMA_ACC_ATOMIC_WRITE` <br> `PRAGMA_OMP_TARGET_ATOMIC_WRITE` | `!$acc atomic write` <br> `!$omp atomic write` | OpenACC <br> OpenMP |
+  | **`ATOMIC_CAPTURE`** <br> `PRAGMA_ACC_ATOMIC_CAPTURE` <br> `PRAGMA_OMP_TARGET_ATOMIC_CAPTURE` | `!$acc atomic capture` <br> `!$omp atomic capture` | OpenACC <br> OpenMP |
+  | **`END_OFFLOAD`** | `!$acc end parallel` | OpenACC (only) |
+  | **`PRAGMA_ACC_END_PARALLEL`** | `!$acc end parallel` | OpenACC (only) |
+  | **`PRAGMA_ACC_END_KERNELS`** | `!$acc end kernels` | OpenACC (only) |
+  | **`PRAGMA_ACC_END_SERIAL`** | `!$acc end serial` | OpenACC (only) |
+  | **`PRAGMA_ACC_END_DATA`** | `!$acc end data` <br> `!$omp end target data` | OpenACC <br> OpenMP |
+  | **`PRAGMA_ACC_END_HOST_DATA`** | `!$acc end host_data` <br> `!$omp end target data` | OpenACC <br> OpenMP |
+  | **`PRAGMA_ACC_END_ROUTINE`** | `!$omp end declare target` | OpenMP (only) |
+  | **`PRAGMA_OMP_END_PARALLEL`** | `!$omp end parallel` | OpenMP (only) |
+  | **`PRAGMA_OMP_END_TEAMS`** | `!$omp end teams` | OpenMP (only) |
+  | **`PRAGMA_OMP_END_SIMD`** | `!$omp end simd` | OpenMP (only) |
+  | **`PRAGMA_OMP_END_SINGLE`** | `!$omp end single` | OpenMP (only) |
+  | **`PRAGMA_OMP_END_SECTIONS`** | `!$omp end sections` | OpenMP (only) |
+  | **`PRAGMA_OMP_END_CRITICAL`** | `!$omp end critical` | OpenMP (only) |
+  | **`PRAGMA_OMP_END_PARALLEL_SECTIONS`** | `!$omp end parallel sections` | OpenMP (only) |
+  | **`PRAGMA_OMP_END_DECLARE_TARGET`** | `!$omp end declare target` | OpenMP (only) |
+  | **`PRAGMA_OMP_END_TARGET_PARALLEL`** | `!$acc end parallel` <br> `!$omp end target parallel` | OpenACC <br> OpenMP |
+  | **`PRAGMA_OMP_END_TARGET_SIMD`** | `!$acc end parallel` <br> `!$omp end target simd` | OpenACC <br> OpenMP |
+  | **`PRAGMA_OMP_END_TARGET_TEAMS`** | `!$acc end parallel` <br> `!$omp end target teams` | OpenACC <br> OpenMP |
   </details>
 
   * <details><summary>抽象化マクロ</summary>
@@ -227,7 +341,7 @@
     | 入力 | （中間）出力 | バックエンドとして用いる指示文 |
     | ---- | ---- | ---- |
     | `PRAGMA_ACC_LAUNCH_DEFAULT(...)` <br> `PRAGMA_OMP_TARGET_LAUNCH_DEFAULT(...)` | `PRAGMA_ACC_KERNELS(__VA_ARGS__)` <br> `PRAGMA_ACC_PARALLEL(__VA_ARGS__)` <br> `PRAGMA_OMP_TARGET_TEAMS(__VA_ARGS__)` | OpenACC (kernels) <br> OpenACC (parallel) <br> OpenMP |
-    | `PRAGMA_ACC_OFFLOADING_DEFAULT(...)` <br> `PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(...)` | `PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__) PRAGMA_ACC_LOOP(__VA_ARGS__)` <br> `PRAGMA_OMP_TARGET_TEAMS_LOOP(__VA_ARGS__)` <br> `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(__VA_ARGS__)` | OpenACC <br> OpenMP (loop) <br> OpenMP (distribute) |
+    | `PRAGMA_ACC_OFFLOADING_DEFAULT(...)` <br> `PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(...)` | `PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__) PRAGMA_ACC_LOOP(__VA_ARGS__)` <br> `PRAGMA_OMP_TARGET_TEAMS_LOOP(__VA_ARGS__)` <br> `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(__VA_ARGS__)` | OpenACC <br> OpenMP (loop) <br> OpenMP (distribute) |
 
     </details>
 
@@ -235,15 +349,15 @@
 
     | 入力 | OpenACC 使用時の出力 | OpenMP target 使用時の出力 |
     | ---- | ---- | ---- |
-    | `PRAGMA_ACC_PARALLEL(...)` | `_Pragma("acc parallel __VA_ARGS__")` | `PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(__VA_ARGS__)` |
-    | `PRAGMA_ACC_KERNELS(...)` | `_Pragma("acc kernels __VA_ARGS__")` | `PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(__VA_ARGS__)` |
-    | `PRAGMA_ACC_SERIAL(...)` | `_Pragma("acc serial __VA_ARGS__")` | N/A（OpenMP target 使用時には無視される） |
-    | `PRAGMA_ACC_LOOP(...)` | `_Pragma("acc loop __VA_ARGS__")` | N/A（OpenMP target 使用時には無視される） |
-    | `PRAGMA_ACC_CACHE(...)` | `_Pragma("acc cache(__VA_ARGS__)")` | N/A（OpenMP target 使用時には無視される） |
-    | `PRAGMA_ACC_ATOMIC(...)` | `_Pragma("acc atomic __VA_ARGS__")` | `PRAGMA_OMP_TARGET_ATOMIC(__VA_ARGS__)` |
-    | `PRAGMA_ACC_WAIT(...)` | `_Pragma("acc wait __VA_ARGS__")` | `PRAGMA_OMP_TARGET_TASKWAIT(__VA_ARGS__)` |
-    | `PRAGMA_ACC_ROUTINE(...)` | `_Pragma("acc routine __VA_ARGS__")` | `PRAGMA_OMP_DECLARE_TARGET(__VA_ARGS__)` |
-    | `PRAGMA_ACC_DECLARE(...)` | `_Pragma("acc declare __VA_ARGS__")` | N/A（OpenMP target 使用時には無視される） |
+    | `PRAGMA_ACC_PARALLEL(...)` | `!$acc parallel __VA_ARGS__` | `PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(__VA_ARGS__)` |
+    | `PRAGMA_ACC_KERNELS(...)` | `!$acc kernels __VA_ARGS__` | `PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(__VA_ARGS__)` |
+    | `PRAGMA_ACC_SERIAL(...)` | `!$acc serial __VA_ARGS__` | N/A（OpenMP target 使用時には無視される） |
+    | `PRAGMA_ACC_LOOP(...)` | `!$acc loop __VA_ARGS__` | N/A（OpenMP target 使用時には無視される） |
+    | `PRAGMA_ACC_CACHE(...)` | `!$acc cache(__VA_ARGS__)` | N/A（OpenMP target 使用時には無視される） |
+    | `PRAGMA_ACC_ATOMIC(...)` | `!$acc atomic __VA_ARGS__` | `PRAGMA_OMP_TARGET_ATOMIC(__VA_ARGS__)` |
+    | `PRAGMA_ACC_WAIT(...)` | `!$acc wait __VA_ARGS__` | `PRAGMA_OMP_TARGET_TASKWAIT(__VA_ARGS__)` |
+    | `PRAGMA_ACC_ROUTINE(...)` | `!$acc routine __VA_ARGS__` | `PRAGMA_OMP_DECLARE_TARGET(__VA_ARGS__)` |
+    | `PRAGMA_ACC_DECLARE(...)` | `!$acc declare __VA_ARGS__` | N/A（OpenMP target 使用時には無視される） |
 
     </details>
 
@@ -251,23 +365,23 @@
 
     | 入力 | OpenMP target 使用時の出力 | OpenACC 使用時の出力 | 縮退モード（演算加速器を用いないCPU実行）での出力 |
     | ---- | ---- | ---- | ---- |
-    | `PRAGMA_OMP_TARGET(...)` | `_Pragma("omp target __VA_ARGS__")` | `PRAGMA_ACC(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
-    | `PRAGMA_OMP_TARGET_PARALLEL(...)` | `_Pragma("omp target parallel __VA_ARGS__")` | `PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL(__VA_ARGS__)` |
-    | `PRAGMA_OMP_TARGET_PARALLEL_FOR(...)` | `_Pragma("omp target parallel for __VA_ARGS__")` | `PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)` |
-    | `PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(...)` | `_Pragma("omp target parallel for simd __VA_ARGS__")` | `PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT, ##__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL_FOR_SIMD(__VA_ARGS__)` |
-    | `PRAGMA_OMP_TARGET_PARALLEL_LOOP(...)` | `_Pragma("omp target parallel loop __VA_ARGS__")` | `PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL_LOOP(__VA_ARGS__)` |
-    | `PRAGMA_OMP_TARGET_SIMD(...)` | `_Pragma("omp target simd __VA_ARGS__")` | `PRAGMA_ACC_LAUNCH_DEFAULT(ACC_CLAUSE_INDEPENDENT, ##__VA_ARGS__)` | `PRAGMA_OMP_SIMD(__VA_ARGS__)` |
-    | `PRAGMA_OMP_TARGET_TEAMS(...)` | `_Pragma("omp target teams __VA_ARGS__")` | `PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_TEAMS(__VA_ARGS__)` |
-    | `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(...)` | `_Pragma("omp target teams distribute __VA_ARGS__")` | `PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_TEAMS_DISTRIBUTE(__VA_ARGS__)` |
-    | `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_SIMD(...)` | `_Pragma("omp target teams distribute simd __VA_ARGS__")` | `PRAGMA_ACC_LAUNCH_DEFAULT(ACC_CLAUSE_INDEPENDENT, ##__VA_ARGS__)` | `PRAGMA_OMP_TEAMS_DISTRIBUTE_SIMD(__VA_ARGS__)` |
-    | `PRAGMA_OMP_TARGET_TEAMS_LOOP(...)` | `_Pragma("omp target teams loop __VA_ARGS__")` | `PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_TEAMS_LOOP(__VA_ARGS__)` |
-    | `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...)` | `_Pragma("omp target teams distribute parallel for __VA_ARGS__")` | `PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_FOR(__VA_ARGS__)` |
-    | `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(...)` | `_Pragma("omp target teams distribute parallel for simd __VA_ARGS__")` | `PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT, ##__VA_ARGS__)` | `PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET(...)` | `!$omp target __VA_ARGS__` | `PRAGMA_ACC(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
+    | `PRAGMA_OMP_TARGET_PARALLEL(...)` | `!$omp target parallel __VA_ARGS__` | `PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET_PARALLEL_DO(...)` | `!$omp target parallel do __VA_ARGS__` | `PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL_DO(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(...)` | `!$omp target parallel do simd __VA_ARGS__` | `PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT, ##__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL_DO_SIMD(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET_PARALLEL_LOOP(...)` | `!$omp target parallel loop __VA_ARGS__` | `PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL_LOOP(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET_SIMD(...)` | `!$omp target simd __VA_ARGS__` | `PRAGMA_ACC_LAUNCH_DEFAULT(ACC_CLAUSE_INDEPENDENT, ##__VA_ARGS__)` | `PRAGMA_OMP_SIMD(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET_TEAMS(...)` | `!$omp target teams __VA_ARGS__` | `PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_TEAMS(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(...)` | `!$omp target teams distribute __VA_ARGS__` | `PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_TEAMS_DISTRIBUTE(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_SIMD(...)` | `!$omp target teams distribute simd __VA_ARGS__` | `PRAGMA_ACC_LAUNCH_DEFAULT(ACC_CLAUSE_INDEPENDENT, ##__VA_ARGS__)` | `PRAGMA_OMP_TEAMS_DISTRIBUTE_SIMD(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET_TEAMS_LOOP(...)` | `!$omp target teams loop __VA_ARGS__` | `PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_TEAMS_LOOP(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...)` | `!$omp target teams distribute parallel do __VA_ARGS__` | `PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_DO(__VA_ARGS__)` |
+    | `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(...)` | `!$omp target teams distribute parallel do simd __VA_ARGS__` | `PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT, ##__VA_ARGS__)` | `PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(__VA_ARGS__)` |
     | `PRAGMA_OMP_TARGET_ATOMIC(...)` | `PRAGMA_OMP_ATOMIC(__VA_ARGS__)` | `PRAGMA_ACC_ATOMIC(__VA_ARGS__)` | `PRAGMA_OMP_ATOMIC(__VA_ARGS__)` |
     | `PRAGMA_OMP_TARGET_TASKWAIT(...)` | `PRAGMA_OMP_TASKWAIT(__VA_ARGS__)` | `PRAGMA_ACC_WAIT(__VA_ARGS__)` | `PRAGMA_OMP_TASKWAIT(__VA_ARGS__)` |
-    | `PRAGMA_OMP_DECLARE_TARGET(...)` | `_Pragma("omp declare target __VA_ARGS__")` | `PRAGMA_ACC_ROUTINE(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
-    | `PRAGMA_OMP_BEGIN_DECLARE_TARGET(...)` | `_Pragma("omp begin declare target __VA_ARGS__")` | `PRAGMA_ACC_ROUTINE(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
-    | `PRAGMA_OMP_END_DECLARE_TARGET` | `_Pragma("omp end declare target")` | N/A（OpenACC 使用時には無視される） | N/A（縮退モードでは無視される） |
+    | `PRAGMA_OMP_DECLARE_TARGET(...)` | `!$omp declare target __VA_ARGS__` | `PRAGMA_ACC_ROUTINE(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
+    | `PRAGMA_OMP_BEGIN_DECLARE_TARGET(...)` | `!$omp begin declare target __VA_ARGS__` | `PRAGMA_ACC_ROUTINE(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
+    | `PRAGMA_OMP_END_DECLARE_TARGET` | `!$omp end declare target` | N/A（OpenACC 使用時には無視される） | N/A（縮退モードでは無視される） |
 
     </details>
 
@@ -275,53 +389,53 @@
 
     | 入力 | 出力 |
     | ---- | ---- |
-    | `PRAGMA_OMP_THREADPRIVATE(...)` | `_Pragma("omp threadprivate(__VA_ARGS__)")` |
-    | `PRAGMA_OMP_SCAN(...)` | `_Pragma("omp scan __VA_ARGS__")` |
-    | `PRAGMA_OMP_DECLARE_SIMD(...)` | `_Pragma("omp declare simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_TILE(...)` | `_Pragma("omp tile __VA_ARGS__")` |
-    | `PRAGMA_OMP_UNROLL(...)` | `_Pragma("omp unroll __VA_ARGS__")` |
-    | `PRAGMA_OMP_PARALLEL(...)` | `_Pragma("omp parallel __VA_ARGS__")` |
-    | `PRAGMA_OMP_TEAMS(...)` | `_Pragma("omp teams __VA_ARGS__")` |
-    | `PRAGMA_OMP_SIMD(...)` | `_Pragma("omp simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_MASKED(...)` | `_Pragma("omp masked __VA_ARGS__")` |
-    | `PRAGMA_OMP_SINGLE(...)` | `_Pragma("omp single __VA_ARGS__")` |
-    | `PRAGMA_OMP_WORKSHARE(...)` | `_Pragma("omp workshare __VA_ARGS__")` |
-    | `PRAGMA_OMP_SCOPE(...)` | `_Pragma("omp scope __VA_ARGS__")` |
-    | `PRAGMA_OMP_SECTIONS(...)` | `_Pragma("omp sections __VA_ARGS__")` |
-    | `PRAGMA_OMP_SECTION` | `_Pragma("omp section")` |
-    | `PRAGMA_OMP_FOR(...)` | `_Pragma("omp for __VA_ARGS__")` |
-    | `PRAGMA_OMP_DISTRIBUTE(...)` | `_Pragma("omp distribute __VA_ARGS__")` |
-    | `PRAGMA_OMP_LOOP(...)` | `_Pragma("omp loop __VA_ARGS__")` |
-    | `PRAGMA_OMP_TASK(...)` | `_Pragma("omp task __VA_ARGS__")` |
-    | `PRAGMA_OMP_TASKLOOP(...)` | `_Pragma("omp taskloop __VA_ARGS__")` |
-    | `PRAGMA_OMP_TASKYIELD` | `_Pragma("omp taskyield")` |
-    | `PRAGMA_OMP_INTEROP(...)` | `_Pragma("omp interop __VA_ARGS__")` |
-    | `PRAGMA_OMP_CRITICAL(...)` | `_Pragma("omp critical __VA_ARGS__")` |
-    | `PRAGMA_OMP_BARRIER` | `_Pragma("omp barrier")` |
-    | `PRAGMA_OMP_TASKGROUP(...)` | `_Pragma("omp taskgroup __VA_ARGS__")` |
-    | `PRAGMA_OMP_TASKWAIT(...)` | `_Pragma("omp taskwait __VA_ARGS__")` |
-    | `PRAGMA_OMP_FLUSH(...)` | `_Pragma("omp flush __VA_ARGS__")` |
-    | `PRAGMA_OMP_DEPOBJ(...)` | `_Pragma("omp depobj __VA_ARGS__")` |
-    | `PRAGMA_OMP_ATOMIC(...)` | `_Pragma("omp atomic __VA_ARGS__")` |
-    | `PRAGMA_OMP_ORDERED(...)` | `_Pragma("omp ordered __VA_ARGS__")` |
-    | `PRAGMA_OMP_FOR_SIMD(...)` | `_Pragma("omp for simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_DISTRIBUTE_SIMD(...)` | `_Pragma("omp distribute simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_DISTRIBUTE_PARALLEL_FOR(...)` | `_Pragma("omp distribute parallel for __VA_ARGS__")` |
-    | `PRAGMA_OMP_DISTRIBUTE_PARALLEL_FOR_SIMD(...)` | `_Pragma("omp distribute parallel for simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_TASKLOOP_SIMD(...)` | `_Pragma("omp taskloop simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_PARALLEL_FOR(...)` | `_Pragma("omp parallel for __VA_ARGS__")` |
-    | `PRAGMA_OMP_PARALLEL_LOOP(...)` | `_Pragma("omp parallel loop __VA_ARGS__")` |
-    | `PRAGMA_OMP_PARALLEL_SECTIONS(...)` | `_Pragma("omp parallel sections __VA_ARGS__")` |
-    | `PRAGMA_OMP_PARALLEL_FOR_SIMD(...)` | `_Pragma("omp parallel for simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_MASKED_TASKLOOP(...)` | `_Pragma("omp masked taskloop __VA_ARGS__")` |
-    | `PRAGMA_OMP_MASKED_TASKLOOP_SIMD(...)` | `_Pragma("omp masked taskloop simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_PARALLEL_MASKED_TASKLOOP(...)` | `_Pragma("omp parallel masked taskloop __VA_ARGS__")` |
-    | `PRAGMA_OMP_PARALLEL_MASKED_TASKLOOP_SIMD(...)` | `_Pragma("omp parallel masked taskloop simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_TEAMS_DISTRIBUTE(...)` | `_Pragma("omp teams distribute __VA_ARGS__")` |
-    | `PRAGMA_OMP_TEAMS_DISTRIBUTE_SIMD(...)` | `_Pragma("omp teams distribute simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_FOR(...)` | `_Pragma("omp teams distribute parallel for __VA_ARGS__")` |
-    | `PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_FOR_SIMD(...)` | `_Pragma("omp teams distribute parallel for simd __VA_ARGS__")` |
-    | `PRAGMA_OMP_TEAMS_LOOP(...)` | `_Pragma("omp teams loop __VA_ARGS__")` |
+    | `PRAGMA_OMP_THREADPRIVATE(...)` | `!$omp threadprivate(__VA_ARGS__)` |
+    | `PRAGMA_OMP_SCAN(...)` | `!$omp scan __VA_ARGS__` |
+    | `PRAGMA_OMP_DECLARE_SIMD(...)` | `!$omp declare simd __VA_ARGS__` |
+    | `PRAGMA_OMP_TILE(...)` | `!$omp tile __VA_ARGS__` |
+    | `PRAGMA_OMP_UNROLL(...)` | `!$omp unroll __VA_ARGS__` |
+    | `PRAGMA_OMP_PARALLEL(...)` | `!$omp parallel __VA_ARGS__` |
+    | `PRAGMA_OMP_TEAMS(...)` | `!$omp teams __VA_ARGS__` |
+    | `PRAGMA_OMP_SIMD(...)` | `!$omp simd __VA_ARGS__` |
+    | `PRAGMA_OMP_MASKED(...)` | `!$omp masked __VA_ARGS__` |
+    | `PRAGMA_OMP_SINGLE(...)` | `!$omp single __VA_ARGS__` |
+    | `PRAGMA_OMP_WORKSHARE(...)` | `!$omp workshare __VA_ARGS__` |
+    | `PRAGMA_OMP_SCOPE(...)` | `!$omp scope __VA_ARGS__` |
+    | `PRAGMA_OMP_SECTIONS(...)` | `!$omp sections __VA_ARGS__` |
+    | `PRAGMA_OMP_SECTION` | `!$omp section` |
+    | `PRAGMA_OMP_DO(...)` | `!$omp do __VA_ARGS__` |
+    | `PRAGMA_OMP_DISTRIBUTE(...)` | `!$omp distribute __VA_ARGS__` |
+    | `PRAGMA_OMP_LOOP(...)` | `!$omp loop __VA_ARGS__` |
+    | `PRAGMA_OMP_TASK(...)` | `!$omp task __VA_ARGS__` |
+    | `PRAGMA_OMP_TASKLOOP(...)` | `!$omp taskloop __VA_ARGS__` |
+    | `PRAGMA_OMP_TASKYIELD` | `!$omp taskyield` |
+    | `PRAGMA_OMP_INTEROP(...)` | `!$omp interop __VA_ARGS__` |
+    | `PRAGMA_OMP_CRITICAL(...)` | `!$omp critical __VA_ARGS__` |
+    | `PRAGMA_OMP_BARRIER` | `!$omp barrier` |
+    | `PRAGMA_OMP_TASKGROUP(...)` | `!$omp taskgroup __VA_ARGS__` |
+    | `PRAGMA_OMP_TASKWAIT(...)` | `!$omp taskwait __VA_ARGS__` |
+    | `PRAGMA_OMP_FLUSH(...)` | `!$omp flush __VA_ARGS__` |
+    | `PRAGMA_OMP_DEPOBJ(...)` | `!$omp depobj __VA_ARGS__` |
+    | `PRAGMA_OMP_ATOMIC(...)` | `!$omp atomic __VA_ARGS__` |
+    | `PRAGMA_OMP_ORDERED(...)` | `!$omp ordered __VA_ARGS__` |
+    | `PRAGMA_OMP_DO_SIMD(...)` | `!$omp do simd __VA_ARGS__` |
+    | `PRAGMA_OMP_DISTRIBUTE_SIMD(...)` | `!$omp distribute simd __VA_ARGS__` |
+    | `PRAGMA_OMP_DISTRIBUTE_PARALLEL_DO(...)` | `!$omp distribute parallel do __VA_ARGS__` |
+    | `PRAGMA_OMP_DISTRIBUTE_PARALLEL_DO_SIMD(...)` | `!$omp distribute parallel do simd __VA_ARGS__` |
+    | `PRAGMA_OMP_TASKLOOP_SIMD(...)` | `!$omp taskloop simd __VA_ARGS__` |
+    | `PRAGMA_OMP_PARALLEL_DO(...)` | `!$omp parallel do __VA_ARGS__` |
+    | `PRAGMA_OMP_PARALLEL_LOOP(...)` | `!$omp parallel loop __VA_ARGS__` |
+    | `PRAGMA_OMP_PARALLEL_SECTIONS(...)` | `!$omp parallel sections __VA_ARGS__` |
+    | `PRAGMA_OMP_PARALLEL_DO_SIMD(...)` | `!$omp parallel do simd __VA_ARGS__` |
+    | `PRAGMA_OMP_MASKED_TASKLOOP(...)` | `!$omp masked taskloop __VA_ARGS__` |
+    | `PRAGMA_OMP_MASKED_TASKLOOP_SIMD(...)` | `!$omp masked taskloop simd __VA_ARGS__` |
+    | `PRAGMA_OMP_PARALLEL_MASKED_TASKLOOP(...)` | `!$omp parallel masked taskloop __VA_ARGS__` |
+    | `PRAGMA_OMP_PARALLEL_MASKED_TASKLOOP_SIMD(...)` | `!$omp parallel masked taskloop simd __VA_ARGS__` |
+    | `PRAGMA_OMP_TEAMS_DISTRIBUTE(...)` | `!$omp teams distribute __VA_ARGS__` |
+    | `PRAGMA_OMP_TEAMS_DISTRIBUTE_SIMD(...)` | `!$omp teams distribute simd __VA_ARGS__` |
+    | `PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_DO(...)` | `!$omp teams distribute parallel do __VA_ARGS__` |
+    | `PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(...)` | `!$omp teams distribute parallel do simd __VA_ARGS__` |
+    | `PRAGMA_OMP_TEAMS_LOOP(...)` | `!$omp teams loop __VA_ARGS__` |
 
     </details>
 
@@ -329,19 +443,19 @@
 
   | 入力 | 出力 | バックエンドとして用いる指示文 |
   | ---- | ---- | ---- |
-  | **`MALLOC_ON_DEVICE(...)`** <br> `PRAGMA_ACC_ENTER_DATA_CREATE(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA_MAP_ALLOC(...)` | <br> `_Pragma("acc enter data create(__VA_ARGS__)")` <br> `_Pragma("omp target enter data map(alloc: __VA_ARGS__)")` | <br> OpenACC <br> OpenMP |
-  | **`FREE_FROM_DEVICE(...)`** <br> `PRAGMA_ACC_EXIT_DATA_DELETE(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA_MAP_DELETE(...)` | <br> `_Pragma("acc exit data delete(__VA_ARGS__)")` <br> `_Pragma("omp target exit data map(delete: __VA_ARGS__)")` | <br> OpenACC <br> OpenMP |
-  | **`MEMCPY_D2H(...)`** <br> `PRAGMA_ACC_UPDATE_HOST(...)` <br> `PRAGMA_OMP_TARGET_UPDATE_FROM(...)` | <br> `_Pragma("acc update host(__VA_ARGS__)")` <br> `_Pragma("omp target update from(__VA_ARGS__)")` | <br> OpenACC <br> OpenMP |
-  | **`MEMCPY_H2D(...)`** <br> `PRAGMA_ACC_UPDATE_DEVICE(...)` <br> `PRAGMA_OMP_TARGET_UPDATE_TO(...)` | <br> `_Pragma("acc update device(__VA_ARGS__)")` <br> `_Pragma("omp target update to(__VA_ARGS__)")` | <br> OpenACC <br> OpenMP |
-  | `PRAGMA_ACC_ENTER_DATA(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA(...)` | `_Pragma("acc enter data __VA_ARGS__")` <br> `_Pragma("omp target enter data __VA_ARGS__")` | OpenACC <br> OpenMP |
-  | `PRAGMA_ACC_ENTER_DATA_COPYIN(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA_MAP_TO(...)` | `_Pragma("acc enter data copyin(__VA_ARGS__)")` <br> `_Pragma("omp target enter data map(to: __VA_ARGS__)")` | OpenACC <br> OpenMP |
-  | `PRAGMA_ACC_EXIT_DATA(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA(...)` | `_Pragma("acc exit data __VA_ARGS__")` <br> `_Pragma("omp target exit data __VA_ARGS__")` | OpenACC <br> OpenMP |
-  | `PRAGMA_ACC_EXIT_DATA_COPYOUT(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA_MAP_FROM(...)` | `_Pragma("acc exit data copyout(__VA_ARGS__)")` <br> `_Pragma("omp target exit data map(from: __VA_ARGS__)")` | OpenACC <br> OpenMP |
-  | `PRAGMA_ACC_UPDATE(...)` <br> `PRAGMA_OMP_TARGET_UPDATE(...)` | `_Pragma("acc update __VA_ARGS__")` <br> `_Pragma("omp target update __VA_ARGS__")` | OpenACC <br> OpenMP |
-  | **`DATA_ACCESS_BY_DEVICE(...)`** <br> `PRAGMA_ACC_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | <br> `_Pragma("acc data __VA_ARGS__")` <br> `_Pragma("omp target data __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
-  | **`DATA_ACCESS_BY_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | <br> `_Pragma("acc host_data __VA_ARGS__")` <br> `_Pragma("omp target data __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
-  | **`USE_DEVICE_DATA_FROM_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA_USE_DEVICE(...)` <br> `PRAGMA_OMP_TARGET_DATA_USE_DEVICE_ADDR(...)` | <br> `_Pragma("acc host_data use_device(__VA_ARGS__)")` <br> `_Pragma("omp target data use_device_addr(__VA_ARGS__)")` | <br> OpenACC <br> OpenMP |
-  | **`DECLARE_DATA_ON_DEVICE(...)`** <br> `PRAGMA_ACC_DATA_PRESENT(...)` | <br> `_Pragma("acc data present(__VA_ARGS__)")` | <br> OpenACC (only) |
+  | **`MALLOC_ON_DEVICE(...)`** <br> `PRAGMA_ACC_ENTER_DATA_CREATE(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA_MAP_ALLOC(...)` | `!$acc enter data create(__VA_ARGS__)` <br> `!$omp target enter data map(alloc: __VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`FREE_FROM_DEVICE(...)`** <br> `PRAGMA_ACC_EXIT_DATA_DELETE(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA_MAP_DELETE(...)` | `!$acc exit data delete(__VA_ARGS__)` <br> `!$omp target exit data map(delete: __VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`MEMCPY_D2H(...)`** <br> `PRAGMA_ACC_UPDATE_HOST(...)` <br> `PRAGMA_OMP_TARGET_UPDATE_FROM(...)` | `!$acc update host(__VA_ARGS__)` <br> `!$omp target update from(__VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`MEMCPY_H2D(...)`** <br> `PRAGMA_ACC_UPDATE_DEVICE(...)` <br> `PRAGMA_OMP_TARGET_UPDATE_TO(...)` | `!$acc update device(__VA_ARGS__)` <br> `!$omp target update to(__VA_ARGS__)` | OpenACC <br> OpenMP |
+  | `PRAGMA_ACC_ENTER_DATA(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA(...)` | `!$acc enter data __VA_ARGS__` <br> `!$omp target enter data __VA_ARGS__` | OpenACC <br> OpenMP |
+  | `PRAGMA_ACC_ENTER_DATA_COPYIN(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA_MAP_TO(...)` | `!$acc enter data copyin(__VA_ARGS__)` <br> `!$omp target enter data map(to: __VA_ARGS__)` | OpenACC <br> OpenMP |
+  | `PRAGMA_ACC_EXIT_DATA(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA(...)` | `!$acc exit data __VA_ARGS__` <br> `!$omp target exit data __VA_ARGS__` | OpenACC <br> OpenMP |
+  | `PRAGMA_ACC_EXIT_DATA_COPYOUT(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA_MAP_FROM(...)` | `!$acc exit data copyout(__VA_ARGS__)` <br> `!$omp target exit data map(from: __VA_ARGS__)` | OpenACC <br> OpenMP |
+  | `PRAGMA_ACC_UPDATE(...)` <br> `PRAGMA_OMP_TARGET_UPDATE(...)` | `!$acc update __VA_ARGS__` <br> `!$omp target update __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`DATA_ACCESS_BY_DEVICE(...)`** <br> `PRAGMA_ACC_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | `!$acc data __VA_ARGS__` <br> `!$omp target data __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`DATA_ACCESS_BY_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | `!$acc host_data __VA_ARGS__` <br> `!$omp target data __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`USE_DEVICE_DATA_FROM_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA_USE_DEVICE(...)` <br> `PRAGMA_OMP_TARGET_DATA_USE_DEVICE_ADDR(...)` | `!$acc host_data use_device(__VA_ARGS__)` <br> `!$omp target data use_device_addr(__VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`DECLARE_DATA_ON_DEVICE(...)`** <br> `PRAGMA_ACC_DATA_PRESENT(...)` | `!$acc data present(__VA_ARGS__)` | OpenACC (only) |
 
   </details>
 
@@ -349,11 +463,11 @@
 
     | 入力 | 出力 | OpenMP target 使用時の出力 |
     | ---- | ---- | ---- |
-    | `PRAGMA_ACC_DATA(...)` | `_Pragma("acc data __VA_ARGS__")` | `PRAGMA_OMP_TARGET_DATA(__VA_ARGS__)` |
-    | `PRAGMA_ACC_ENTER_DATA(...)` | `_Pragma("acc enter data __VA_ARGS__")` | `PRAGMA_OMP_TARGET_ENTER_DATA(__VA_ARGS__)` |
-    | `PRAGMA_ACC_EXIT_DATA(...)` | `_Pragma("acc exit data __VA_ARGS__")` | `PRAGMA_OMP_TARGET_EXIT_DATA(__VA_ARGS__)` |
-    | `PRAGMA_ACC_HOST_DATA(...)` | `_Pragma("acc host_data __VA_ARGS__")` | `PRAGMA_OMP_TARGET_DATA(__VA_ARGS__)` |
-    | `PRAGMA_ACC_UPDATE(...)` | `_Pragma("acc update __VA_ARGS__")` | `PRAGMA_OMP_TARGET_UPDATE(__VA_ARGS__)` |
+    | `PRAGMA_ACC_DATA(...)` | `!$acc data __VA_ARGS__` | `PRAGMA_OMP_TARGET_DATA(__VA_ARGS__)` |
+    | `PRAGMA_ACC_ENTER_DATA(...)` | `!$acc enter data __VA_ARGS__` | `PRAGMA_OMP_TARGET_ENTER_DATA(__VA_ARGS__)` |
+    | `PRAGMA_ACC_EXIT_DATA(...)` | `!$acc exit data __VA_ARGS__` | `PRAGMA_OMP_TARGET_EXIT_DATA(__VA_ARGS__)` |
+    | `PRAGMA_ACC_HOST_DATA(...)` | `!$acc host_data __VA_ARGS__` | `PRAGMA_OMP_TARGET_DATA(__VA_ARGS__)` |
+    | `PRAGMA_ACC_UPDATE(...)` | `!$acc update __VA_ARGS__` | `PRAGMA_OMP_TARGET_UPDATE(__VA_ARGS__)` |
 
     </details>
 
@@ -361,10 +475,10 @@
 
     | 入力 | 出力 | OpenACC 使用時の出力 | 縮退モード（演算加速器を用いないCPU実行）での出力 |
     | ---- | ---- | ---- | ---- |
-    | `PRAGMA_OMP_TARGET_DATA(...)` | `_Pragma("omp target data __VA_ARGS__")` | `PRAGMA_ACC_DATA(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
-    | `PRAGMA_OMP_TARGET_ENTER_DATA(...)` | `_Pragma("omp target enter data __VA_ARGS__")` | `PRAGMA_ACC_ENTER_DATA(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
-    | `PRAGMA_OMP_TARGET_EXIT_DATA(...)` | `_Pragma("omp target exit data __VA_ARGS__")` | `PRAGMA_ACC_EXIT_DATA(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
-    | `PRAGMA_OMP_TARGET_UPDATE(...)` | `_Pragma("omp target update __VA_ARGS__")` | `PRAGMA_ACC_UPDATE(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
+    | `PRAGMA_OMP_TARGET_DATA(...)` | `!$omp target data __VA_ARGS__` | `PRAGMA_ACC_DATA(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
+    | `PRAGMA_OMP_TARGET_ENTER_DATA(...)` | `!$omp target enter data __VA_ARGS__` | `PRAGMA_ACC_ENTER_DATA(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
+    | `PRAGMA_OMP_TARGET_EXIT_DATA(...)` | `!$omp target exit data __VA_ARGS__` | `PRAGMA_ACC_EXIT_DATA(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
+    | `PRAGMA_OMP_TARGET_UPDATE(...)` | `!$omp target update __VA_ARGS__` | `PRAGMA_ACC_UPDATE(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
 
     </details>
 
@@ -374,25 +488,25 @@
 
   | 入力 | 出力 | バックエンドとして用いる指示文 |
   | ---- | ---- | ---- |
-  | **`AS_INDEPENDENT`** <br> `ACC_CLAUSE_INDEPENDENT` <br> `OMP_TARGET_CLAUSE_SIMD` | <br> `independent` <br> `simd` | <br> OpenACC <br> OpenMP |
-  | **`AS_SEQUENTIAL`** <br> `ACC_CLAUSE_SEQ` | <br> `seq` | <br> OpenACC (only) |
-  | **`NUM_THREADS(n)`** <br> `ACC_CLAUSE_VECTOR_LENGTH(n)` <br> `OMP_TARGET_CLAUSE_THREAD_LIMIT(n)` | <br> `vector_length(n)` <br> `thread_limit(n)` | <br> OpenACC <br> OpenMP |
-  | **`NUM_BLOCKS(n)`** <br> `ACC_CLAUSE_NUM_WORKERS(n)` <br> `OMP_TARGET_CLAUSE_NUM_TEAMS(n)` | <br> `num_workers(n)` <br> `num_teams(n)` | <br> OpenACC <br> OpenMP |
-  | **`NUM_GRIDS(n)`** <br> `ACC_CLAUSE_NUM_GANGS(n)` | <br> `num_gang(n)` | <br> OpenACC (only) |
-  | **`AS_THREAD`** <br> `ACC_CLAUSE_VECTOR` | <br> `vector` | <br> OpenACC (only) |
-  | **`AS_BLOCK`** <br> `ACC_CLAUSE_WORKER` | <br> `worker` | <br> OpenACC (only) |
-  | **`AS_GRID`** <br> `ACC_CLAUSE_GANG` | <br> `gang` | <br> OpenACC (only) |
-  | **`COLLAPSE(n)`** <br> `ACC_CLAUSE_COLLAPSE(n)` <br> `OMP_TARGET_CLAUSE_COLLAPSE(n)` | <br> `collapse(n)` <br> `collapse(n)` | <br> OpenACC <br> OpenMP |
-  | **`AS_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | <br> `async(__VA_ARGS__)` <br> `nowait` | <br> OpenACC <br> OpenMP |
-  | **`ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | <br> `async(id)` | <br> OpenACC (only) |
-  | **`REDUCTION(...)`** <br> `ACC_CLAUSE_REDUCTION(...)` <br> `OMP_TARGET_CLAUSE_REDUCTION(...)` | <br> `reduction(__VA_ARGS__)` <br> `reduction(__VA_ARGS__)` | <br> OpenACC <br> OpenMP |
-  | **`ENABLE_IF(condition)`** <br> `ACC_CLAUSE_IF(condition)` <br> `OMP_TARGET_CLAUSE_IF(condition)` | <br> `if(condition)` <br> `if(condition)` | <br> OpenACC <br> OpenMP |
-  | **`AS_PRIVATE(...)`** <br> `ACC_CLAUSE_PRIVATE(...)` <br> `OMP_TARGET_CLAUSE_PRIVATE(...)` | <br> `private(__VA_ARGS__)` <br> `private(__VA_ARGS__)` | <br> OpenACC <br> OpenMP |
-  | **`AS_FIRSTPRIVATE(...)`** <br> `ACC_CLAUSE_FIRSTPRIVATE(...)` <br> `OMP_TARGET_CLAUSE_FIRSTPRIVATE(...)` | <br> `firstprivate(__VA_ARGS__)` <br> `firstprivate(__VA_ARGS__)` | <br> OpenACC <br> OpenMP |
-  | **`AS_DEVICE_PTR(...)`** <br> `ACC_CLAUSE_DEVICEPTR(...)` <br> `OMP_TARGET_CLAUSE_IS_DEVICE_PTR(...)` | <br> `deviceptr(__VA_ARGS__)` <br> `is_device_ptr(__VA_ARGS__)` | <br> OpenACC <br> OpenMP |
-  | **`COPY_BEFORE_AND_AFTER_EXEC(...)`** <br> `ACC_CLAUSE_COPY(...)` <br> `OMP_TARGET_CLAUSE_MAP_TOFROM(...)` | <br> `copy(__VA_ARGS__)` <br> `map(tofrom: __VA_ARGS__)` | <br> OpenACC <br> OpenMP |
-  | **`COPY_H2D_BEFORE_EXEC(...)`** <br> `ACC_CLAUSE_COPYIN(...)` <br> `OMP_TARGET_CLAUSE_MAP_TO(...)` | <br> `copyin(__VA_ARGS__)` <br> `map(to: __VA_ARGS__)` | <br> OpenACC <br> OpenMP |
-  | **`COPY_D2H_AFTER_EXEC(...)`** <br> `ACC_CLAUSE_COPYOUT(...)` <br> `OMP_TARGET_CLAUSE_MAP_FROM(...)` | <br> `copyout(__VA_ARGS__)` <br> `map(from: __VA_ARGS__)` | <br> OpenACC <br> OpenMP |
+  | **`AS_INDEPENDENT`** <br> `ACC_CLAUSE_INDEPENDENT` <br> `OMP_TARGET_CLAUSE_SIMD` | `independent` <br> `simd` | OpenACC <br> OpenMP |
+  | **`AS_SEQUENTIAL`** <br> `ACC_CLAUSE_SEQ` | `seq` | OpenACC (only) |
+  | **`NUM_THREADS(n)`** <br> `ACC_CLAUSE_VECTOR_LENGTH(n)` <br> `OMP_TARGET_CLAUSE_THREAD_LIMIT(n)` | `vector_length(n)` <br> `thread_limit(n)` | OpenACC <br> OpenMP |
+  | **`NUM_BLOCKS(n)`** <br> `ACC_CLAUSE_NUM_WORKERS(n)` <br> `OMP_TARGET_CLAUSE_NUM_TEAMS(n)` | `num_workers(n)` <br> `num_teams(n)` | OpenACC <br> OpenMP |
+  | **`NUM_GRIDS(n)`** <br> `ACC_CLAUSE_NUM_GANGS(n)` | `num_gang(n)` | OpenACC (only) |
+  | **`AS_THREAD`** <br> `ACC_CLAUSE_VECTOR` | `vector` | OpenACC (only) |
+  | **`AS_BLOCK`** <br> `ACC_CLAUSE_WORKER` | `worker` | OpenACC (only) |
+  | **`AS_GRID`** <br> `ACC_CLAUSE_GANG` | `gang` | OpenACC (only) |
+  | **`COLLAPSE(n)`** <br> `ACC_CLAUSE_COLLAPSE(n)` <br> `OMP_TARGET_CLAUSE_COLLAPSE(n)` | `collapse(n)` <br> `collapse(n)` | OpenACC <br> OpenMP |
+  | **`AS_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | `async(__VA_ARGS__)` <br> `nowait` | OpenACC <br> OpenMP |
+  | **`ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | `async(id)` | OpenACC (only) |
+  | **`REDUCTION(...)`** <br> `ACC_CLAUSE_REDUCTION(...)` <br> `OMP_TARGET_CLAUSE_REDUCTION(...)` | `reduction(__VA_ARGS__)` <br> `reduction(__VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`ENABLE_IF(condition)`** <br> `ACC_CLAUSE_IF(condition)` <br> `OMP_TARGET_CLAUSE_IF(condition)` | `if(condition)` <br> `if(condition)` | OpenACC <br> OpenMP |
+  | **`AS_PRIVATE(...)`** <br> `ACC_CLAUSE_PRIVATE(...)` <br> `OMP_TARGET_CLAUSE_PRIVATE(...)` | `private(__VA_ARGS__)` <br> `private(__VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`AS_FIRSTPRIVATE(...)`** <br> `ACC_CLAUSE_FIRSTPRIVATE(...)` <br> `OMP_TARGET_CLAUSE_FIRSTPRIVATE(...)` | `firstprivate(__VA_ARGS__)` <br> `firstprivate(__VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`AS_DEVICE_PTR(...)`** <br> `ACC_CLAUSE_DEVICEPTR(...)` <br> `OMP_TARGET_CLAUSE_IS_DEVICE_PTR(...)` | `deviceptr(__VA_ARGS__)` <br> `is_device_ptr(__VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`COPY_BEFORE_AND_AFTER_EXEC(...)`** <br> `ACC_CLAUSE_COPY(...)` <br> `OMP_TARGET_CLAUSE_MAP_TOFROM(...)` | `copy(__VA_ARGS__)` <br> `map(tofrom: __VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`COPY_H2D_BEFORE_EXEC(...)`** <br> `ACC_CLAUSE_COPYIN(...)` <br> `OMP_TARGET_CLAUSE_MAP_TO(...)` | `copyin(__VA_ARGS__)` <br> `map(to: __VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`COPY_D2H_AFTER_EXEC(...)`** <br> `ACC_CLAUSE_COPYOUT(...)` <br> `OMP_TARGET_CLAUSE_MAP_FROM(...)` | `copyout(__VA_ARGS__)` <br> `map(from: __VA_ARGS__)` | OpenACC <br> OpenMP |
 
   </details>
 

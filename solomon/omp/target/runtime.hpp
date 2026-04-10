@@ -10,7 +10,11 @@
 #if !defined(SOLOMON_OMP_TARGET_RUNTIME_HPP)
 #define SOLOMON_OMP_TARGET_RUNTIME_HPP
 
+#if !defined(SOLOMON_FORTRAN)
 #include <omp.h>
+#else  // !defined(SOLOMON_FORTRAN)
+#define USE_SOLOMON_RUNTIME use omp_lib
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief get number of accelerator devices
