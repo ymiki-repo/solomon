@@ -46,6 +46,10 @@
 /// @details Maps variables to a device data environment for the extent of the region.
 ///
 #define PRAGMA_OMP_TARGET_DATA(...)
+///
+/// @brief finalize the omp target data region
+///
+#define PRAGMA_OMP_END_TARGET_DATA
 
 ///
 /// @brief _Pragma("omp target enter data [clause [[,] clause] ... ]")
@@ -81,6 +85,10 @@
 /// @details Creates a team of OpenMP threads that execute the region.
 ///
 #define PRAGMA_OMP_TARGET_PARALLEL(...) PRAGMA_OMP_PARALLEL(__VA_ARGS__)
+///
+/// @brief finalize the omp target parallel region
+///
+#define PRAGMA_OMP_END_TARGET_PARALLEL PRAGMA_OMP_END_PARALLEL
 
 ///
 /// @brief _Pragma("omp parallel for [clause [[,] clause] ... ]")
@@ -120,12 +128,20 @@
 /// @details Applied to a loop to indicate that the loop can be transformed into a SIMD loop.
 ///
 #define PRAGMA_OMP_TARGET_SIMD(...) PRAGMA_OMP_SIMD(__VA_ARGS__)
+///
+/// @brief finalize the omp target simd region
+///
+#define PRAGMA_OMP_END_TARGET_SIMD PRAGMA_OMP_END_SIMD
 
 ///
 /// @brief _Pragma("omp teams [clause [[,] clause] ... ]")
 /// @details Creates a league of initial teams where the initial thread of each team executes the region.
 ///
 #define PRAGMA_OMP_TARGET_TEAMS(...) PRAGMA_OMP_TEAMS(__VA_ARGS__)
+///
+/// @brief finalize the omp target teams region
+///
+#define PRAGMA_OMP_END_TARGET_TEAMS PRAGMA_OMP_END_TEAMS
 
 ///
 /// @brief _Pragma("omp teams distribute [clause [[,] clause] ... ]")

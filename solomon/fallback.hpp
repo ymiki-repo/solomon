@@ -12,6 +12,7 @@
 
 #if defined(_OPENMP)
 #include "omp.hpp"
+#include "omp/runtime.hpp"
 #include "omp/target/clause.hpp"
 #include "omp/target/fallback.hpp"
 
@@ -22,7 +23,13 @@
 #include "acc/utils.hpp"
 #include "convert/acc2omp/clause.hpp"
 #include "convert/acc2omp/directive.hpp"
-
+#else   // defined(_OPENMP)
+#if !defined(USE_SOLOMON_RUNTIME)
+///
+/// @brief empty definition of USE_SOLOMON_RUNTIME when OpenMP is not available
+///
+#define USE_SOLOMON_RUNTIME
+#endif  // !defined(USE_SOLOMON_RUNTIME)
 #endif  // defined(_OPENMP)
 
 #endif  // !defined(SOLOMON_FALLBACK_HPP)

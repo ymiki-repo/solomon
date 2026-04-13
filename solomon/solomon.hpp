@@ -58,6 +58,15 @@
 /// @brief "arg" appears only in the fallback mode (when GPU offloading is disabled)
 ///
 #define IF_NOT_OFFLOADED(arg) arg
+#else
+// no offloading backend is available
+#include "fallback.hpp"
+
+#undef IF_NOT_OFFLOADED
+///
+/// @brief "arg" appears only in the fallback mode (when GPU offloading is disabled)
+///
+#define IF_NOT_OFFLOADED(arg) arg
 #endif  // defined(_OPENMP)
 
 ///
