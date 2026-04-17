@@ -88,7 +88,7 @@ contains
     integer,  intent(in)  :: nx, ny, nz
     real(sp), intent(in)  :: dx, dy, dz, kappa
     real(sp), intent(in)  :: f(nx,ny,nz)
-    real(sp) :: kx,ky,kz,ax,ay,az,x,y,z,pi,f0
+    real(sp) :: kx,ky,kz,ax,ay,az,x,y,z,f0
     real(dp) :: ferr
     integer  :: i,j,k
     real(dp) :: accuracy

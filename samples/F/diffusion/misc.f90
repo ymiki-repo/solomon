@@ -1,11 +1,12 @@
 module misc
+  use iso_fortran_env, only: int64
   implicit none
 
   integer, parameter :: sp = selected_real_kind(6)  ! single precision, float.
   integer, parameter :: dp = selected_real_kind(15) ! double precision, double.
   integer, parameter :: qp = selected_real_kind(33) ! quadruple precision, quad.
 
-  real(dp) :: t_s
+  integer(int64) :: t_s
 
 contains
 
@@ -19,13 +20,13 @@ contains
   end subroutine swap
 
   subroutine start_timer()
-    real(dp) :: omp_get_wtime
-    t_s = omp_get_wtime()
+    call system_clock(t_s)
   end subroutine start_timer
 
   double precision function get_elapsed_time()
-    real(dp) :: omp_get_wtime
-    get_elapsed_time = omp_get_wtime() - t_s
+    integer(int64) :: t_e, t_rate
+    call system_clock(t_e, t_rate)
+    get_elapsed_time = real(t_e - t_s, dp) / real(t_rate, dp)
   end function get_elapsed_time
 
 end module misc

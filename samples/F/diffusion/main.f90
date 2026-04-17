@@ -97,7 +97,7 @@ program main
 
   ferr = accuracy(time, nx, ny, nz, dx, dy, dz, kappa, f)
 #if !defined(BENCHMARK_MODE)
-  write(*, '("Error[",i3,"][",i3,"][",i3,"] = ",e12.6)') nx, ny, nz, ferr
+  write(*, '("Error[",i3,"][",i3,"][",i3,"] = ",e13.6)') nx, ny, nz, ferr
 #endif // !defined(BENCHMARK_MODE)
 
   write(filename, '("diffusion_benchmark_",a,i0,".csv")') COMPILER, MODEL_ID
@@ -124,7 +124,7 @@ program main
   write(fd,'(",",i3)',advance='no') nx
   write(fd,'(",",i3)',advance='no') ny
   write(fd,'(",",i3)',advance='no') nz
-  write(fd,'(",",f12.6,",",e12.6,",",e12.6,",",e12.6,",",e12.6,",",e12.6)') &
+  write(fd,'(",",f12.6,",",e13.6,",",e13.6,",",e13.6,",",e13.6,",",e13.6)') &
        elapsed_time, flop, flop/elapsed_time, byte_per_flop*flop, &
        byte_per_flop*flop/elapsed_time, ferr
 

@@ -67,6 +67,9 @@ MAKEDEPEND = makedepend
 GFLAGS    = -std=c99 -Wall -Wextra -Wunused -Wcast-qual -Wcast-align -Ofast
 
 FFLAGS	:= -Wall
+ifeq ($(IFX), 1)
+	FFLAGS	:= -warn all
+endif
 ifeq ($(OPT_LEVEL), 1)
 	FFLAGS	+= -O1
 	PARAM	+= -DOPT_LEVEL="\"O1\""
