@@ -64,7 +64,7 @@ INC	:= -I$(SOLOMON_DIR)
 GCC  = gcc
 RM  = rm -f
 MAKEDEPEND = makedepend
-GFLAGS    = -std=c99 -Wall -Wextra -Wunused -Wcast-qual -Wcast-align -Ofast
+GFLAGS    = -std=c99 -Wall -Wextra -Wunused -Wcast-qual -Wcast-align -O3 -ffast-math
 
 CFLAGS	:= -Wall
 ifeq ($(OPT_LEVEL), 1)
@@ -80,8 +80,13 @@ else
 			PARAM	+= -DOPT_LEVEL="\"O3\""
 		else
 			ifeq ($(OPT_LEVEL), 4)
-				CFLAGS	+= -Ofast
-				PARAM	+= -DOPT_LEVEL="\"Ofast\""
+				ifeq ($(NVHPC), 1)
+					CFLAGS	+= -Ofast
+					PARAM	+= -DOPT_LEVEL="\"Ofast\""
+				else
+					CFLAGS	+= -O3 -ffast-math
+					PARAM	+= -DOPT_LEVEL="\"O3 -ffast-math\""
+				endif
 			else
 				PARAM	+= -DOPT_LEVEL="\"default\""
 			endif

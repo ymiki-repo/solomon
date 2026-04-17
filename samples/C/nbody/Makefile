@@ -37,7 +37,10 @@ GPU_ARCH	:= 120 # RTX PRO 4000 Blackwell
 # option(s)
 STD	:= --std=c++17
 FLAG	:= -Wall -Wextra -Wunused -Wcast-qual -Wcast-align
-ARGS	:= -Ofast
+ARGS	:= -O3 -ffast-math
+ifeq ($(NVHPC), 1)
+	ARGS	:= -Ofast
+endif
 
 ifeq ($(USE_OPENACC), 1)
 	PARAM	+= -DOFFLOAD_BY_OPENACC

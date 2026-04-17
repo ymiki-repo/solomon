@@ -27,7 +27,7 @@ void swap(float **f, float **fn)
     *fn = tmp;
 }
 
-void start_timer()
+void start_timer(void)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -36,7 +36,7 @@ void start_timer()
     usec_org = tv.tv_usec;
 }
 
-double get_elapsed_time()
+double get_elapsed_time(void)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);

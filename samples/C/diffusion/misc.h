@@ -16,8 +16,8 @@
 
 
 void swap(float **f, float **fn);
-void start_timer();
-double get_elapsed_time();
+void start_timer(void);
+double get_elapsed_time(void);
 
 
 #endif /* MISC_H */
