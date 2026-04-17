@@ -1,4 +1,5 @@
 slurm-*.out
+*.csv
 *.o
 *.d
 run
