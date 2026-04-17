@@ -229,12 +229,13 @@
 
       ```sh
       export SOLOMON_DIR=/path/to/Solomon
-      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # for NVIDIA HPC SDK
-      $(SOLOMON_DIR)/spp.sh -compiler="amdflang -fopenmp --offload-arch=[target GPU architecture (e.g., gfx942)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # for AMD ROCm
-      $(SOLOMON_DIR)/spp.sh -compiler="ifx -fiopenmp -fopenmp-targets=spir64_gen -Xs \"-device [target GPU architecture (e.g., pvc)]\"" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # for Intel oneAPI
+      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # for NVIDIA HPC SDK
+      $(SOLOMON_DIR)/spp.sh -compiler="amdflang -fopenmp" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # for AMD ROCm
+      $(SOLOMON_DIR)/spp.sh -compiler="ifx -fiopenmp" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # for Intel oneAPI
       ```
 
       * Replace the `-compiler=...` argument as appropriate for your environment
+      * Target GPU architecture flags (`-gpu=...`, `--offload-arch=...`, `-Xs "-device ..."`) are not required for `spp.sh`, since it only performs preprocessing and macro detection; specify them at the actual compile/link step instead
       * Regarding `$(SOLOMON_DIR)/spp.sh`, you can also add the Solomon path to your `PATH` environment variable and execute it simply as `spp.sh`
   1. Create a dedicated directory named `spp` under the Fortran source directory to store the files processed by Solomon, using the following command:
 
@@ -246,12 +247,13 @@
 
      ```sh
      echo "OPENACC=_OPENACC OPENMP=_OPENMP" > spp/solomon.F
-     nvfortran -E -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)] spp/solomon.F # for NVIDIA HPC SDK
-     amdflang -E -fopenmp --offload-arch=[target GPU architecture (e.g., gfx942)] spp/solomon.F # for AMD ROCm
-     ifx -E -fiopenmp -fopenmp-targets=spir64_gen -Xs "-device [target GPU architecture (e.g., pvc)]" spp/solomon.F # for Intel oneAPI
+     nvfortran -E -acc=gpu -mp=gpu spp/solomon.F # for NVIDIA HPC SDK
+     amdflang -E -fopenmp spp/solomon.F # for AMD ROCm
+     ifx -E -fiopenmp spp/solomon.F # for Intel oneAPI
      ```
 
      * Replace the compiler and compiler options on lines 2-4 as appropriate for your environment
+     * Target GPU architecture flags (`-gpu=...`, `--offload-arch=...`, `-Xs "-device ..."`) are not required here, since `_OPENACC` / `_OPENMP` are determined solely by the OpenACC/OpenMP enabling flags; specify them at the actual compile/link step (Step 4) instead
      * If the respective compiler features can be enabled, the output will display the year-month strings representing the OpenACC and OpenMP versions, such as `OPENACC=201711 OPENMP=202011`
        * If they cannot be enabled, the original strings will be displayed as they are, such as `OPENMP=202011 OPENACC=_OPENACC`
 

@@ -229,12 +229,13 @@
 
       ```sh
       export SOLOMON_DIR=/path/to/Solomon
-      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # NVIDIA HPC SDK の場合
-      $(SOLOMON_DIR)/spp.sh -compiler="amdflang -fopenmp --offload-arch=[target GPU architecture (e.g., gfx942)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # AMD ROCm の場合
-      $(SOLOMON_DIR)/spp.sh -compiler="ifx -fiopenmp -fopenmp-targets=spir64_gen -Xs \"-device [target GPU architecture (e.g., pvc)]\"" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # Intel oneAPI の場合
+      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # NVIDIA HPC SDK の場合
+      $(SOLOMON_DIR)/spp.sh -compiler="amdflang -fopenmp" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # AMD ROCm の場合
+      $(SOLOMON_DIR)/spp.sh -compiler="ifx -fiopenmp" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # Intel oneAPI の場合
       ```
 
       * `-compiler=...` の引数は使用する環境に応じて適宜置き換えてください
+      * GPU アーキテクチャを指定するフラグ（`-gpu=...`, `--offload-arch=...`, `-Xs "-device ..."`）は `spp.sh` ではプリプロセスとマクロ検出のみを行うため不要で，最終的な compile/link 時に指定してください
       * `$(SOLOMON_DIR)/spp.sh` については，Solomonのパスに`PATH`を通した上で`spp.sh`として実行することもできます
 
   1. Fortranのソースファイルのディレクトリの下にSolomonによる処理結果を保存する専用のディレクトリ `spp` を以下のコマンドで作成してください
@@ -247,12 +248,13 @@
 
      ```sh
      echo "OPENACC=_OPENACC OPENMP=_OPENMP" > spp/solomon.F
-     nvfortran -E -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)] spp/solomon.F # NVIDIA HPC SDK の場合
-     amdflang -E -fopenmp --offload-arch=[target GPU architecture (e.g., gfx942)] spp/solomon.F # AMD ROCm の場合
-     ifx -E -fiopenmp -fopenmp-targets=spir64_gen -Xs "-device [target GPU architecture (e.g., pvc)]" spp/solomon.F # Intel oneAPI の場合
+     nvfortran -E -acc=gpu -mp=gpu spp/solomon.F # NVIDIA HPC SDK の場合
+     amdflang -E -fopenmp spp/solomon.F # AMD ROCm の場合
+     ifx -E -fiopenmp spp/solomon.F # Intel oneAPI の場合
      ```
 
      * 2-4行目のコンパイラおよびコンパイルオプションは，使用する環境に応じて適宜置き換えてください
+     * GPU アーキテクチャを指定するフラグ（`-gpu=...`, `--offload-arch=...`, `-Xs "-device ..."`）は，`_OPENACC` / `_OPENMP` の値が OpenACC/OpenMP の有効化フラグのみで決まるためここでは不要です（実際の compile/link 時（手順 4）に指定してください）
      * コンパイラのそれぞれの機能が有効化できる場合には，この出力としてOpenACCとOpenMPのversionを表す年月の文字列が`OPENACC=201711 OPENMP=202011` のように表示されます
        * 有効化できない場合は`OPENMP=202011 OPENACC=_OPENACC` のように元の文字列のまま表示されます
 
