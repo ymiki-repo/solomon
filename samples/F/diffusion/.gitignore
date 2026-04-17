@@ -1,6 +1,10 @@
 slurm-*.out
 *.o
 *.d
+*.mod
+*.modmic
+run
+spp/
 fig/
 *_nvhpc_nvidia_*/
 *_amdflang_amd_gfx*/

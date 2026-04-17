@@ -229,9 +229,12 @@
 
       ```sh
       export SOLOMON_DIR=/path/to/Solomon
-      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90
+      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # NVIDIA HPC SDK の場合
+      $(SOLOMON_DIR)/spp.sh -compiler="amdflang -fopenmp --offload-arch=[target GPU architecture (e.g., gfx942)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # AMD ROCm の場合
+      $(SOLOMON_DIR)/spp.sh -compiler="ifx -fiopenmp -fopenmp-targets=spir64_gen -Xs \"-device [target GPU architecture (e.g., pvc)]\"" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # Intel oneAPI の場合
       ```
 
+      * `-compiler=...` の引数は使用する環境に応じて適宜置き換えてください
       * `$(SOLOMON_DIR)/spp.sh` については，Solomonのパスに`PATH`を通した上で`spp.sh`として実行することもできます
 
   1. Fortranのソースファイルのディレクトリの下にSolomonによる処理結果を保存する専用のディレクトリ `spp` を以下のコマンドで作成してください

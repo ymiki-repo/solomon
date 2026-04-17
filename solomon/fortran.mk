@@ -1,12 +1,5 @@
-SOLOMON_DEF = $(shell mkdir -p spp && printf "\
-\#ifdef _OPENMP\n\
-	-D_OPENMP=_OPENMP\n\
-\#endif\n\
-\#ifdef _OPENACC\n\
-	-D_OPENACC=_OPENACC\n\
-\#endif\n" > spp/_solomon.F && \
-$(SOLOMON_FC) $(SOLOMON_FLAGS) -E spp/_solomon.F 2>/dev/null | grep -- "-D_" && \
-rm -f spp/_solomon.F)
+SOLOMON_HASH := \#
+SOLOMON_DEF = $(shell mkdir -p spp && printf "$(SOLOMON_HASH)ifdef _OPENMP\n-D_OPENMP=_OPENMP\n$(SOLOMON_HASH)endif\n$(SOLOMON_HASH)ifdef _OPENACC\n-D_OPENACC=_OPENACC\n$(SOLOMON_HASH)endif\n" > spp/_solomon.F && $(SOLOMON_FC) $(SOLOMON_FLAGS) -E spp/_solomon.F 2>/dev/null | grep -- "-D_" && rm -f spp/_solomon.F)
 
 SOLOMON_DEF += $(filter -D% -I%,$(SOLOMON_FC) $(SOLOMON_FLAGS))
 

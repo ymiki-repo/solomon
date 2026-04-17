@@ -49,7 +49,7 @@ if [ -z "$COMPILER" ]; then
     exit 1
 fi
 
-if ! $COMPILER > /dev/null 2>&1; then
+if ! $COMPILER --version > /dev/null 2>&1; then
     echo "$0: error: failed to run compiler: $COMPILER" >&2
     exit 1
 fi

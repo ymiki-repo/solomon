@@ -229,9 +229,12 @@
 
       ```sh
       export SOLOMON_DIR=/path/to/Solomon
-      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90
+      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu -gpu=[target GPU architecture (e.g., cc90)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # for NVIDIA HPC SDK
+      $(SOLOMON_DIR)/spp.sh -compiler="amdflang -fopenmp --offload-arch=[target GPU architecture (e.g., gfx942)]" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # for AMD ROCm
+      $(SOLOMON_DIR)/spp.sh -compiler="ifx -fiopenmp -fopenmp-targets=spir64_gen -Xs \"-device [target GPU architecture (e.g., pvc)]\"" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # for Intel oneAPI
       ```
 
+      * Replace the `-compiler=...` argument as appropriate for your environment
       * Regarding `$(SOLOMON_DIR)/spp.sh`, you can also add the Solomon path to your `PATH` environment variable and execute it simply as `spp.sh`
   1. Create a dedicated directory named `spp` under the Fortran source directory to store the files processed by Solomon, using the following command:
 

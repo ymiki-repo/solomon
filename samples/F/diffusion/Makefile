@@ -7,13 +7,13 @@ else
 	USE_OMP_DISTRIBUTE	:= 0
 endif
 
-GPU_ARCH	:= 90 # NVIDIA H100
+# GPU_ARCH	:= 90 # NVIDIA H100
 # GPU_ARCH	:= gfx90a # CDNA 2 GPUs (MI210, MI250, MI250X)
-# GPU_ARCH	:= pvc # Intel PVC
+GPU_ARCH	:= pvc # Intel PVC
 
-NVHPC	:= 1
+NVHPC	:= 0
 AMDFLANG	:= 0
-IFX	:= 0
+IFX	:= 1
 
 # -O1, -O2, -O3, -Ofast, or default (w/o optimization flag)
 OPT_LEVEL	:= 4
