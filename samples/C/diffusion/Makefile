@@ -10,6 +10,7 @@ endif
 GPU_ARCH	:= 90 # NVIDIA H100
 # GPU_ARCH	:= gfx90a # CDNA 2 GPUs (MI210, MI250, MI250X)
 # GPU_ARCH	:= pvc # Intel PVC
+GPU_ARCH	:= $(strip $(GPU_ARCH))
 
 NVHPC	:= 1
 AMDCLANG	:= 0
@@ -85,7 +86,7 @@ else
 					PARAM	+= -DOPT_LEVEL="\"Ofast\""
 				else
 					CFLAGS	+= -O3 -ffast-math
-					PARAM	+= -DOPT_LEVEL="\"O3 -ffast-math\""
+					PARAM	+= -DOPT_LEVEL="\"O3+ffast-math\""
 				endif
 			else
 				PARAM	+= -DOPT_LEVEL="\"default\""

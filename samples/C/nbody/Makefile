@@ -17,9 +17,9 @@ USE_FAST_MATH	:= 1
 MODEL_ID	:= 0
 
 DEBUG_MODE	:= 0
-NVHPC	:= 0
+NVHPC	:= 1
 AMDCLANG	:= 0
-ICPX	:= 1
+ICPX	:= 0
 ACPP	:= 0
 
 BENCHMARK	:= 0
@@ -29,10 +29,11 @@ SET_NCRIT	:= 0
 
 # GPU_ARCH	:= pvc # Intel PVC
 # GPU_ARCH	:= 80 # NVIDIA A100
-# GPU_ARCH	:= 90 # NVIDIA H100
-GPU_ARCH	:= 120 # RTX PRO 4000 Blackwell
+GPU_ARCH	:= 90 # NVIDIA H100
+# GPU_ARCH	:= 120 # RTX PRO 4000 Blackwell
 # GPU_ARCH	:= gfx908 # CDNA 1 GPU (MI100)
 # GPU_ARCH	:= gfx90a # CDNA 2 GPUs (MI210, MI250, MI250X)
+GPU_ARCH	:= $(strip $(GPU_ARCH))
 
 # option(s)
 STD	:= --std=c++17

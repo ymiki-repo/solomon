@@ -1,6 +1,7 @@
 slurm-*.out
 *.o
 *.d
+run
 fig/
 old/
 *_nvhpc_nvidia_*/
