@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #PBS -q short-g
 #PBS -l select=1
-#PBS -l walltime=02:00:00
+#PBS -l walltime=07:00:00
 #PBS -W group_list=gj14
 #PBS -N survey
 

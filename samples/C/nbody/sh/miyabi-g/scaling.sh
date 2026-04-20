@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#PBS -q regular-g
+#PBS -q short-g
 #PBS -l select=1
 #PBS -l walltime=04:00:00
 #PBS -W group_list=gj14
