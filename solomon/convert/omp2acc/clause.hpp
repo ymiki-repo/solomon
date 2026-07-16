@@ -78,9 +78,9 @@
 
 ///
 /// @brief add OpenMP target clause "num_teams ([lower_bound:] upper_bound)" if applicable
-/// @details replace to OpenACC clause "num_workers (n)"
+/// @details replace to OpenACC clause "num_gangs (n)"
 ///
-#define OMP_TARGET_CLAUSE_NUM_TEAMS(...) ACC_CLAUSE_NUM_WORKERS(__VA_ARGS__)
+#define OMP_TARGET_CLAUSE_NUM_TEAMS(...) ACC_CLAUSE_NUM_GANGS(__VA_ARGS__)
 
 ///
 /// @brief add OpenMP target clause "thread_limit (num)" if applicable

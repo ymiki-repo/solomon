@@ -83,6 +83,64 @@
 #define END_OFFLOAD PRAGMA_ACC_END_OFFLOADING_DEFAULT
 #endif  // !defined(SOLOMON_FORTRAN)
 
+#if defined(OFFLOAD_BY_OPENACC)
+///
+/// @brief offload the immediately following loop and distribute it over thread-blocks (OpenACC: _Pragma("acc parallel [...]") _Pragma("acc loop gang [...]"))
+/// @note do not pass AS_GRID, AS_BLOCK, AS_THREAD, ACC_CLAUSE_GANG, ACC_CLAUSE_WORKER, or ACC_CLAUSE_VECTOR to OFFLOAD_OUTER_LOOP(...) because the conflicting clauses are already included in the macro
+///
+#define OFFLOAD_OUTER_LOOP(...) PRAGMA_ACC_PARALLEL(__VA_ARGS__) PRAGMA_ACC_LOOP(ACC_CLAUSE_GANG APPEND_ARGS(__VA_ARGS__))
+///
+/// @brief parallelize the immediately following loop over threads within a thread-block (OpenACC: _Pragma("acc loop vector [...]"))
+/// @note must be used in conjunction with OFFLOAD_OUTER_LOOP(...) to parallelize the immediately following loop over threads within a thread-block
+/// @note do not pass AS_GRID, AS_BLOCK, AS_THREAD, ACC_CLAUSE_GANG, ACC_CLAUSE_WORKER, or ACC_CLAUSE_VECTOR to PARALLELIZE_INNER_LOOP(...) because the conflicting clauses are already included in the macro
+///
+#define PARALLELIZE_INNER_LOOP(...) PRAGMA_ACC_LOOP(ACC_CLAUSE_VECTOR APPEND_ARGS(__VA_ARGS__))
+///
+/// @brief finalize the offloading of the outer loop
+///
+#define END_OFFLOAD_OUTER_LOOP PRAGMA_ACC_END_PARALLEL
+#elif defined(OFFLOAD_BY_OPENMP_TARGET)
+///
+/// @brief offload the immediately following loop and distribute it over thread-blocks (OpenMP target: _Pragma("omp target teams distribute [...]"))
+///
+#define OFFLOAD_OUTER_LOOP(...) PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(__VA_ARGS__)
+///
+/// @brief parallelize the immediately following loop over threads within a thread-block (OpenMP target: _Pragma("omp parallel for [...]"))
+/// @note must be used in conjunction with OFFLOAD_OUTER_LOOP(...) to parallelize the immediately following loop over threads within a thread-block
+///
+#define PARALLELIZE_INNER_LOOP(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
+///
+/// @brief finalize the offloading of the outer loop
+///
+#define END_OFFLOAD_OUTER_LOOP
+#elif defined(_OPENMP)
+///
+/// @brief parallelize the immediately following loop (OpenMP for multicore CPU: _Pragma("omp parallel for [...]"))
+///
+#define OFFLOAD_OUTER_LOOP(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
+///
+/// @brief do nothing (OpenMP for multicore CPU: OFFLOAD_OUTER_LOOP(...) has already parallelized the outer loop; the immediately following loop runs sequentially within each thread)
+///
+#define PARALLELIZE_INNER_LOOP(...)
+///
+/// @brief finalize the offloading of the outer loop
+///
+#define END_OFFLOAD_OUTER_LOOP
+#else  // defined(_OPENMP)
+///
+/// @brief offload the immediately following loop (fallback mode: no offloading)
+///
+#define OFFLOAD_OUTER_LOOP(...)
+///
+/// @brief parallelize the immediately following loop (fallback mode: no offloading)
+///
+#define PARALLELIZE_INNER_LOOP(...)
+///
+/// @brief finalize the offloading of the outer loop
+///
+#define END_OFFLOAD_OUTER_LOOP
+#endif  // defined(OFFLOAD_BY_OPENACC)
+
 ///
 /// @brief indicate parallelism to compiler
 ///
@@ -101,27 +159,35 @@
 ///
 /// @brief suggest number of thread-blocks
 ///
-#define NUM_BLOCKS(n) ACC_CLAUSE_NUM_WORKERS(n)
+#define NUM_BLOCKS(n) ACC_CLAUSE_NUM_GANGS(n)
 
 ///
-/// @brief suggest number of grids
+/// @brief deprecated alias of NUM_BLOCKS
+/// @deprecated NUM_GRIDS(n) was renamed to NUM_BLOCKS(n) in v2.0.0
 ///
-#define NUM_GRIDS(n) ACC_CLAUSE_NUM_GANGS(n)
+#define NUM_GRIDS(n) NUM_BLOCKS(n)
+#if defined(__clang__) && (__clang_major__ >= 14)
+#pragma clang deprecated(NUM_GRIDS, "NUM_GRIDS(n) was renamed to NUM_BLOCKS(n) in v2.0.0")
+#endif  // defined(__clang__) && (__clang_major__ >= 14)
 
 ///
-/// @brief suggest parallelization hierarchy: thread(CUDA)/vector(OpenACC)/SIMD(OpenMP target)
+/// @brief suggest parallelization hierarchy: thread(CUDA)/vector(OpenACC)/thread(OpenMP target)
 ///
 #define AS_THREAD ACC_CLAUSE_VECTOR
 
 ///
-/// @brief suggest parallelization hierarchy: block(CUDA)/worker(OpenACC)/thread(OpenMP target)
+/// @brief suggest parallelization hierarchy: block(CUDA)/gang(OpenACC)/teams(OpenMP target)
 ///
-#define AS_BLOCK ACC_CLAUSE_WORKER
+#define AS_BLOCK ACC_CLAUSE_GANG
 
 ///
-/// @brief suggest parallelization hierarchy: grid(CUDA)/gang(OpenACC)/teams(OpenMP target)
+/// @brief deprecated alias of AS_BLOCK
+/// @deprecated AS_GRID was renamed to AS_BLOCK in v2.0.0
 ///
-#define AS_GRID ACC_CLAUSE_GANG
+#define AS_GRID AS_BLOCK
+#if defined(__clang__) && (__clang_major__ >= 14)
+#pragma clang deprecated(AS_GRID, "AS_GRID was renamed to AS_BLOCK in v2.0.0")
+#endif  // defined(__clang__) && (__clang_major__ >= 14)
 
 ///
 /// @brief collapse tightly-nested loops

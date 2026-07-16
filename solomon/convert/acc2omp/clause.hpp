@@ -68,15 +68,15 @@
 
 ///
 /// @brief add OpenACC clause "num_gangs (n)" if applicable
-/// @details ignore the clause
+/// @details replace to OpenMP clause "num_teams (n)"
 ///
-#define ACC_CLAUSE_NUM_GANGS(n) MISSING_CLAUSE
+#define ACC_CLAUSE_NUM_GANGS(n) OMP_TARGET_CLAUSE_NUM_TEAMS(n)
 
 ///
 /// @brief add OpenACC clause "num_workers (n)" if applicable
-/// @details replace to OpenMP clause "num_teams (n)"
+/// @details ignore the clause
 ///
-#define ACC_CLAUSE_NUM_WORKERS(n) OMP_TARGET_CLAUSE_NUM_TEAMS(n)
+#define ACC_CLAUSE_NUM_WORKERS(n) MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "vector_length (n)" if applicable
