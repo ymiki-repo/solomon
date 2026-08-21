@@ -9,3 +9,5 @@ typescript
 tmp/
 # old files
 samples/miniFE-2.2.0/
+# internal memo
+request.md
