@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-#PBS -q short-g
-#PBS -l select=1
-#PBS -l walltime=04:00:00
-#PBS -W group_list=gj14
-#PBS -N scaling
+#SBATCH -J scaling
+#SBATCH -t 24:00:00
+#SBATCH -p regular
+#SBATCH --gres=gpu:1
 
-cd ${PBS_O_WORKDIR}
+cd ${SLURM_SUBMIT_DIR}
 
 USE_NVHPC=1
 USE_AMDCLANG=0
@@ -46,7 +45,6 @@ for _modules_init in \
 done
 unset _modules_init
 module purge
-module use /work/gj14/share/opt/modules/lib
 hostname
 
 # recipe for NVIDIA GPU
@@ -78,7 +76,7 @@ fi
 if [ $USE_NVHPC == 1 ]; then
 	COMPILER=nvhpc
 	module purge
-	module load nvidia
+	module load nvhpc
 	nvc++ --version
 	MODEL_ID_LIST+=(`seq $(($MAX_MODEL_ID + 1)) 7`) # OpenACC: kernels/parallel, w/ or w/o dedicated options
 fi
@@ -99,24 +97,24 @@ fi
 
 module load boost
 
-# # NUMA configuration
-# if [ $VENDER == amd ]; then
-# 	export ROCR_VISIBLE_DEVICES=$GPU_ID
-# 	NUMA_NODE=`LANG=C rocm-smi -d $GPU_ID --showtoponuma | sed -n 's/^GPU\['$GPU_ID'\]\t*//p' | sed -n 's/: (Topology) Numa Node: *//p'`
-# fi
-# if [ $VENDER == nvidia ]; then
-# 	export CUDA_VISIBLE_DEVICES=$GPU_ID
-# 	BUS_ID=`nvidia-smi --format=csv,noheader --query-gpu=gpu_bus_id -i $GPU_ID | awk -F ":" '{print "0000:" $2 ":" $3}' | tr '[:upper:]' '[:lower:]'`
-# 	NUMA_NODE=`cat /sys/bus/pci/devices/$BUS_ID/numa_node`
-# fi
-# if [ $VENDER == intel ]; then
-#         # tentative treatment for spr2
-#         NUMA_NODE=0
-# fi
-# if [ "${NUMA_NODE}" == "" ]; then
-# 	AVAILABLE_NUMA_NODE=`LANG=C numactl --show | sed -n 's/^nodebind: *//p'`
-# 	NUMA_NODE=${AVAILABLE_NUMA_NODE[0]}
-# fi
+# NUMA configuration
+if [ $VENDER == amd ]; then
+	export ROCR_VISIBLE_DEVICES=$GPU_ID
+	NUMA_NODE=`LANG=C rocm-smi -d $GPU_ID --showtoponuma | sed -n 's/^GPU\['$GPU_ID'\]\t*//p' | sed -n 's/: (Topology) Numa Node: *//p'`
+fi
+if [ $VENDER == nvidia ]; then
+	export CUDA_VISIBLE_DEVICES=$GPU_ID
+	BUS_ID=`nvidia-smi --format=csv,noheader --query-gpu=gpu_bus_id -i $GPU_ID | awk -F ":" '{print "0000:" $2 ":" $3}' | tr '[:upper:]' '[:lower:]'`
+	NUMA_NODE=`cat /sys/bus/pci/devices/$BUS_ID/numa_node`
+fi
+if [ $VENDER == intel ]; then
+        # tentative treatment for spr2
+        NUMA_NODE=0
+fi
+if [ "${NUMA_NODE}" == "" ]; then
+	AVAILABLE_NUMA_NODE=`LANG=C numactl --show | sed -n 's/^nodebind: *//p'`
+	NUMA_NODE=${AVAILABLE_NUMA_NODE[0]}
+fi
 
 TARGET=${COMPILER}_${VENDER}
 module list
@@ -211,7 +209,7 @@ do
 		mv ${BIN} $EXEC
 		if [ -e $EXEC ]; then
 			mkdir -p log dat fig
-			COMMAND="numactl --localalloc $EXEC"
+			COMMAND="numactl --cpunodebind=$NUMA_NODE --localalloc $EXEC"
 			for (( COUNTER = 0 ; COUNTER < ${NUM_ITERATE} ; COUNTER += 1 ))
 			do
 				echo ${COMMAND}

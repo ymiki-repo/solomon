@@ -176,5 +176,3 @@ HOST=`hostname --short`
 DEST=${HOST}_${TARGET}_${ARCH}
 mkdir -p "${DEST}"
 mv --backup=numbered ${DUMP} ${DEST}
-
-exit 0

@@ -1,4 +1,5 @@
-SOLOMON_DIR := ../../../solomon
+# resolve relative to this Makefile's real location (works from padding/ via the symlinked Makefile)
+SOLOMON_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))../../../solomon
 
 USE_OPENACC	:= 0
 ifeq ($(USE_OPENACC), 1)

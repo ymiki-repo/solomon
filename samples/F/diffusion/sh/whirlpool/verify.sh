@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-#PBS -q regular-g
-#PBS -l select=1
-#PBS -l walltime=12:00:00
-#PBS -W group_list=gj14
-#PBS -N iterate
+#SBATCH -J verify
+#SBATCH -t 02:00:00
+#SBATCH -p regular
+#SBATCH --gres=gpu:1
 
-cd ${PBS_O_WORKDIR}
+cd ${SLURM_SUBMIT_DIR}
 
 USE_NVHPC=1
 USE_AMDFLANG=0
@@ -23,7 +22,6 @@ if [ $(($NVIDIA_GPU + $AMD_GPU + $INTEL_GPU)) != 1 ]; then
 fi
 
 TIMEOUT=120s
-NUM_ITERATE=10
 GPU_ID=0
 
 # OpenMP loop/distribute (2)
@@ -52,7 +50,8 @@ if [ $NVIDIA_GPU == 1 ]; then
 	nvcc --version
 	VENDER=nvidia
 	# ARCH=80
-	ARCH=90
+	# ARCH=90
+	ARCH=120
 fi
 
 # recipe for AMD GPU
@@ -75,7 +74,7 @@ fi
 if [ $USE_NVHPC == 1 ]; then
 	COMPILER=nvhpc
 	module purge
-	module load nvidia
+	module load nvhpc
 	nvfortran --version
 	# MODEL_ID_LIST+=(`seq $(($MAX_MODEL_ID + 1)) 3`) # (OpenMP loop/distribute (2) + OpenACC kernels/parallel (2)) = 4 models
 	# MODEL_ID_LIST+=(`seq $(($MAX_MODEL_ID + 1)) 7`) # (OpenMP loop/distribute (2) + OpenACC kernels/parallel (2)) * (data/managed (2)) = 8 models
@@ -96,29 +95,29 @@ if [ $USE_IFX == 1 ]; then
 	ifx --version
 fi
 
-# # NUMA configuration
-# if [ $VENDER == amd ]; then
-# 	export ROCR_VISIBLE_DEVICES=$GPU_ID
-# 	NUMA_NODE=`LANG=C rocm-smi -d $GPU_ID --showtoponuma | sed -n 's/^GPU\['$GPU_ID'\]\t*//p' | sed -n 's/: (Topology) Numa Node: *//p'`
-# fi
-# if [ $VENDER == nvidia ]; then
-# 	export CUDA_VISIBLE_DEVICES=$GPU_ID
-# 	BUS_ID=`nvidia-smi --format=csv,noheader --query-gpu=gpu_bus_id -i $GPU_ID | awk -F ":" '{print "0000:" $2 ":" $3}' | tr '[:upper:]' '[:lower:]'`
-# 	NUMA_NODE=`cat /sys/bus/pci/devices/$BUS_ID/numa_node`
-# fi
-# if [ $VENDER == intel ]; then
-#         # tentative treatment for spr2
-#         NUMA_NODE=0
-# fi
-# if [ "${NUMA_NODE}" == "" ]; then
-# 	AVAILABLE_NUMA_NODE=`LANG=C numactl --show | sed -n 's/^nodebind: *//p'`
-# 	NUMA_NODE=${AVAILABLE_NUMA_NODE[0]}
-# fi
+# NUMA configuration
+if [ $VENDER == amd ]; then
+	export ROCR_VISIBLE_DEVICES=$GPU_ID
+	NUMA_NODE=`LANG=C rocm-smi -d $GPU_ID --showtoponuma | sed -n 's/^GPU\['$GPU_ID'\]\t*//p' | sed -n 's/: (Topology) Numa Node: *//p'`
+fi
+if [ $VENDER == nvidia ]; then
+	export CUDA_VISIBLE_DEVICES=$GPU_ID
+	BUS_ID=`nvidia-smi --format=csv,noheader --query-gpu=gpu_bus_id -i $GPU_ID | awk -F ":" '{print "0000:" $2 ":" $3}' | tr '[:upper:]' '[:lower:]'`
+	NUMA_NODE=`cat /sys/bus/pci/devices/$BUS_ID/numa_node`
+fi
+if [ $VENDER == intel ]; then
+        # tentative treatment for spr2
+        NUMA_NODE=0
+fi
+if [ "${NUMA_NODE}" == "" ]; then
+	AVAILABLE_NUMA_NODE=`LANG=C numactl --show | sed -n 's/^nodebind: *//p'`
+	NUMA_NODE=${AVAILABLE_NUMA_NODE[0]}
+fi
 
 TARGET=${COMPILER}_${VENDER}
 module list
 
-DUMP=iterate
+DUMP=verify
 mkdir -p "${DUMP}"
 
 make clean NVHPC=$USE_NVHPC AMDFLANG=$USE_AMDFLANG IFX=$USE_IFX
@@ -158,18 +157,15 @@ do
 	BINARY=${BIN}_${APPEND}
 	for OPT_LEVEL in 0 1 2 3 4
 	do
-		make all NVHPC=$USE_NVHPC AMDFLANG=$USE_AMDFLANG IFX=$USE_IFX USE_OPENACC=$USE_OPENACC USE_ACC_PARALLEL=$USE_ACC_PARALLEL USE_OMP_DISTRIBUTE=$USE_OMP_DISTRIBUTE USE_MANAGED=$USE_MANAGED USE_UNIFIED=$USE_UNIFIED APPLY_FIRST_TOUCH=${APPLY_FIRST_TOUCH} MODEL_ID=${MODEL_ID} OPT_LEVEL=${OPT_LEVEL} GPU_ARCH=${ARCH} BENCHMARK=1
+		make all NVHPC=$USE_NVHPC AMDFLANG=$USE_AMDFLANG IFX=$USE_IFX USE_OPENACC=$USE_OPENACC USE_ACC_PARALLEL=$USE_ACC_PARALLEL USE_OMP_DISTRIBUTE=$USE_OMP_DISTRIBUTE USE_MANAGED=$USE_MANAGED USE_UNIFIED=$USE_UNIFIED APPLY_FIRST_TOUCH=${APPLY_FIRST_TOUCH} MODEL_ID=${MODEL_ID} OPT_LEVEL=${OPT_LEVEL} GPU_ARCH=${ARCH} BENCHMARK=0
 		EXEC=${BINARY}_opt${OPT_LEVEL}
 		mv ${BIN} $EXEC
 		if [ -e $EXEC ]; then
 			for NUM in 32 64 128 256 512
 			do
-				for (( COUNTER = 0 ; COUNTER < ${NUM_ITERATE} ; COUNTER += 1 ))
-				do
-					COMMAND="timeout ${TIMEOUT} numactl --localalloc $EXEC $NUM"
-					echo ${COMMAND}
-					eval ${COMMAND}
-				done
+				COMMAND="timeout ${TIMEOUT} numactl --localalloc $EXEC $NUM"
+				echo ${COMMAND}
+				eval ${COMMAND}
 			done
 		fi
 		make clean NVHPC=$USE_NVHPC AMDFLANG=$USE_AMDFLANG IFX=$USE_IFX

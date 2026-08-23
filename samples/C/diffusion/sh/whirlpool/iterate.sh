@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-#PBS -q regular-g
-#PBS -l select=1
-#PBS -l walltime=12:00:00
-#PBS -W group_list=gj14
-#PBS -N iterate
+#SBATCH -J iterate
+#SBATCH -t 24:00:00
+#SBATCH -p regular
+#SBATCH --gres=gpu:1
 
-cd ${PBS_O_WORKDIR}
+cd ${SLURM_SUBMIT_DIR}
 
 USE_NVHPC=1
-USE_AMDFLANG=0
-USE_IFX=0
-if [ $(($USE_NVHPC + $USE_AMDFLANG + $USE_IFX)) != 1 ]; then
-	echo "Only one compiler can be activated: USE_NVHPC, USE_AMDFLANG, and USE_IFX"
+USE_AMDCLANG=0
+USE_ICPX=0
+USE_ACPP=0
+if [ $(($USE_NVHPC + $USE_AMDCLANG + $USE_ICPX + $USE_ACPP)) != 1 ]; then
+	echo "Only one compiler can be activated: USE_NVHPC, USE_AMDCLANG, USE_ICPX, and USE_ACPP"
 	exit 1
 fi
 NVIDIA_GPU=1
@@ -52,7 +52,8 @@ if [ $NVIDIA_GPU == 1 ]; then
 	nvcc --version
 	VENDER=nvidia
 	# ARCH=80
-	ARCH=90
+	# ARCH=90
+	ARCH=120
 fi
 
 # recipe for AMD GPU
@@ -75,45 +76,45 @@ fi
 if [ $USE_NVHPC == 1 ]; then
 	COMPILER=nvhpc
 	module purge
-	module load nvidia
-	nvfortran --version
+	module load nvhpc
+	nvc++ --version
 	# MODEL_ID_LIST+=(`seq $(($MAX_MODEL_ID + 1)) 3`) # (OpenMP loop/distribute (2) + OpenACC kernels/parallel (2)) = 4 models
 	# MODEL_ID_LIST+=(`seq $(($MAX_MODEL_ID + 1)) 7`) # (OpenMP loop/distribute (2) + OpenACC kernels/parallel (2)) * (data/managed (2)) = 8 models
 	MODEL_ID_LIST+=(`seq $(($MAX_MODEL_ID + 1)) 15`) # (OpenMP loop/distribute (2) + OpenACC kernels/parallel (2)) * (data/managed/unified/unified+first touch (4)) = 16 models
 fi
 
 # recipe for ROCm
-if [ $USE_AMDFLANG == 1 ]; then
-	COMPILER=amdflang
+if [ $USE_AMDCLANG == 1 ]; then
+	COMPILER=amdclang
 	module load rocm
-	amdflang --version
+	amdclang++ --version
 fi
 
 # recipe for Intel oneAPI
-if [ $USE_IFX == 1 ]; then
-	COMPILER=ifx
+if [ $USE_ICPX == 1 ]; then
+	COMPILER=icpx
 	module load intel
-	ifx --version
+	icpx --version
 fi
 
-# # NUMA configuration
-# if [ $VENDER == amd ]; then
-# 	export ROCR_VISIBLE_DEVICES=$GPU_ID
-# 	NUMA_NODE=`LANG=C rocm-smi -d $GPU_ID --showtoponuma | sed -n 's/^GPU\['$GPU_ID'\]\t*//p' | sed -n 's/: (Topology) Numa Node: *//p'`
-# fi
-# if [ $VENDER == nvidia ]; then
-# 	export CUDA_VISIBLE_DEVICES=$GPU_ID
-# 	BUS_ID=`nvidia-smi --format=csv,noheader --query-gpu=gpu_bus_id -i $GPU_ID | awk -F ":" '{print "0000:" $2 ":" $3}' | tr '[:upper:]' '[:lower:]'`
-# 	NUMA_NODE=`cat /sys/bus/pci/devices/$BUS_ID/numa_node`
-# fi
-# if [ $VENDER == intel ]; then
-#         # tentative treatment for spr2
-#         NUMA_NODE=0
-# fi
-# if [ "${NUMA_NODE}" == "" ]; then
-# 	AVAILABLE_NUMA_NODE=`LANG=C numactl --show | sed -n 's/^nodebind: *//p'`
-# 	NUMA_NODE=${AVAILABLE_NUMA_NODE[0]}
-# fi
+# NUMA configuration
+if [ $VENDER == amd ]; then
+	export ROCR_VISIBLE_DEVICES=$GPU_ID
+	NUMA_NODE=`LANG=C rocm-smi -d $GPU_ID --showtoponuma | sed -n 's/^GPU\['$GPU_ID'\]\t*//p' | sed -n 's/: (Topology) Numa Node: *//p'`
+fi
+if [ $VENDER == nvidia ]; then
+	export CUDA_VISIBLE_DEVICES=$GPU_ID
+	BUS_ID=`nvidia-smi --format=csv,noheader --query-gpu=gpu_bus_id -i $GPU_ID | awk -F ":" '{print "0000:" $2 ":" $3}' | tr '[:upper:]' '[:lower:]'`
+	NUMA_NODE=`cat /sys/bus/pci/devices/$BUS_ID/numa_node`
+fi
+if [ $VENDER == intel ]; then
+        # tentative treatment for spr2
+        NUMA_NODE=0
+fi
+if [ "${NUMA_NODE}" == "" ]; then
+	AVAILABLE_NUMA_NODE=`LANG=C numactl --show | sed -n 's/^nodebind: *//p'`
+	NUMA_NODE=${AVAILABLE_NUMA_NODE[0]}
+fi
 
 TARGET=${COMPILER}_${VENDER}
 module list
@@ -121,7 +122,7 @@ module list
 DUMP=iterate
 mkdir -p "${DUMP}"
 
-make clean NVHPC=$USE_NVHPC AMDFLANG=$USE_AMDFLANG IFX=$USE_IFX
+make clean
 for MODEL_ID in ${MODEL_ID_LIST[@]}
 do
 	USE_OPENACC=0
@@ -158,7 +159,7 @@ do
 	BINARY=${BIN}_${APPEND}
 	for OPT_LEVEL in 0 1 2 3 4
 	do
-		make all NVHPC=$USE_NVHPC AMDFLANG=$USE_AMDFLANG IFX=$USE_IFX USE_OPENACC=$USE_OPENACC USE_ACC_PARALLEL=$USE_ACC_PARALLEL USE_OMP_DISTRIBUTE=$USE_OMP_DISTRIBUTE USE_MANAGED=$USE_MANAGED USE_UNIFIED=$USE_UNIFIED APPLY_FIRST_TOUCH=${APPLY_FIRST_TOUCH} MODEL_ID=${MODEL_ID} OPT_LEVEL=${OPT_LEVEL} GPU_ARCH=${ARCH} BENCHMARK=1
+		make all NVHPC=$USE_NVHPC AMDCLANG=$USE_AMDCLANG ICPX=$USE_ICPX ACPP=$USE_ACPP USE_OPENACC=$USE_OPENACC USE_ACC_PARALLEL=$USE_ACC_PARALLEL USE_OMP_DISTRIBUTE=$USE_OMP_DISTRIBUTE USE_MANAGED=$USE_MANAGED USE_UNIFIED=$USE_UNIFIED APPLY_FIRST_TOUCH=${APPLY_FIRST_TOUCH} MODEL_ID=${MODEL_ID} OPT_LEVEL=${OPT_LEVEL} GPU_ARCH=${ARCH} BENCHMARK=1
 		EXEC=${BINARY}_opt${OPT_LEVEL}
 		mv ${BIN} $EXEC
 		if [ -e $EXEC ]; then
@@ -172,9 +173,9 @@ do
 				done
 			done
 		fi
-		make clean NVHPC=$USE_NVHPC AMDFLANG=$USE_AMDFLANG IFX=$USE_IFX
+		make clean
 	done
-	mv --backup=numbered ${BINARY}_* *.csv spp ${DUMP}/model${MODEL_ID}/
+	mv --backup=numbered ${BINARY}_* *.csv ${DUMP}/model${MODEL_ID}/
 done
 
 HOST=`hostname --short`

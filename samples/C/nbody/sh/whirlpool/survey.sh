@@ -1,27 +1,30 @@
 #!/usr/bin/env bash
-# set -o errexit
-# set -o nounset
-# set -o pipefail
+#SBATCH -J survey
+#SBATCH -t 24:00:00
+#SBATCH -p regular
+#SBATCH --gres=gpu:1
 
-USE_NVHPC=0
+cd ${SLURM_SUBMIT_DIR}
+
+USE_NVHPC=1
 USE_AMDCLANG=0
-USE_ICPX=1
+USE_ICPX=0
 USE_ACPP=0
 if [ $(($USE_NVHPC + $USE_AMDCLANG + $USE_ICPX + $USE_ACPP)) != 1 ]; then
 	echo "Only one compiler can be activated: USE_NVHPC, USE_AMDCLANG, USE_ICPX, and USE_ACPP"
 	exit 1
 fi
-NVIDIA_GPU=0
+NVIDIA_GPU=1
 AMD_GPU=0
-INTEL_GPU=1
+INTEL_GPU=0
 if [ $(($NVIDIA_GPU + $AMD_GPU + $INTEL_GPU)) != 1 ]; then
 	echo "Only one vendor can be activated: NVIDIA, AMD, and Intel"
 	exit 1
 fi
 
-NUM_MIN=128
-NUM_MAX=4194304
-NUM_ITERATE=10
+NUM=2097152
+TIMEOUT=40s # 3 TFlop/s at N = 2M: ~40 s
+NUM_ITERATE=3
 GPU_ID=0
 
 # OpenMP target: loop/distribute, w/ or w/o dedicated options
@@ -51,6 +54,8 @@ if [ $NVIDIA_GPU == 1 ]; then
 	VENDER=nvidia
 	# ARCH=80
 	ARCH=90
+	MIN_THREADS=32
+	MAX_THREADS=1024
 fi
 
 # recipe for AMD GPU
@@ -61,12 +66,16 @@ if [ $AMD_GPU == 1 ]; then
 	# ARCH=gfx908
 	GPU_ID=2
 	ARCH=gfx90a
+	MIN_THREADS=64
+	MAX_THREADS=1024
 fi
 
 # recipe for Intel GPU
 if [ $INTEL_GPU == 1 ]; then
 	VENDER=intel
 	ARCH=pvc
+	MIN_THREADS=16
+	MAX_THREADS=1024
 fi
 
 # recipe for NVIDIA HPC SDK
@@ -115,10 +124,10 @@ fi
 
 TARGET=${COMPILER}_${VENDER}
 module list
+make dir
 
-DUMP=scaling
-mkdir -p "${DUMP}"
-
+THREADS_MIN=${MIN_THREADS}
+THREADS_MAX=${MAX_THREADS}
 for MODEL_ID in ${MODEL_ID_LIST[@]}
 do
 	USE_OPENACC=0
@@ -138,88 +147,31 @@ do
 		USE_ACC_PARALLEL=1
 	fi
 
-	if [ $USE_NVHPC == 1 ]; then
-		if [ $MODEL_ID -eq 0 ] ; then
-			THREADS=128
-		fi
-		if [ $MODEL_ID -eq 1 ] ; then
-			THREADS=128
-		fi
-		if [ $MODEL_ID -eq 2 ] ; then
-			THREADS=128
-		fi
-		if [ $MODEL_ID -eq 3 ] ; then
-			THREADS=256
-		fi
-		if [ $MODEL_ID -eq 4 ] ; then
-			THREADS=64
-		fi
-		if [ $MODEL_ID -eq 5 ] ; then
-			THREADS=64
-		fi
-		if [ $MODEL_ID -eq 6 ] ; then
-			THREADS=128
-		fi
-		if [ $MODEL_ID -eq 7 ] ; then
-			THREADS=128
-		fi
-	fi
-
-	if [ $USE_AMDCLANG == 1 ]; then
-		if [ $MODEL_ID -eq 0 ] ; then
-			THREADS=256
-		fi
-		if [ $MODEL_ID -eq 1 ] ; then
-			THREADS=256
-		fi
-		if [ $MODEL_ID -eq 2 ] ; then
-			THREADS=64
-		fi
-		if [ $MODEL_ID -eq 3 ] ; then
-			THREADS=64
-		fi
-	fi
-
-	if [ $USE_ICPX == 1 ]; then
-		if [ $MODEL_ID -eq 0 ] ; then
-			THREADS=256
-		fi
-		if [ $MODEL_ID -eq 1 ] ; then
-			THREADS=32
-		fi
-		if [ $MODEL_ID -eq 2 ] ; then
-			THREADS=512
-		fi
-		if [ $MODEL_ID -eq 3 ] ; then
-			THREADS=32
-		fi
-	fi
-
-	make dir
-	make clean
-	make all NVHPC=$USE_NVHPC AMDCLANG=$USE_AMDCLANG ICPX=$USE_ICPX ACPP=$USE_ACPP USE_OPENACC=$USE_OPENACC USE_ACC_PARALLEL=$USE_ACC_PARALLEL USE_OMP_DISTRIBUTE=$USE_OMP_DISTRIBUTE USE_FAST_MATH=$USE_FAST_MATH MODEL_ID=${MODEL_ID} NUM_THREADS=$THREADS GPU_ARCH=${ARCH} BENCHMARK=1 SET_NMIN=${NUM_MIN} SET_NMAX=${NUM_MAX}
-	APPEND=${COMPILER}_${ARCH}_model${MODEL_ID}_thrd${THREADS}
-	for TAG in nbody acc omp
+	for (( THREADS = ${THREADS_MIN} ; THREADS <= ${THREADS_MAX} ; THREADS *= 2 ))
 	do
-		BIN=bin/${TAG}_pragma
-		EXEC=${BIN}_${APPEND}
-		mv ${BIN} $EXEC
-		if [ -e $EXEC ]; then
-			mkdir -p log dat fig
-			COMMAND="numactl --cpunodebind=$NUMA_NODE --localalloc $EXEC"
-			for (( COUNTER = 0 ; COUNTER < ${NUM_ITERATE} ; COUNTER += 1 ))
-			do
-				echo ${COMMAND}
-				eval ${COMMAND}
-			done
-
-			mkdir -p ${DUMP}/model${MODEL_ID}/${TAG}
-			mv --backup=numbered log ${DUMP}/model${MODEL_ID}/${TAG}
-		fi
+		make clean
+		make all NVHPC=$USE_NVHPC AMDCLANG=$USE_AMDCLANG ICPX=$USE_ICPX ACPP=$USE_ACPP USE_OPENACC=$USE_OPENACC USE_ACC_PARALLEL=$USE_ACC_PARALLEL USE_OMP_DISTRIBUTE=$USE_OMP_DISTRIBUTE USE_FAST_MATH=$USE_FAST_MATH MODEL_ID=${MODEL_ID} NUM_THREADS=$THREADS GPU_ARCH=${ARCH} BENCHMARK=1 SET_NMIN=${NUM} SET_NMAX=${NUM}
+		APPEND=${COMPILER}_${ARCH}_model${MODEL_ID}_thrd${THREADS}
+		for BIN in bin/nbody_pragma bin/acc_pragma bin/omp_pragma
+		do
+			EXEC=${BIN}_${APPEND}
+			mv ${BIN} $EXEC
+			if [ -e $EXEC ]; then
+				COMMAND="timeout ${TIMEOUT} numactl --cpunodebind=$NUMA_NODE --localalloc $EXEC"
+				for (( COUNTER = 0 ; COUNTER < ${NUM_ITERATE} ; COUNTER += 1 ))
+				do
+					sleep ${TIMEOUT}
+					echo ${COMMAND}
+					eval ${COMMAND}
+				done
+			fi
+		done
 	done
-	mv --backup=numbered bin ${DUMP}/model${MODEL_ID}
 done
 
+DUMP=survey
+mkdir -p "${DUMP}"
+mv bin log ${DUMP}
 HOST=`hostname --short`
 DEST=${HOST}_${TARGET}_${ARCH}
 mkdir -p "${DEST}"
