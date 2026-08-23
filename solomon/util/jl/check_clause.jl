@@ -44,11 +44,20 @@ function generate(io::IO, N_max::Int)
     println(io, "///                   (where N >= your clause count)")
     println(io, "///")
     println(io, "#define SOLOMON_INTERNAL_APPEND_CLAUSES(...) SOLOMON_INTERNAL_SORT_AND_OUTPUT(SOLOMON_INTERNAL_CHECK_CLAUSE_", N_max, "(__VA_ARGS__))")
-    # Original SOLOMON_INTERNAL_APPEND_CLAUSES without sorting (kept as comment for reference)
-    println(io, "// #define SOLOMON_INTERNAL_APPEND_CLAUSES(...) SOLOMON_INTERNAL_CHECK_CLAUSE_", N_max, "(__VA_ARGS__)")
+
+    # SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING: checking only, without clause sorting
+    println(io)
+    println(io, "///")
+    println(io, "/// @brief Apply automatic checking valid clauses")
+    println(io, "/// @warning Passing more than ", N_max, " clauses will cause a compile error:")
+    println(io, "///          - Error message: 'SOLOMON_INTERNAL_CHECK_CLAUSE_*' was not declared in this scope")
+    println(io, "///          - To fix: cd solomon/util && julia jl/check_clause.jl --max N")
+    println(io, "///                   (where N >= your clause count)")
+    println(io, "///")
+    println(io, "#define SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(...) SOLOMON_INTERNAL_CHECK_CLAUSE_", N_max, "(__VA_ARGS__)")
 
 	println(io)
-    println(io, "#endif // !defined(SOLOMON_UTIL_IMPL_CHECK_CLAUSE_HPP)")
+    println(io, "#endif  // !defined(SOLOMON_UTIL_IMPL_CHECK_CLAUSE_HPP)")
 end
 
 function main()
