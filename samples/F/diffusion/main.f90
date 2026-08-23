@@ -56,7 +56,7 @@ program main
 
 #if defined(APPLY_FIRST_TOUCH)
   !! first touch
-  OFFLOAD(AS_PRIVATE(i,j,k))
+  SOLOMON_OFFLOAD(SOLOMON_CLAUSE_PRIVATE(i,j,k))
   do k=1, nz
      do j=1, ny
         do i=1, nx
@@ -65,7 +65,7 @@ program main
         end do ! i
      end do ! j
   end do ! k
-  END_OFFLOAD
+  SOLOMON_END_OFFLOAD
 #endif // !defined(APPLY_FIRST_TOUCH)
 
   call init(nx, ny, nz, dx, dy, dz, f)

@@ -26,7 +26,7 @@ double diffusion3d(int nx, int ny, int nz, float dx, float dy, float dz, float d
 
   const float cc = 1.0 - (ce + cw + cn + cs + ct + cb);
 
-  OFFLOAD(AS_INDEPENDENT, COLLAPSE(3), ACC_CLAUSE_PRESENT(f, fn))
+  SOLOMON_OFFLOAD(SOLOMON_CLAUSE_INDEPENDENT, SOLOMON_CLAUSE_COLLAPSE(3), ACC_CLAUSE_PRESENT(f, fn))
   for (int i = 0; i < nx; i++) {
     for (int j = 0; j < ny; j++) {
       for (int k = 0; k < nz; k++) {
