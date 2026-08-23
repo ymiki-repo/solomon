@@ -1,0 +1,24 @@
+{
+    "name": "solomon-highlight",
+    "displayName": "Solomon Highlight",
+    "description": "Highlight Solomon offloading macros as preprocessor directives (local injection grammar; no build step). Install: copy or symlink this folder into ~/.vscode/extensions/ and restart VS Code.",
+    "version": "2.0.0",
+    "publisher": "solomon-local",
+    "engines": {
+        "vscode": "^1.50.0"
+    },
+    "contributes": {
+        "grammars": [
+            {
+                "injectTo": [
+                    "source.c",
+                    "source.cpp",
+                    "source.fortran.free",
+                    "source.fortran.fixed"
+                ],
+                "scopeName": "solomon.injection",
+                "path": "./syntaxes/solomon.tmLanguage.json"
+            }
+        ]
+    }
+}

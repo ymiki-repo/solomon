@@ -1,2 +1,39 @@
+# reference clang-format configuration for codes using Solomon
+# (not enforced by CI; copy the macro lists below into your own .clang-format)
+#
+# registering the Solomon directive macros keeps clang-format from mangling
+# directive lines (e.g., merging them into the following statement)
+Language: Cpp
 BasedOnStyle: Google
 ColumnLimit: 0
+# directive macros that appear as standalone statements
+StatementMacros:
+  - SOLOMON_OFFLOAD
+  - SOLOMON_END_OFFLOAD
+  - SOLOMON_OFFLOAD_OUTER_LOOP
+  - SOLOMON_PARALLELIZE_INNER_LOOP
+  - SOLOMON_END_OFFLOAD_OUTER_LOOP
+  - SOLOMON_SYNCHRONIZE
+  - SOLOMON_WAIT_QUEUE
+  - SOLOMON_ATOMIC
+  - SOLOMON_ATOMIC_UPDATE
+  - SOLOMON_ATOMIC_READ
+  - SOLOMON_ATOMIC_WRITE
+  - SOLOMON_ATOMIC_CAPTURE
+  - SOLOMON_DATA_ACCESS_BY_HOST
+  - SOLOMON_DATA_ACCESS_BY_DEVICE
+  - SOLOMON_USE_DEVICE_DATA_FROM_HOST
+  - SOLOMON_MALLOC_ON_DEVICE
+  - SOLOMON_ALLOCATE_ON_DEVICE
+  - SOLOMON_FREE_FROM_DEVICE
+  - SOLOMON_DEALLOCATE_ON_DEVICE
+  - SOLOMON_MEMCPY_D2H
+  - SOLOMON_MEMCPY_H2D
+  - SOLOMON_DECLARE_DATA_ON_DEVICE
+  - SOLOMON_DECLARE_ON_DEVICE
+  - SOLOMON_DECLARE_ON_DEVICE_LINKED
+  - SOLOMON_DECLARE_OFFLOADED_END
+# directive macros that precede a declaration
+AttributeMacros:
+  - SOLOMON_DECLARE_OFFLOADED
+  - SOLOMON_IF_NOT_OFFLOADED
