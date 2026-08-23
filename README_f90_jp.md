@@ -13,6 +13,14 @@
 * Released under the MIT license, see LICENSE.txt
 * Copyright (c) 2024 Yohei MIKI
 
+## v1.x との後方互換性（v2.0.0 以降）
+
+* v2.0.0 では，ユーザーコードや他ライブラリとの名前衝突を避けるため，ユーザー向けマクロを全て改名しました:
+  * 指示文マクロには `SOLOMON_` 接頭辞が付きます（例: `OFFLOAD(...)` は `SOLOMON_OFFLOAD(...)` になりました）
+  * 引数トークンには `SOLOMON_CLAUSE_` 接頭辞が付きます（例: `AS_INDEPENDENT` は `SOLOMON_CLAUSE_INDEPENDENT`，`COLLAPSE(n)` は `SOLOMON_CLAUSE_COLLAPSE(n)` になりました）
+* v1.x 向けに書かれたコードは，`SOLOMON_WITH_SHORT_NAMES` を定義する（例: コンパイルフラグに `-DSOLOMON_WITH_SHORT_NAMES` を追加する）ことで従来の接頭辞なしの綴りが有効になり，そのまま動作します（デフォルト: OFF）
+* 設定マクロには新しい綴り `-DSOLOMON_OFFLOAD_BY_*` が追加されました．従来の `-DSOLOMON_OFFLOAD_BY_*` は無条件で使用し続けられます（`SOLOMON_WITH_SHORT_NAMES` の定義は不要です）
+
 ## 意義
 
 ### 背景
@@ -73,24 +81,24 @@
 
 2. OpenACC/OpenMP target 指示文のかわりに Solomon が提供するマクロを挿入する
 
-   * GPU化を始めたばかりの方には，`OFFLOAD(...)` などの簡易記法の利用をおすすめします
+   * GPU化を始めたばかりの方には，`SOLOMON_OFFLOAD(...)` などの簡易記法の利用をおすすめします
    * OpenACC あるいは OpenMP target を用いた開発に慣れている方は，OpenACC/OpenMP 的な記法を使うこともできます
      * OpenMP 的記法を使った場合には，`PRAGMA_OMP_TARGET_*` や `OMP_TARGET_CLAUSE_*` のように `_TARGET_` をつけたものだけが OpenACC 使用時における変換対象となります（例えば `PRAGMA_OMP_ATOMIC(...)` は `!$omp atomic __VA_ARGS__` へと変換されるため，`!$acc atomic __VA_ARGS__` には変換されません）
      * `PRAGMA_OMP_TARGET_DATA(...)` という記法は使わないでください
-       * 演算加速器（GPU）からアクセスするデータについては `DATA_ACCESS_BY_DEVICE(...)` か `PRAGMA_ACC_DATA(...)`，ホスト（CPU）からアクセスするデータについては `DATA_ACCESS_BY_HOST(...)` か `PRAGMA_ACC_HOST_DATA(...)` をお使いください
-     * OpenACC 的記法における`PRAGMA_ACC_ROUTINE(...)`（や`DECLARE_OFFLOADED(...)`などの対応するマクロ）を使用した際には，対象リージョンの最後に`DECLARE_OFFLOADED_END` （や`PRAGMA_OMP_END_DECLARE_TARGET`）も挿入してください
-   * GPU実行時には無視してほしい指示文については，`IF_NOT_OFFLOADED(arg)` の中に記入してください
+       * 演算加速器（GPU）からアクセスするデータについては `SOLOMON_DATA_ACCESS_BY_DEVICE(...)` か `PRAGMA_ACC_DATA(...)`，ホスト（CPU）からアクセスするデータについては `SOLOMON_DATA_ACCESS_BY_HOST(...)` か `PRAGMA_ACC_HOST_DATA(...)` をお使いください
+     * OpenACC 的記法における`PRAGMA_ACC_ROUTINE(...)`（や`SOLOMON_DECLARE_OFFLOADED(...)`などの対応するマクロ）を使用した際には，対象リージョンの最後に`SOLOMON_DECLARE_OFFLOADED_END` （や`PRAGMA_OMP_END_DECLARE_TARGET`）も挿入してください
+   * GPU実行時には無視してほしい指示文については，`SOLOMON_IF_NOT_OFFLOADED(arg)` の中に記入してください
      * <details><summary> 実装例: `arg` については，縮退モード（OpenACC と OpenMP target 両方を無効化した場合）のみ実体化されます</summary>
 
        ```Fortran
-       OFFLOAD(AS_PRIVATE(i,j))
+       SOLOMON_OFFLOAD(SOLOMON_CLAUSE_PRIVATE(i,j))
        do i=1, num
-         IF_NOT_OFFLOADED(PRAGMA_OMP_SIMD())
+         SOLOMON_IF_NOT_OFFLOADED(PRAGMA_OMP_SIMD())
          do j=1, 16
            ! computation
          end do
        end do
-       END_OFFLOAD
+       SOLOMON_END_OFFLOAD
        ```
 
        * OpenACC 使用時
@@ -135,52 +143,52 @@
    * 指示文に付与する指示節・指示句については，下記の例のようにカンマ区切りで渡してください：
 
       ```Fortran
-      OFFLOAD(AS_INDEPENDENT, ACC_CLAUSE_VECTOR_LENGTH(128), OMP_TARGET_CLAUSE_COLLAPSE(3))
+      SOLOMON_OFFLOAD(SOLOMON_CLAUSE_INDEPENDENT, ACC_CLAUSE_VECTOR_LENGTH(128), OMP_TARGET_CLAUSE_COLLAPSE(3))
       ```
 
       * 簡易記法，OpenACC/OpenMP的記法を混ぜても問題ありません
-      * ~~`AS_INDEPENDENT`（およびこれに対応する `ACC_CLAUSE_INDEPENDENT` や `OMP_TARGET_CLAUSE_SIMD`）については，全ての指示節・指示句の先頭に記載してください~~
-        * **[更新 v1.1.0]** この制約は自動的に処理されるようになりました．どの順番で記述されていても，`AS_INDEPENDENT`（及びその同義語）を Solomon が自動的に先頭に並び替えます
+      * ~~`SOLOMON_CLAUSE_INDEPENDENT`（およびこれに対応する `ACC_CLAUSE_INDEPENDENT` や `OMP_TARGET_CLAUSE_SIMD`）については，全ての指示節・指示句の先頭に記載してください~~
+        * **[更新 v1.1.0]** この制約は自動的に処理されるようになりました．どの順番で記述されていても，`SOLOMON_CLAUSE_INDEPENDENT`（及びその同義語）を Solomon が自動的に先頭に並び替えます
       * 指示文に対応していない指示節・指示句については，Solomon が自動的に無視します
    * OpenACC/OpenMP target間の互換性向上のため，（個々のマクロを直接使うよりも）下記に示す統合マクロの使用をおすすめします
 
      | 推奨実装 | 対応実装（非推奨） |
      | ---- | ---- |
-     | **`OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` | `PRAGMA_ACC_KERNELS(...) PRAGMA_ACC_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL(...) PRAGMA_ACC_LOOP(...)` |
-     | **`DECLARE_DATA_ON_DEVICE(...)`** <br> `PRAGMA_ACC_DATA_PRESENT(...)` | `PRAGMA_ACC_DATA(ACC_CLAUSE_PRESENT(...))` |
+     | **`SOLOMON_OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` | `PRAGMA_ACC_KERNELS(...) PRAGMA_ACC_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL(...) PRAGMA_ACC_LOOP(...)` |
+     | **`SOLOMON_DECLARE_DATA_ON_DEVICE(...)`** <br> `PRAGMA_ACC_DATA_PRESENT(...)` | `PRAGMA_ACC_DATA(ACC_CLAUSE_PRESENT(...))` |
      | `OMP_TARGET_CLAUSE_MAP_TO(...)` | `OMP_TARGET_CLAUSE_MAP(OMP_TARGET_CLAUSE_TO(...))` |
 
-     * `OFFLOAD(...)` よりも細粒度でGPU化・並列化を指示したい場合（多重ループ中の個々のループに指示文を付与したい場合）には，下記のマクロが使えます
+     * `SOLOMON_OFFLOAD(...)` よりも細粒度でGPU化・並列化を指示したい場合（多重ループ中の個々のループに指示文を付与したい場合）には，下記のマクロが使えます
        * OpenACC/OpenMP target間の互換性向上のため，統合マクロの使用が推奨です（OpenACC/OpenMP的記法を使って直接実装した際には，両指示文の設計の違いから異なるバックエンドへ正しく変換される保証がありません）
 
        | 使用可能なマクロ | 出力 | 使用されるバックエンド | 備考 |
        | ---- | ---- | ---- | ---- |
-       | **`OFFLOAD_OUTER_LOOP(...)`** | `!$acc parallel [...] !$acc loop gang [...]` <br> `!$omp target teams distribute [...]` <br> `!$omp parallel do [...]` | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） | 多重ループの外側ループに指定 <br> スレッド数などは `NUM_THREADS(n)` や `NUM_BLOCKS(n)` などで示唆する <br> `AS_BLOCK`, `ACC_CLAUSE_GANG` などは重複指定となってしまうため付与してはいけない |
-       | **`PARALLELIZE_INNER_LOOP(...)`** | `!$acc loop vector [...]` <br> `!$omp parallel do [...]` <br> 無視される（外側ループが並列化済みのため） | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） | 多重ループの内側ループに指定 <br> `AS_THREAD`, `ACC_CLAUSE_VECTOR` などは重複指定となってしまうため付与してはいけない |
+       | **`SOLOMON_OFFLOAD_OUTER_LOOP(...)`** | `!$acc parallel [...] !$acc loop gang [...]` <br> `!$omp target teams distribute [...]` <br> `!$omp parallel do [...]` | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） | 多重ループの外側ループに指定 <br> スレッド数などは `SOLOMON_CLAUSE_NUM_THREADS(n)` や `SOLOMON_CLAUSE_NUM_BLOCKS(n)` などで示唆する <br> `SOLOMON_CLAUSE_BLOCK`, `ACC_CLAUSE_GANG` などは重複指定となってしまうため付与してはいけない |
+       | **`SOLOMON_PARALLELIZE_INNER_LOOP(...)`** | `!$acc loop vector [...]` <br> `!$omp parallel do [...]` <br> 無視される（外側ループが並列化済みのため） | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） | 多重ループの内側ループに指定 <br> `SOLOMON_CLAUSE_THREAD`, `ACC_CLAUSE_VECTOR` などは重複指定となってしまうため付与してはいけない |
 
        ```Fortran
-       OFFLOAD_OUTER_LOOP(NUM_BLOCKS(16384), NUM_THREADS(256))
+       SOLOMON_OFFLOAD_OUTER_LOOP(SOLOMON_CLAUSE_NUM_BLOCKS(16384), SOLOMON_CLAUSE_NUM_THREADS(256))
        do i = 1, N_out
          ! common computation
-         PARALLELIZE_INNER_LOOP()
+         SOLOMON_PARALLELIZE_INNER_LOOP()
          do j = 1, N_in
            ! further computation
          end do
        end do
-       END_OFFLOAD_OUTER_LOOP
+       SOLOMON_END_OFFLOAD_OUTER_LOOP
        ```
 
    * カーネルの非同期実行および同期処理については下記のマクロが提供されているので，用途に合わせて使い分けてください
      * OpenACC/OpenMP target間の互換性向上のため，非同期実行および同期処理についてもSolomonが提供する簡易記法の使用をおすすめします
-     * バックエンドに依らず非同期処理を実行したい場合には`AS_ASYNC(...)`および`SYNCHRONIZE(...)`を用いてください．キューIDの指定は無視される場合がある点にご注意ください
-     * キューIDを指定した細やかな非同期処理を実行したい場合には`ASYNC_QUEUE(id)`および`WAIT_QUEUE(id)`を用いてください．非同期実行がなされない場合がある点にご注意ください
+     * バックエンドに依らず非同期処理を実行したい場合には`SOLOMON_CLAUSE_ASYNC(...)`および`SOLOMON_SYNCHRONIZE(...)`を用いてください．キューIDの指定は無視される場合がある点にご注意ください
+     * キューIDを指定した細やかな非同期処理を実行したい場合には`SOLOMON_CLAUSE_ASYNC_QUEUE(id)`および`SOLOMON_WAIT_QUEUE(id)`を用いてください．非同期実行がなされない場合がある点にご注意ください
 
      | 使用可能なマクロ | 出力 | 使用されるバックエンド | 備考 |
      | ---- | ---- | ---- | ---- |
-     | **`AS_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | `async(__VA_ARGS__)` <br> `nowait` | OpenACC <br> OpenMP | 両バックエンドで共通して非同期実行される <br> OpenACC においてはキューIDを指定可能 <br> OpenMP においてはキューIDは無視される |
-     | **`SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | OpenACC <br> OpenMP | 両バックエンドで共通して同期処理が実行される．`AS_ASYNC(...)` に対応して記述する |
-     | **`ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | `async(id)` <br> N/A（OpenMP target 使用時には無視される） | OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して非同期実行 <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した非同期実行がサポートされていないため，無視される |
-     | **`WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | `wait(id)` <br> N/A（OpenMP target 使用時には無視される） | OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して同期処理を実行．`ASYNC_QUEUE(id)` に対応して記述する <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した同期処理がサポートされていないため，無視される |
+     | **`SOLOMON_CLAUSE_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | `async(__VA_ARGS__)` <br> `nowait` | OpenACC <br> OpenMP | 両バックエンドで共通して非同期実行される <br> OpenACC においてはキューIDを指定可能 <br> OpenMP においてはキューIDは無視される |
+     | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | OpenACC <br> OpenMP | 両バックエンドで共通して同期処理が実行される．`SOLOMON_CLAUSE_ASYNC(...)` に対応して記述する |
+     | **`SOLOMON_CLAUSE_ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | `async(id)` <br> N/A（OpenMP target 使用時には無視される） | OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して非同期実行 <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した非同期実行がサポートされていないため，無視される |
+     | **`SOLOMON_WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | `wait(id)` <br> N/A（OpenMP target 使用時には無視される） | OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して同期処理を実行．`SOLOMON_CLAUSE_ASYNC_QUEUE(id)` に対応して記述する <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した同期処理がサポートされていないため，無視される |
 
 ### Solomon を使ったコードのコンパイル方法
 
@@ -199,10 +207,10 @@
 
   | プリプロセスフラグ | 使用されるバックエンド | 備考 |
   | ---- | ---- | ---- |
-  | `-DOFFLOAD_BY_OPENACC` | OpenACC | デフォルトでは `kernels` 構文を使用 |
-  | `-DOFFLOAD_BY_OPENACC -DOFFLOAD_BY_OPENACC_PARALLEL` | OpenACC | デフォルトでは `parallel` 構文を使用 |
-  | `-DOFFLOAD_BY_OPENMP_TARGET` | OpenMP target | デフォルトでは `loop` 指示文を使用 |
-  | `-DOFFLOAD_BY_OPENMP_TARGET -DOFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE` | OpenMP target | デフォルトでは `distribute` 指示文を使用 |
+  | `-DSOLOMON_OFFLOAD_BY_OPENACC` | OpenACC | デフォルトでは `kernels` 構文を使用 |
+  | `-DSOLOMON_OFFLOAD_BY_OPENACC -DSOLOMON_OFFLOAD_BY_OPENACC_PARALLEL` | OpenACC | デフォルトでは `parallel` 構文を使用 |
+  | `-DSOLOMON_OFFLOAD_BY_OPENMP_TARGET` | OpenMP target | デフォルトでは `loop` 指示文を使用 |
+  | `-DSOLOMON_OFFLOAD_BY_OPENMP_TARGET -DSOLOMON_OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE` | OpenMP target | デフォルトでは `distribute` 指示文を使用 |
   | | 縮退モード | OpenMP を用いたマルチコアCPU向けのスレッド並列 |
   | | シリアルモード | OpenACC・OpenMP のいずれも有効化されていない場合は，全ての指示文が除去されシリアルコードとしてコンパイルされます（v2.0.0 以降） |
 
@@ -223,7 +231,7 @@
      ```Makefile
      SOLOMON_DIR = ../../../solomon
      FC = nvfortran -acc=gpu
-     FLAGS = -O3 -DOFFLOAD_BY_OPENACC
+     FLAGS = -O3 -DSOLOMON_OFFLOAD_BY_OPENACC
      INC = -I$(SOLOMON_DIR)
 
      SOLOMON_FC    = $(FC)
@@ -254,9 +262,9 @@
 
       ```sh
       export SOLOMON_DIR=/path/to/Solomon
-      $(SOLOMON_DIR)/spp.sh -compiler=nvfortran -acc=gpu -mp=gpu -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # NVIDIA HPC SDK の場合
-      $(SOLOMON_DIR)/spp.sh -compiler=amdflang -fopenmp -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # AMD ROCm の場合
-      $(SOLOMON_DIR)/spp.sh -compiler=ifx -fiopenmp -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # Intel oneAPI の場合
+      $(SOLOMON_DIR)/spp.sh -compiler=nvfortran -acc=gpu -mp=gpu -I$(SOLOMON_DIR) -DSOLOMON_OFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # NVIDIA HPC SDK の場合
+      $(SOLOMON_DIR)/spp.sh -compiler=amdflang -fopenmp -I$(SOLOMON_DIR) -DSOLOMON_OFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # AMD ROCm の場合
+      $(SOLOMON_DIR)/spp.sh -compiler=ifx -fiopenmp -I$(SOLOMON_DIR) -DSOLOMON_OFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # Intel oneAPI の場合
       ```
 
       * `-compiler=...` の引数およびコンパイラフラグは使用する環境に応じて適宜置き換えてください
@@ -287,7 +295,7 @@
   3. FortranのソースファイルをC言語用のプリプロセッサを用いた以下の2つのコマンドでプリプロセスを実行してください
 
      ```sh
-     cpp -P -DSOLOMON_FORTRAN -D_OPENACC=201711 -I../../../solomon -DOFFLOAD_BY_OPENACC mysrc.f90 > spp/mysrc.i.f90
+     cpp -P -DSOLOMON_FORTRAN -D_OPENACC=201711 -I../../../solomon -DSOLOMON_OFFLOAD_BY_OPENACC mysrc.f90 > spp/mysrc.i.f90
      sed 's/^#pragma /!$/g' spp/mysrc.i.f90 > spp/mysrc.f90
      ```
 
@@ -345,20 +353,20 @@
 
   | 入力 | 出力 | バックエンドとして用いる指示文 |
   | ---- | ---- | ---- |
-  | **`OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...)` | `!$acc kernels __VA_ARGS__` <br> `!$acc loop __VA_ARGS__` <br> `!$acc parallel __VA_ARGS__` <br> `!$acc loop __VA_ARGS__` <br> `!$omp target teams loop __VA_ARGS__` <br> `!$omp target teams distribute parallel do __VA_ARGS__` | OpenACC (kernels) <br><br> OpenACC (parallel) <br><br> OpenMP (loop) <br> OpenMP (distribute) |
-  | **`OFFLOAD_OUTER_LOOP(...)`** | `!$acc parallel __VA_ARGS__ !$acc loop gang __VA_ARGS__` <br> `!$omp target teams distribute __VA_ARGS__` <br> `!$omp parallel do __VA_ARGS__` | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） |
-  | **`PARALLELIZE_INNER_LOOP(...)`** | `!$acc loop vector __VA_ARGS__` <br> `!$omp parallel do __VA_ARGS__` <br> 無視される（外側ループが並列化済みのため） | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） |
-  | **`SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | OpenACC <br> OpenMP |
-  | **`WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | `!$acc wait id` | OpenACC (only) |
-  | **`DECLARE_OFFLOADED(...)`** <br> `PRAGMA_ACC_ROUTINE(...)` <br> `PRAGMA_OMP_DECLARE_TARGET(...)` | `!$acc routine __VA_ARGS__` <br> `!$omp declare target __VA_ARGS__` | OpenACC <br> OpenMP |
-  | **`DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | `!$omp end declare target` | OpenMP (only) |
-  | **`ATOMIC(...)`** <br> `PRAGMA_ACC_ATOMIC(...)` <br> `PRAGMA_OMP_TARGET_ATOMIC(...)` | `!$acc atomic __VA_ARGS__` <br> `!$omp atomic __VA_ARGS__` | OpenACC <br> OpenMP |
-  | **`ATOMIC_UPDATE`** <br> `PRAGMA_ACC_ATOMIC_UPDATE` <br> `PRAGMA_OMP_TARGET_ATOMIC_UPDATE` | `!$acc atomic update` <br> `!$omp atomic update` | OpenACC <br> OpenMP |
-  | **`ATOMIC_READ`** <br> `PRAGMA_ACC_ATOMIC_READ` <br> `PRAGMA_OMP_TARGET_ATOMIC_READ` | `!$acc atomic read` <br> `!$omp atomic read` | OpenACC <br> OpenMP |
-  | **`ATOMIC_WRITE`** <br> `PRAGMA_ACC_ATOMIC_WRITE` <br> `PRAGMA_OMP_TARGET_ATOMIC_WRITE` | `!$acc atomic write` <br> `!$omp atomic write` | OpenACC <br> OpenMP |
-  | **`ATOMIC_CAPTURE`** <br> `PRAGMA_ACC_ATOMIC_CAPTURE` <br> `PRAGMA_OMP_TARGET_ATOMIC_CAPTURE` | `!$acc atomic capture` <br> `!$omp atomic capture` | OpenACC <br> OpenMP |
-  | **`END_OFFLOAD`** | `!$acc end parallel` | OpenACC (only) |
-  | **`END_OFFLOAD_OUTER_LOOP`** | `!$acc end parallel` | OpenACC (only) |
+  | **`SOLOMON_OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...)` | `!$acc kernels __VA_ARGS__` <br> `!$acc loop __VA_ARGS__` <br> `!$acc parallel __VA_ARGS__` <br> `!$acc loop __VA_ARGS__` <br> `!$omp target teams loop __VA_ARGS__` <br> `!$omp target teams distribute parallel do __VA_ARGS__` | OpenACC (kernels) <br><br> OpenACC (parallel) <br><br> OpenMP (loop) <br> OpenMP (distribute) |
+  | **`SOLOMON_OFFLOAD_OUTER_LOOP(...)`** | `!$acc parallel __VA_ARGS__ !$acc loop gang __VA_ARGS__` <br> `!$omp target teams distribute __VA_ARGS__` <br> `!$omp parallel do __VA_ARGS__` | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） |
+  | **`SOLOMON_PARALLELIZE_INNER_LOOP(...)`** | `!$acc loop vector __VA_ARGS__` <br> `!$omp parallel do __VA_ARGS__` <br> 無視される（外側ループが並列化済みのため） | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） |
+  | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`SOLOMON_WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | `!$acc wait id` | OpenACC (only) |
+  | **`SOLOMON_DECLARE_OFFLOADED(...)`** <br> `PRAGMA_ACC_ROUTINE(...)` <br> `PRAGMA_OMP_DECLARE_TARGET(...)` | `!$acc routine __VA_ARGS__` <br> `!$omp declare target __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | `!$omp end declare target` | OpenMP (only) |
+  | **`SOLOMON_ATOMIC(...)`** <br> `PRAGMA_ACC_ATOMIC(...)` <br> `PRAGMA_OMP_TARGET_ATOMIC(...)` | `!$acc atomic __VA_ARGS__` <br> `!$omp atomic __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`SOLOMON_ATOMIC_UPDATE`** <br> `PRAGMA_ACC_ATOMIC_UPDATE` <br> `PRAGMA_OMP_TARGET_ATOMIC_UPDATE` | `!$acc atomic update` <br> `!$omp atomic update` | OpenACC <br> OpenMP |
+  | **`SOLOMON_ATOMIC_READ`** <br> `PRAGMA_ACC_ATOMIC_READ` <br> `PRAGMA_OMP_TARGET_ATOMIC_READ` | `!$acc atomic read` <br> `!$omp atomic read` | OpenACC <br> OpenMP |
+  | **`SOLOMON_ATOMIC_WRITE`** <br> `PRAGMA_ACC_ATOMIC_WRITE` <br> `PRAGMA_OMP_TARGET_ATOMIC_WRITE` | `!$acc atomic write` <br> `!$omp atomic write` | OpenACC <br> OpenMP |
+  | **`SOLOMON_ATOMIC_CAPTURE`** <br> `PRAGMA_ACC_ATOMIC_CAPTURE` <br> `PRAGMA_OMP_TARGET_ATOMIC_CAPTURE` | `!$acc atomic capture` <br> `!$omp atomic capture` | OpenACC <br> OpenMP |
+  | **`SOLOMON_END_OFFLOAD`** | `!$acc end parallel` | OpenACC (only) |
+  | **`SOLOMON_END_OFFLOAD_OUTER_LOOP`** | `!$acc end parallel` | OpenACC (only) |
   | **`PRAGMA_ACC_END_PARALLEL`** | `!$acc end parallel` | OpenACC (only) |
   | **`PRAGMA_ACC_END_KERNELS`** | `!$acc end kernels` | OpenACC (only) |
   | **`PRAGMA_ACC_END_SERIAL`** | `!$acc end serial` | OpenACC (only) |
@@ -485,19 +493,19 @@
 
   | 入力 | 出力 | バックエンドとして用いる指示文 |
   | ---- | ---- | ---- |
-  | **`ALLOCATE_ON_DEVICE(...)`** <br> `PRAGMA_ACC_ENTER_DATA_CREATE(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA_MAP_ALLOC(...)` | `!$acc enter data create(__VA_ARGS__)` <br> `!$omp target enter data map(alloc: __VA_ARGS__)` | OpenACC <br> OpenMP |
-  | **`DEALLOCATE_ON_DEVICE(...)`** <br> `PRAGMA_ACC_EXIT_DATA_DELETE(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA_MAP_DELETE(...)` | `!$acc exit data delete(__VA_ARGS__)` <br> `!$omp target exit data map(delete: __VA_ARGS__)` | OpenACC <br> OpenMP |
-  | **`MEMCPY_D2H(...)`** <br> `PRAGMA_ACC_UPDATE_HOST(...)` <br> `PRAGMA_OMP_TARGET_UPDATE_FROM(...)` | `!$acc update host(__VA_ARGS__)` <br> `!$omp target update from(__VA_ARGS__)` | OpenACC <br> OpenMP |
-  | **`MEMCPY_H2D(...)`** <br> `PRAGMA_ACC_UPDATE_DEVICE(...)` <br> `PRAGMA_OMP_TARGET_UPDATE_TO(...)` | `!$acc update device(__VA_ARGS__)` <br> `!$omp target update to(__VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`SOLOMON_ALLOCATE_ON_DEVICE(...)`** <br> `PRAGMA_ACC_ENTER_DATA_CREATE(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA_MAP_ALLOC(...)` | `!$acc enter data create(__VA_ARGS__)` <br> `!$omp target enter data map(alloc: __VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`SOLOMON_DEALLOCATE_ON_DEVICE(...)`** <br> `PRAGMA_ACC_EXIT_DATA_DELETE(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA_MAP_DELETE(...)` | `!$acc exit data delete(__VA_ARGS__)` <br> `!$omp target exit data map(delete: __VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`SOLOMON_MEMCPY_D2H(...)`** <br> `PRAGMA_ACC_UPDATE_HOST(...)` <br> `PRAGMA_OMP_TARGET_UPDATE_FROM(...)` | `!$acc update host(__VA_ARGS__)` <br> `!$omp target update from(__VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`SOLOMON_MEMCPY_H2D(...)`** <br> `PRAGMA_ACC_UPDATE_DEVICE(...)` <br> `PRAGMA_OMP_TARGET_UPDATE_TO(...)` | `!$acc update device(__VA_ARGS__)` <br> `!$omp target update to(__VA_ARGS__)` | OpenACC <br> OpenMP |
   | `PRAGMA_ACC_ENTER_DATA(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA(...)` | `!$acc enter data __VA_ARGS__` <br> `!$omp target enter data __VA_ARGS__` | OpenACC <br> OpenMP |
   | `PRAGMA_ACC_ENTER_DATA_COPYIN(...)` <br> `PRAGMA_OMP_TARGET_ENTER_DATA_MAP_TO(...)` | `!$acc enter data copyin(__VA_ARGS__)` <br> `!$omp target enter data map(to: __VA_ARGS__)` | OpenACC <br> OpenMP |
   | `PRAGMA_ACC_EXIT_DATA(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA(...)` | `!$acc exit data __VA_ARGS__` <br> `!$omp target exit data __VA_ARGS__` | OpenACC <br> OpenMP |
   | `PRAGMA_ACC_EXIT_DATA_COPYOUT(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA_MAP_FROM(...)` | `!$acc exit data copyout(__VA_ARGS__)` <br> `!$omp target exit data map(from: __VA_ARGS__)` | OpenACC <br> OpenMP |
   | `PRAGMA_ACC_UPDATE(...)` <br> `PRAGMA_OMP_TARGET_UPDATE(...)` | `!$acc update __VA_ARGS__` <br> `!$omp target update __VA_ARGS__` | OpenACC <br> OpenMP |
-  | **`DATA_ACCESS_BY_DEVICE(...)`** <br> `PRAGMA_ACC_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | `!$acc data __VA_ARGS__` <br> `!$omp target data __VA_ARGS__` | OpenACC <br> OpenMP |
-  | **`DATA_ACCESS_BY_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | `!$acc host_data __VA_ARGS__` <br> `!$omp target data __VA_ARGS__` | OpenACC <br> OpenMP |
-  | **`USE_DEVICE_DATA_FROM_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA_USE_DEVICE(...)` <br> `PRAGMA_OMP_TARGET_DATA_USE_DEVICE_ADDR(...)` | `!$acc host_data use_device(__VA_ARGS__)` <br> `!$omp target data use_device_addr(__VA_ARGS__)` | OpenACC <br> OpenMP |
-  | **`DECLARE_DATA_ON_DEVICE(...)`** <br> `PRAGMA_ACC_DATA_PRESENT(...)` | `!$acc data present(__VA_ARGS__)` | OpenACC (only) |
+  | **`SOLOMON_DATA_ACCESS_BY_DEVICE(...)`** <br> `PRAGMA_ACC_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | `!$acc data __VA_ARGS__` <br> `!$omp target data __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`SOLOMON_DATA_ACCESS_BY_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | `!$acc host_data __VA_ARGS__` <br> `!$omp target data __VA_ARGS__` | OpenACC <br> OpenMP |
+  | **`SOLOMON_USE_DEVICE_DATA_FROM_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA_USE_DEVICE(...)` <br> `PRAGMA_OMP_TARGET_DATA_USE_DEVICE_ADDR(...)` | `!$acc host_data use_device(__VA_ARGS__)` <br> `!$omp target data use_device_addr(__VA_ARGS__)` | OpenACC <br> OpenMP |
+  | **`SOLOMON_DECLARE_DATA_ON_DEVICE(...)`** <br> `PRAGMA_ACC_DATA_PRESENT(...)` | `!$acc data present(__VA_ARGS__)` | OpenACC (only) |
 
   </details>
 
@@ -530,25 +538,25 @@
 
   | 入力 | 出力 | バックエンドとして用いる指示文 | 備考 |
   | ---- | ---- | ---- | ---- |
-  | **`AS_INDEPENDENT`** <br> `ACC_CLAUSE_INDEPENDENT` <br> `OMP_TARGET_CLAUSE_SIMD` | `independent` <br> `simd` | OpenACC <br> OpenMP | |
-  | **`AS_SEQUENTIAL`** <br> `ACC_CLAUSE_SEQ` | `seq` | OpenACC (only) | |
-  | **`NUM_THREADS(n)`** <br> `ACC_CLAUSE_VECTOR_LENGTH(n)` <br> `OMP_TARGET_CLAUSE_THREAD_LIMIT(n)` | `vector_length(n)` <br> `thread_limit(n)` | OpenACC <br> OpenMP | |
-  | **`NUM_BLOCKS(n)`** <br> `ACC_CLAUSE_NUM_GANGS(n)` <br> `OMP_TARGET_CLAUSE_NUM_TEAMS(n)` | <br> `num_gangs(n)` <br> `num_teams(n)` | <br> OpenACC <br> OpenMP | v2.0.0 で `ACC_CLAUSE_NUM_WORKERS(n)` から `ACC_CLAUSE_NUM_GANGS(n)` へと変更 |
-  | ~~`NUM_GRIDS(n)`~~ <br> ~~`ACC_CLAUSE_NUM_GANGS(n)`~~ | <br> ~~`num_gangs(n)`~~ | <br> OpenACC (only) | v2.0.0 で非推奨．以降は `NUM_BLOCKS(n)` を使用 |
-  | **`AS_THREAD`** <br> `ACC_CLAUSE_VECTOR` | `vector` | OpenACC (only) | |
-  | **`AS_BLOCK`** <br> `ACC_CLAUSE_GANG` | <br> `gang` | <br> OpenACC (only) | v2.0.0 で `ACC_CLAUSE_WORKER` から `ACC_CLAUSE_GANG` へと変更 |
-  | ~~`AS_GRID`~~ <br> ~~`ACC_CLAUSE_GANG`~~ | <br> ~~`gang`~~ | <br> OpenACC (only) | v2.0.0 で非推奨．以降は `AS_BLOCK` を使用 |
-  | **`COLLAPSE(n)`** <br> `ACC_CLAUSE_COLLAPSE(n)` <br> `OMP_TARGET_CLAUSE_COLLAPSE(n)` | `collapse(n)` <br> `collapse(n)` | OpenACC <br> OpenMP | |
-  | **`AS_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | `async(__VA_ARGS__)` <br> `nowait` | OpenACC <br> OpenMP | |
-  | **`ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | `async(id)` | OpenACC (only) | |
-  | **`REDUCTION(...)`** <br> `ACC_CLAUSE_REDUCTION(...)` <br> `OMP_TARGET_CLAUSE_REDUCTION(...)` | `reduction(__VA_ARGS__)` <br> `reduction(__VA_ARGS__)` | OpenACC <br> OpenMP | |
-  | **`ENABLE_IF(condition)`** <br> `ACC_CLAUSE_IF(condition)` <br> `OMP_TARGET_CLAUSE_IF(condition)` | `if(condition)` <br> `if(condition)` | OpenACC <br> OpenMP | |
-  | **`AS_PRIVATE(...)`** <br> `ACC_CLAUSE_PRIVATE(...)` <br> `OMP_TARGET_CLAUSE_PRIVATE(...)` | `private(__VA_ARGS__)` <br> `private(__VA_ARGS__)` | OpenACC <br> OpenMP | |
-  | **`AS_FIRSTPRIVATE(...)`** <br> `ACC_CLAUSE_FIRSTPRIVATE(...)` <br> `OMP_TARGET_CLAUSE_FIRSTPRIVATE(...)` | `firstprivate(__VA_ARGS__)` <br> `firstprivate(__VA_ARGS__)` | OpenACC <br> OpenMP | |
-  | **`AS_DEVICE_PTR(...)`** <br> `ACC_CLAUSE_DEVICEPTR(...)` <br> `OMP_TARGET_CLAUSE_IS_DEVICE_PTR(...)` | `deviceptr(__VA_ARGS__)` <br> `is_device_ptr(__VA_ARGS__)` | OpenACC <br> OpenMP | |
-  | **`COPY_BEFORE_AND_AFTER_EXEC(...)`** <br> `ACC_CLAUSE_COPY(...)` <br> `OMP_TARGET_CLAUSE_MAP_TOFROM(...)` | `copy(__VA_ARGS__)` <br> `map(tofrom: __VA_ARGS__)` | OpenACC <br> OpenMP | |
-  | **`COPY_H2D_BEFORE_EXEC(...)`** <br> `ACC_CLAUSE_COPYIN(...)` <br> `OMP_TARGET_CLAUSE_MAP_TO(...)` | `copyin(__VA_ARGS__)` <br> `map(to: __VA_ARGS__)` | OpenACC <br> OpenMP | |
-  | **`COPY_D2H_AFTER_EXEC(...)`** <br> `ACC_CLAUSE_COPYOUT(...)` <br> `OMP_TARGET_CLAUSE_MAP_FROM(...)` | `copyout(__VA_ARGS__)` <br> `map(from: __VA_ARGS__)` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_INDEPENDENT`** <br> `ACC_CLAUSE_INDEPENDENT` <br> `OMP_TARGET_CLAUSE_SIMD` | `independent` <br> `simd` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_SEQUENTIAL`** <br> `ACC_CLAUSE_SEQ` | `seq` | OpenACC (only) | |
+  | **`SOLOMON_CLAUSE_NUM_THREADS(n)`** <br> `ACC_CLAUSE_VECTOR_LENGTH(n)` <br> `OMP_TARGET_CLAUSE_THREAD_LIMIT(n)` | `vector_length(n)` <br> `thread_limit(n)` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_NUM_BLOCKS(n)`** <br> `ACC_CLAUSE_NUM_GANGS(n)` <br> `OMP_TARGET_CLAUSE_NUM_TEAMS(n)` | <br> `num_gangs(n)` <br> `num_teams(n)` | <br> OpenACC <br> OpenMP | v2.0.0 で `ACC_CLAUSE_NUM_WORKERS(n)` から `ACC_CLAUSE_NUM_GANGS(n)` へと変更 |
+  | ~~`SOLOMON_CLAUSE_NUM_GRIDS(n)`~~ <br> ~~`ACC_CLAUSE_NUM_GANGS(n)`~~ | <br> ~~`num_gangs(n)`~~ | <br> OpenACC (only) | v2.0.0 で非推奨．以降は `SOLOMON_CLAUSE_NUM_BLOCKS(n)` を使用 |
+  | **`SOLOMON_CLAUSE_THREAD`** <br> `ACC_CLAUSE_VECTOR` | `vector` | OpenACC (only) | |
+  | **`SOLOMON_CLAUSE_BLOCK`** <br> `ACC_CLAUSE_GANG` | <br> `gang` | <br> OpenACC (only) | v2.0.0 で `ACC_CLAUSE_WORKER` から `ACC_CLAUSE_GANG` へと変更 |
+  | ~~`SOLOMON_CLAUSE_GRID`~~ <br> ~~`ACC_CLAUSE_GANG`~~ | <br> ~~`gang`~~ | <br> OpenACC (only) | v2.0.0 で非推奨．以降は `SOLOMON_CLAUSE_BLOCK` を使用 |
+  | **`SOLOMON_CLAUSE_COLLAPSE(n)`** <br> `ACC_CLAUSE_COLLAPSE(n)` <br> `OMP_TARGET_CLAUSE_COLLAPSE(n)` | `collapse(n)` <br> `collapse(n)` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | `async(__VA_ARGS__)` <br> `nowait` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | `async(id)` | OpenACC (only) | |
+  | **`SOLOMON_CLAUSE_REDUCTION(...)`** <br> `ACC_CLAUSE_REDUCTION(...)` <br> `OMP_TARGET_CLAUSE_REDUCTION(...)` | `reduction(__VA_ARGS__)` <br> `reduction(__VA_ARGS__)` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_IF(condition)`** <br> `ACC_CLAUSE_IF(condition)` <br> `OMP_TARGET_CLAUSE_IF(condition)` | `if(condition)` <br> `if(condition)` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_PRIVATE(...)`** <br> `ACC_CLAUSE_PRIVATE(...)` <br> `OMP_TARGET_CLAUSE_PRIVATE(...)` | `private(__VA_ARGS__)` <br> `private(__VA_ARGS__)` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_FIRSTPRIVATE(...)`** <br> `ACC_CLAUSE_FIRSTPRIVATE(...)` <br> `OMP_TARGET_CLAUSE_FIRSTPRIVATE(...)` | `firstprivate(__VA_ARGS__)` <br> `firstprivate(__VA_ARGS__)` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_DEVICE_PTR(...)`** <br> `ACC_CLAUSE_DEVICEPTR(...)` <br> `OMP_TARGET_CLAUSE_IS_DEVICE_PTR(...)` | `deviceptr(__VA_ARGS__)` <br> `is_device_ptr(__VA_ARGS__)` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_COPY_BEFORE_AND_AFTER_EXEC(...)`** <br> `ACC_CLAUSE_COPY(...)` <br> `OMP_TARGET_CLAUSE_MAP_TOFROM(...)` | `copy(__VA_ARGS__)` <br> `map(tofrom: __VA_ARGS__)` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_COPY_H2D_BEFORE_EXEC(...)`** <br> `ACC_CLAUSE_COPYIN(...)` <br> `OMP_TARGET_CLAUSE_MAP_TO(...)` | `copyin(__VA_ARGS__)` <br> `map(to: __VA_ARGS__)` | OpenACC <br> OpenMP | |
+  | **`SOLOMON_CLAUSE_COPY_D2H_AFTER_EXEC(...)`** <br> `ACC_CLAUSE_COPYOUT(...)` <br> `OMP_TARGET_CLAUSE_MAP_FROM(...)` | `copyout(__VA_ARGS__)` <br> `map(from: __VA_ARGS__)` | OpenACC <br> OpenMP | |
 
   </details>
 
