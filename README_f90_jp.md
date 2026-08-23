@@ -241,6 +241,8 @@
      * `FC`および`FLAGS`の内容を変数`SOLOMON_FC`と`SOLOMON_FLAGS`にそれぞれ指定
        * `fortran.mk` は `SOLOMON_FC` と `SOLOMON_FLAGS` を用いてコンパイラを起動し `_OPENACC` / `_OPENMP` を自動検出するため，OpenACC/OpenMP を有効化するフラグ（`-acc=gpu`, `-mp=gpu`, `-fopenmp`, `-fiopenmp` など）を `SOLOMON_FC` または `SOLOMON_FLAGS` のいずれかに必ず含めてください
        * `_OPENACC` / `_OPENMP` のいずれも検出されなかった場合は注意メッセージ（`solomon: note: ...`）が表示され，全ての指示文はシリアルコードに展開されます．オフロードを意図していた場合は有効化フラグを追加してください（v2.0.0 以降）
+     * ソースファイル中の Fortran の文字列連結（`//`）はプリプロセス時に保護されるため，自由に使用できます（v2.0.0 以降，`fortran.mk`・`spp.sh` の両方）
+       * この保護のために `__SOLOMON_FC_CONCAT__` というトークンを Solomon が予約しています．ユーザーコード中に書かないでください
      * コンパイルの対象のファイルをsppディレクトリの下にある.f90に変更
      * Solomonの補助Makefileである`fortran.mk`をincludeするように絶対パスあるいは相対パスで指定
 

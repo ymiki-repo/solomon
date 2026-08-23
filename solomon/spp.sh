@@ -102,12 +102,15 @@ case "$SRC" in
 	cpp -P $MACRO $INCS $DEFS $SRC
 	;;
     *.f|*.for|*.f90|*.f95|*.f03|*.f08|*.F|*.F90|*.F95|*.F03|*.F08)
-	cpp -P $MACRO -DSOLOMON_FORTRAN $INCS $DEFS $SRC -o _$SRC.i
+	# protect Fortran string concatenation (//) from being eaten as a C++ comment by cpp;
+	# __SOLOMON_FC_CONCAT__ is a reserved token restored after preprocessing
+	sed 's,//,__SOLOMON_FC_CONCAT__,g' $SRC > _$SRC.spp
+	cpp -P $MACRO -DSOLOMON_FORTRAN $INCS $DEFS _$SRC.spp -o _$SRC.i
 	rc=$?
 	if [ "$rc" -eq 0 ]; then
-	    sed 's/^#pragma /!$/g'  _$SRC.i
+	    sed -e 's/^#pragma /!$/g' -e 's,__SOLOMON_FC_CONCAT__,//,g' _$SRC.i
 	fi
-	rm -f _$SRC.i
+	rm -f _$SRC.spp _$SRC.i
 	exit $rc
 	;;
     *)

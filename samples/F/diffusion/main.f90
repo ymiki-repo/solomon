@@ -100,7 +100,7 @@ program main
   write(*, '("Error[",i3,"][",i3,"][",i3,"] = ",e13.6)') nx, ny, nz, ferr
 #endif // !defined(BENCHMARK_MODE)
 
-  write(filename, '("diffusion_benchmark_",a,i0,".csv")') COMPILER, MODEL_ID
+  write(filename, '(a,i0,a)') "diffusion_" // "benchmark_" // COMPILER, MODEL_ID, ".csv"
 
   inquire(file=filename,exist=ex)
   if( ex ) then
