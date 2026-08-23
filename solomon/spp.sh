@@ -3,6 +3,7 @@
 COMPILER=""
 INCS=""
 DEFS=""
+FLAGS=""
 SRC=""
 
 while [ $# -gt 0 ]; do
@@ -30,8 +31,10 @@ while [ $# -gt 0 ]; do
 	    fi
 	    ;;
 	-*)
-	    echo "$0: error: unknown option: $1" >&2
-	    exit 1
+	    # compiler flags (e.g., -acc, -mp=gpu, -fopenmp, --offload-arch=gfx90a)
+	    # passed to the compiler when probing _OPENACC and _OPENMP
+	    FLAGS="$FLAGS $1"
+	    shift
 	    ;;
 	*)
 	    if [ -n "$SRC" ]; then
@@ -87,7 +90,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-MACRO=$($COMPILER -E $CONFTEST | grep -- "^-D")
+MACRO=$($COMPILER $FLAGS -E $CONFTEST | grep -- "^-D")
 
 rm -f $CONFTEST
 
