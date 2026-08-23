@@ -63,6 +63,8 @@
      * OpenMP 的記法を使った場合には，`PRAGMA_OMP_TARGET_*` や `OMP_TARGET_CLAUSE_*` のように `_TARGET_` をつけたものだけが OpenACC 使用時における変換対象となります（例えば `PRAGMA_OMP_ATOMIC(...)` は `_Pragma("omp atomic __VA_ARGS__")` へと変換されるため，`_Pragma("acc atomic __VA_ARGS__")` には変換されません）
      * `PRAGMA_OMP_TARGET_DATA(...)` という記法は使わないでください
        * 演算加速器（GPU）からアクセスするデータについては `SOLOMON_DATA_ACCESS_BY_DEVICE(...)` か `PRAGMA_ACC_DATA(...)`，ホスト（CPU）からアクセスするデータについては `SOLOMON_DATA_ACCESS_BY_HOST(...)` か `PRAGMA_ACC_HOST_DATA(...)` をお使いください
+     * `PRAGMA_ACC_DECLARE(...)` という記法は使わないでください（OpenMP target バックエンドへは変換されません）
+       * デバイス常駐変数には `SOLOMON_DECLARE_ON_DEVICE(...)` を，link 意味論が必要な場合には `SOLOMON_DECLARE_ON_DEVICE_LINKED(...)` をお使いください（v2.0.0 以降）
      * OpenACC 的記法における`PRAGMA_ACC_ROUTINE(...)`（や`SOLOMON_DECLARE_OFFLOADED(...)`などの対応するマクロ）を使用した際には，対象リージョンの最後に`SOLOMON_DECLARE_OFFLOADED_END` （や`PRAGMA_OMP_END_DECLARE_TARGET`）も挿入してください
    * GPU実行時には無視してほしい指示文については，`SOLOMON_IF_NOT_OFFLOADED(arg)` の中に記入してください
      * <details><summary> 実装例: `arg` については，縮退モード（OpenACC と OpenMP target 両方を無効化した場合）のみ実体化されます</summary>
@@ -276,7 +278,7 @@
     | `PRAGMA_ACC_ATOMIC(...)` | `_Pragma("acc atomic __VA_ARGS__")` | `PRAGMA_OMP_TARGET_ATOMIC(__VA_ARGS__)` |
     | `PRAGMA_ACC_WAIT(...)` | `_Pragma("acc wait __VA_ARGS__")` | `PRAGMA_OMP_TARGET_TASKWAIT(__VA_ARGS__)` |
     | `PRAGMA_ACC_ROUTINE(...)` | `_Pragma("acc routine __VA_ARGS__")` | `PRAGMA_OMP_DECLARE_TARGET(__VA_ARGS__)` |
-    | `PRAGMA_ACC_DECLARE(...)` | `_Pragma("acc declare __VA_ARGS__")` | N/A（OpenMP target 使用時には無視される） |
+    | `PRAGMA_ACC_DECLARE(...)` | `_Pragma("acc declare __VA_ARGS__")` | N/A（OpenMP target 使用時には無視される．`SOLOMON_DECLARE_ON_DEVICE(...)` をお使いください） |
 
     </details>
 

@@ -63,6 +63,8 @@
      * In OpenMP-like notation, only notations like `PRAGMA_OMP_TARGET_*` or `OMP_TARGET_CLAUSE_*` are converted to OpenACC backend (e.g., `PRAGMA_OMP_ATOMIC(...)` will be translated as `_Pragma("omp atomic __VA_ARGS__")`)
      * We strongly recommend not to adopt `PRAGMA_OMP_TARGET_DATA(...)` in your codes
        * Alternative notations are `SOLOMON_DATA_ACCESS_BY_DEVICE(...)` or `PRAGMA_ACC_DATA(...)` for data accessed by device (GPU), and `SOLOMON_DATA_ACCESS_BY_HOST(...)` or `PRAGMA_ACC_HOST_DATA(...)` for data accessed by host (CPU)
+     * We strongly recommend not to adopt `PRAGMA_ACC_DECLARE(...)` in your codes (it is not converted to the OpenMP target backend)
+       * Alternative notations are `SOLOMON_DECLARE_ON_DEVICE(...)` for device-resident variables and `SOLOMON_DECLARE_ON_DEVICE_LINKED(...)` for link semantics (v2.0.0 or later)
      * In OpenACC-like notation, inserting `SOLOMON_DECLARE_OFFLOADED_END` or `PRAGMA_OMP_END_DECLARE_TARGET` is required when you insert `PRAGMA_ACC_ROUTINE(...)` (for proper translation to OpenMP target offloading)
    * `SOLOMON_IF_NOT_OFFLOADED(arg)` is available to hide directives when GPU offloading is enabled
      * <details><summary> Example: `arg` appears only in fallback mode (when GPU offloading is disabled (both OpenACC and OpenMP target are not enabled))</summary>
@@ -276,7 +278,7 @@
     | `PRAGMA_ACC_ATOMIC(...)` | `_Pragma("acc atomic __VA_ARGS__")` | `PRAGMA_OMP_TARGET_ATOMIC(__VA_ARGS__)` |
     | `PRAGMA_ACC_WAIT(...)` | `_Pragma("acc wait __VA_ARGS__")` | `PRAGMA_OMP_TARGET_TASKWAIT(__VA_ARGS__)` |
     | `PRAGMA_ACC_ROUTINE(...)` | `_Pragma("acc routine __VA_ARGS__")` | `PRAGMA_OMP_DECLARE_TARGET(__VA_ARGS__)` |
-    | `PRAGMA_ACC_DECLARE(...)` | `_Pragma("acc declare __VA_ARGS__")` | N/A (disregarded in OpenMP backend) |
+    | `PRAGMA_ACC_DECLARE(...)` | `_Pragma("acc declare __VA_ARGS__")` | N/A (disregarded in OpenMP backend; use `SOLOMON_DECLARE_ON_DEVICE(...)` instead) |
 
     </details>
 
