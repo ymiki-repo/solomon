@@ -214,9 +214,40 @@
 #define SOLOMON_DECLARE_OFFLOADED(...) PRAGMA_ACC_ROUTINE(__VA_ARGS__)
 
 ///
+/// @brief specify the target procedures by name (OpenACC: routine(name), OpenMP target: declare target(list))
+/// @note pass as the first argument of SOLOMON_DECLARE_OFFLOADED(...) (v2.0.0 or later)
+///
+#define SOLOMON_CLAUSE_TARGETS(...) (__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_ROUTINE, SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET)
+
+///
 /// @brief declaration of the specified functions are mapped to device
+/// @note in Fortran, this macro expands to nothing (SOLOMON_DECLARE_OFFLOADED(...) inside a procedure is self-contained); writing it is harmless
 ///
 #define SOLOMON_DECLARE_OFFLOADED_END PRAGMA_OMP_END_DECLARE_TARGET
+
+///
+/// @brief declare device-resident variables (OpenACC: declare create(vars), OpenMP target: declare target(vars)) (v2.0.0 or later)
+/// @note place at file/module scope (Fortran: in the specification part); no end directive is required
+/// @note initialization semantics differ slightly: OpenACC "declare create" allocates without copying initial values, while OpenMP "declare target" copies static initializers; transfer data explicitly (e.g., SOLOMON_MEMCPY_H2D) when initial values matter
+///
+#if defined(OFFLOAD_BY_OPENACC)
+#define SOLOMON_DECLARE_ON_DEVICE(...) PRAGMA_ACC_DECLARE(ACC_CLAUSE_CREATE(__VA_ARGS__))
+#elif defined(OFFLOAD_BY_OPENMP_TARGET)
+#define SOLOMON_DECLARE_ON_DEVICE(...) PRAGMA_OMP_DECLARE_TARGET(OMP_PASS_LIST(__VA_ARGS__))
+#else  // defined(OFFLOAD_BY_OPENACC)
+#define SOLOMON_DECLARE_ON_DEVICE(...)
+#endif  // defined(OFFLOAD_BY_OPENACC)
+
+///
+/// @brief declare device-resident variables with link semantics (OpenACC: declare link(vars), OpenMP target: declare target link(vars)) (v2.0.0 or later)
+///
+#if defined(OFFLOAD_BY_OPENACC)
+#define SOLOMON_DECLARE_ON_DEVICE_LINKED(...) PRAGMA_ACC_DECLARE(ACC_CLAUSE_LINK(__VA_ARGS__))
+#elif defined(OFFLOAD_BY_OPENMP_TARGET)
+#define SOLOMON_DECLARE_ON_DEVICE_LINKED(...) PRAGMA_OMP_DECLARE_TARGET(OMP_TARGET_CLAUSE_LINK(__VA_ARGS__))
+#else  // defined(OFFLOAD_BY_OPENACC)
+#define SOLOMON_DECLARE_ON_DEVICE_LINKED(...)
+#endif  // defined(OFFLOAD_BY_OPENACC)
 
 ///
 /// @brief launch kernels asynchronously

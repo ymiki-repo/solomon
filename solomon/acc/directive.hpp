@@ -139,7 +139,7 @@
 /// @brief _Pragma("acc routine [clause [[,] clause] ... ]")
 /// @details The routine directive tells the compiler to compile a procedure for the device and gives the execution context for calls to the procedure. Such a procedure is called a device routine.
 ///
-#define PRAGMA_ACC_ROUTINE(...) PRAGMA_ACC(routine SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_ROUTINE), __VA_ARGS__))
+#define PRAGMA_ACC_ROUTINE(...) PRAGMA_ACC(routine SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_ROUTINE), __VA_ARGS__))
 ///
 /// @brief finalize the device routine
 ///

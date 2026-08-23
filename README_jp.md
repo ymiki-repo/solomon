@@ -243,7 +243,10 @@
   | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `_Pragma("acc wait __VA_ARGS__")` <br> `_Pragma("omp taskwait __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | <br> `_Pragma("acc wait id")` | <br> OpenACC (only) |
   | **`SOLOMON_DECLARE_OFFLOADED(...)`** <br> `PRAGMA_ACC_ROUTINE(...)` <br> `PRAGMA_OMP_DECLARE_TARGET(...)` | <br> `_Pragma("acc routine __VA_ARGS__")` <br> `_Pragma("omp declare target __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
-  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | <br> `_Pragma("omp end declare target")` | <br> OpenMP (only) |
+  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | <br> `_Pragma("omp end declare target")` | <br> OpenMP (only) | `SOLOMON_DECLARE_OFFLOADED(...)` の対形式でのみ必要（`SOLOMON_CLAUSE_TARGETS(...)` を用いる名前形式の後には書かないこと）．Fortran では空に展開される（v2.0.0 以降） |
+  | **`SOLOMON_CLAUSE_TARGETS(...)`** | `(__VA_ARGS__)` | OpenACC/OpenMP | 手続を名前で指定する: `SOLOMON_DECLARE_OFFLOADED(SOLOMON_CLAUSE_TARGETS(func), ...)` は `_Pragma("acc routine (func) ...")` / `_Pragma("omp declare target (func)")` に展開される．単独指示文であり end は不要（v2.0.0 以降） |
+  | **`SOLOMON_DECLARE_ON_DEVICE(...)`** | `_Pragma("acc declare create(__VA_ARGS__)")` <br> `_Pragma("omp declare target (__VA_ARGS__)")` | OpenACC <br> OpenMP | ファイルスコープでデバイス常駐変数を宣言する．end は不要（v2.0.0 以降） |
+  | **`SOLOMON_DECLARE_ON_DEVICE_LINKED(...)`** | `_Pragma("acc declare link(__VA_ARGS__)")` <br> `_Pragma("omp declare target link(__VA_ARGS__)")` | OpenACC <br> OpenMP | link 意味論でデバイス常駐変数を宣言する（v2.0.0 以降） |
   | **`SOLOMON_ATOMIC(...)`** <br> `PRAGMA_ACC_ATOMIC(...)` <br> `PRAGMA_OMP_TARGET_ATOMIC(...)` | <br> `_Pragma("acc atomic __VA_ARGS__")` <br> `_Pragma("omp atomic __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_ATOMIC_UPDATE`** <br> `PRAGMA_ACC_ATOMIC_UPDATE` <br> `PRAGMA_OMP_TARGET_ATOMIC_UPDATE` | <br> `_Pragma("acc atomic update")` <br> `_Pragma("omp atomic update")` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_ATOMIC_READ`** <br> `PRAGMA_ACC_ATOMIC_READ` <br> `PRAGMA_OMP_TARGET_ATOMIC_READ` | <br> `_Pragma("acc atomic read")` <br> `_Pragma("omp atomic read")` | <br> OpenACC <br> OpenMP |

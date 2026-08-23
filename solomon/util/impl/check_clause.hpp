@@ -54,11 +54,12 @@
 
 ///
 /// @brief Apply automatic checking valid clauses
+/// @note Required for directives whose clauses may be parenthesized lists (e.g., routine(name), declare target(list)); the sorting stage token-pastes clause texts and cannot handle them
 /// @warning Passing more than 32 clauses will cause a compile error:
 ///          - Error message: 'SOLOMON_INTERNAL_CHECK_CLAUSE_*' was not declared in this scope
 ///          - To fix: cd solomon/util && julia jl/check_clause.jl --max N
 ///                   (where N >= your clause count)
 ///
-#define SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(...) SOLOMON_INTERNAL_CHECK_CLAUSE_32(__VA_ARGS__)
+#define SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(...) SOLOMON_INTERNAL_STRIP_TRAILING_COMMA(SOLOMON_INTERNAL_CHECK_CLAUSE_32(__VA_ARGS__))
 
 #endif  // !defined(SOLOMON_UTIL_IMPL_CHECK_CLAUSE_HPP)

@@ -86,7 +86,7 @@
      * In OpenMP-like notation, only notations like `PRAGMA_OMP_TARGET_*` or `OMP_TARGET_CLAUSE_*` are converted to OpenACC backend (e.g., `PRAGMA_OMP_ATOMIC(...)` will be translated as `$omp atomic __VA_ARGS__`)
      * We strongly recommend not to adopt `PRAGMA_OMP_TARGET_DATA(...)` in your codes
        * Alternative notations are `SOLOMON_DATA_ACCESS_BY_DEVICE(...)` or `PRAGMA_ACC_DATA(...)` for data accessed by device (GPU), and `SOLOMON_DATA_ACCESS_BY_HOST(...)` or `PRAGMA_ACC_HOST_DATA(...)` for data accessed by host (CPU)
-     * In OpenACC-like notation, inserting `SOLOMON_DECLARE_OFFLOADED_END` or `PRAGMA_OMP_END_DECLARE_TARGET` is required when you insert `PRAGMA_ACC_ROUTINE(...)` (for proper translation to OpenMP target offloading)
+     * `SOLOMON_DECLARE_OFFLOADED(...)` (or `PRAGMA_ACC_ROUTINE(...)`) inside a procedure is self-contained in Fortran; `SOLOMON_DECLARE_OFFLOADED_END` is not required (it expands to nothing; writing it is harmless) (v2.0.0 or later)
    * `SOLOMON_IF_NOT_OFFLOADED(arg)` is available to hide directives when GPU offloading is enabled
      * <details><summary> Example: `arg` appears only in fallback mode (when GPU offloading is disabled (both OpenACC and OpenMP target are not enabled))</summary>
 
@@ -360,7 +360,10 @@
   | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | <br> `!$acc wait id` | <br> OpenACC (only) |
   | **`SOLOMON_DECLARE_OFFLOADED(...)`** <br> `PRAGMA_ACC_ROUTINE(...)` <br> `PRAGMA_OMP_DECLARE_TARGET(...)` | <br> `!$acc routine __VA_ARGS__` <br> `!$omp declare target __VA_ARGS__` | <br> OpenACC <br> OpenMP |
-  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | <br> `!$omp end declare target` | <br> OpenMP (only) |
+  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | <br> (nothing) | <br> OpenMP (only) | in Fortran this macro expands to nothing since `SOLOMON_DECLARE_OFFLOADED(...)` inside a procedure is self-contained; writing it is harmless but not required (v2.0.0 or later) |
+  | **`SOLOMON_CLAUSE_TARGETS(...)`** | `(__VA_ARGS__)` | OpenACC/OpenMP | specify the target procedures by name: `SOLOMON_DECLARE_OFFLOADED(SOLOMON_CLAUSE_TARGETS(func), ...)` expands to `!$acc routine (func) ...` / `!$omp declare target (func)` (v2.0.0 or later) |
+  | **`SOLOMON_DECLARE_ON_DEVICE(...)`** | `!$acc declare create(__VA_ARGS__)` <br> `!$omp declare target (__VA_ARGS__)` | OpenACC <br> OpenMP | declare device-resident variables in the specification part of a module or procedure (v2.0.0 or later) |
+  | **`SOLOMON_DECLARE_ON_DEVICE_LINKED(...)`** | `!$acc declare link(__VA_ARGS__)` <br> `!$omp declare target link(__VA_ARGS__)` | OpenACC <br> OpenMP | declare device-resident variables with link semantics (v2.0.0 or later) |
   | **`SOLOMON_ATOMIC(...)`** <br> `PRAGMA_ACC_ATOMIC(...)` <br> `PRAGMA_OMP_TARGET_ATOMIC(...)` | <br> `!$acc atomic __VA_ARGS__` <br> `!$omp atomic __VA_ARGS__` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_ATOMIC_UPDATE`** <br> `PRAGMA_ACC_ATOMIC_UPDATE` <br> `PRAGMA_OMP_TARGET_ATOMIC_UPDATE` | <br> `!$acc atomic update` <br> `!$omp atomic update` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_ATOMIC_READ`** <br> `PRAGMA_ACC_ATOMIC_READ` <br> `PRAGMA_OMP_TARGET_ATOMIC_READ` | <br> `!$acc atomic read` <br> `!$omp atomic read` | <br> OpenACC <br> OpenMP |

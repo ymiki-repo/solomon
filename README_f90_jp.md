@@ -86,7 +86,7 @@
      * OpenMP 的記法を使った場合には，`PRAGMA_OMP_TARGET_*` や `OMP_TARGET_CLAUSE_*` のように `_TARGET_` をつけたものだけが OpenACC 使用時における変換対象となります（例えば `PRAGMA_OMP_ATOMIC(...)` は `!$omp atomic __VA_ARGS__` へと変換されるため，`!$acc atomic __VA_ARGS__` には変換されません）
      * `PRAGMA_OMP_TARGET_DATA(...)` という記法は使わないでください
        * 演算加速器（GPU）からアクセスするデータについては `SOLOMON_DATA_ACCESS_BY_DEVICE(...)` か `PRAGMA_ACC_DATA(...)`，ホスト（CPU）からアクセスするデータについては `SOLOMON_DATA_ACCESS_BY_HOST(...)` か `PRAGMA_ACC_HOST_DATA(...)` をお使いください
-     * OpenACC 的記法における`PRAGMA_ACC_ROUTINE(...)`（や`SOLOMON_DECLARE_OFFLOADED(...)`などの対応するマクロ）を使用した際には，対象リージョンの最後に`SOLOMON_DECLARE_OFFLOADED_END` （や`PRAGMA_OMP_END_DECLARE_TARGET`）も挿入してください
+     * Fortran では手続内に挿入した `SOLOMON_DECLARE_OFFLOADED(...)`（や `PRAGMA_ACC_ROUTINE(...)`）は自己完結するため，`SOLOMON_DECLARE_OFFLOADED_END` の挿入は不要です（空に展開されるため書いても無害です）（v2.0.0 以降）
    * GPU実行時には無視してほしい指示文については，`SOLOMON_IF_NOT_OFFLOADED(arg)` の中に記入してください
      * <details><summary> 実装例: `arg` については，縮退モード（OpenACC と OpenMP target 両方を無効化した場合）のみ実体化されます</summary>
 
@@ -359,7 +359,10 @@
   | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | OpenACC <br> OpenMP |
   | **`SOLOMON_WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | `!$acc wait id` | OpenACC (only) |
   | **`SOLOMON_DECLARE_OFFLOADED(...)`** <br> `PRAGMA_ACC_ROUTINE(...)` <br> `PRAGMA_OMP_DECLARE_TARGET(...)` | `!$acc routine __VA_ARGS__` <br> `!$omp declare target __VA_ARGS__` | OpenACC <br> OpenMP |
-  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | `!$omp end declare target` | OpenMP (only) |
+  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | （何も出力しない） | OpenMP (only) | Fortran では手続内の `SOLOMON_DECLARE_OFFLOADED(...)` が自己完結するため本マクロは空に展開される．書いても無害だが不要（v2.0.0 以降） |
+  | **`SOLOMON_CLAUSE_TARGETS(...)`** | `(__VA_ARGS__)` | OpenACC/OpenMP | 手続を名前で指定する: `SOLOMON_DECLARE_OFFLOADED(SOLOMON_CLAUSE_TARGETS(func), ...)` は `!$acc routine (func) ...` / `!$omp declare target (func)` に展開される（v2.0.0 以降） |
+  | **`SOLOMON_DECLARE_ON_DEVICE(...)`** | `!$acc declare create(__VA_ARGS__)` <br> `!$omp declare target (__VA_ARGS__)` | OpenACC <br> OpenMP | モジュール・手続の宣言部でデバイス常駐変数を宣言する（v2.0.0 以降） |
+  | **`SOLOMON_DECLARE_ON_DEVICE_LINKED(...)`** | `!$acc declare link(__VA_ARGS__)` <br> `!$omp declare target link(__VA_ARGS__)` | OpenACC <br> OpenMP | link 意味論でデバイス常駐変数を宣言する（v2.0.0 以降） |
   | **`SOLOMON_ATOMIC(...)`** <br> `PRAGMA_ACC_ATOMIC(...)` <br> `PRAGMA_OMP_TARGET_ATOMIC(...)` | `!$acc atomic __VA_ARGS__` <br> `!$omp atomic __VA_ARGS__` | OpenACC <br> OpenMP |
   | **`SOLOMON_ATOMIC_UPDATE`** <br> `PRAGMA_ACC_ATOMIC_UPDATE` <br> `PRAGMA_OMP_TARGET_ATOMIC_UPDATE` | `!$acc atomic update` <br> `!$omp atomic update` | OpenACC <br> OpenMP |
   | **`SOLOMON_ATOMIC_READ`** <br> `PRAGMA_ACC_ATOMIC_READ` <br> `PRAGMA_OMP_TARGET_ATOMIC_READ` | `!$acc atomic read` <br> `!$omp atomic read` | OpenACC <br> OpenMP |

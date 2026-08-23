@@ -22,21 +22,26 @@
 ///
 /// @brief _Pragma("omp declare target (extended_list)") or _Pragma("omp declare target clause [[,] clause ... ]")
 /// @details A declarative directive that specifies that variables, functions, and subroutines are mapped to a device.
-/// @note use OMP_PASS_LIST(...) to pass extended_list
+/// @note use OMP_PASS_LIST(...) to pass extended_list; clauses which are unavailable for declare target (e.g., converted OpenACC clauses without an OpenMP counterpart) are dropped
 ///
-#define PRAGMA_OMP_DECLARE_TARGET(...) PRAGMA_OMP(declare target SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET), OMP_PASS_LIST(__VA_ARGS__)))
+#define PRAGMA_OMP_DECLARE_TARGET(...) PRAGMA_OMP(declare target SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET), __VA_ARGS__))
 
 ///
 /// @brief _Pragma("omp begin declare target [clause [[,] clause] ... ]")
 /// @details A declarative directive that specifies that variables, functions, and subroutines are mapped to a device.
 ///
-#define PRAGMA_OMP_BEGIN_DECLARE_TARGET(...) PRAGMA_OMP(begin declare target SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET), OMP_PASS_LIST(__VA_ARGS__)))
+#define PRAGMA_OMP_BEGIN_DECLARE_TARGET(...) PRAGMA_OMP(begin declare target SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET), __VA_ARGS__))
 
 ///
 /// @brief _Pragma("omp end declare target")
 /// @details A declarative directive that specifies that variables, functions, and subroutines are mapped to a device.
+/// @note in Fortran, the directive is not required (a list-less "declare target" inside a procedure marks the enclosing procedure); therefore it expands to nothing
 ///
+#if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_DECLARE_TARGET PRAGMA_OMP(end declare target)
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_DECLARE_TARGET
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @note Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
