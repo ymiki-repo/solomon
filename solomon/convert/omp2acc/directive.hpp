@@ -60,9 +60,15 @@
 
 ///
 /// @brief _Pragma("omp target [clause [[,] clause] ... ]")
-/// @details replace to _Pragma("acc __VA_ARGS__")
+/// @details replace to _Pragma("acc serial [clause [[,] clause] ... ]") for single-thread execution on the device (v2.0.0 or later; the previous conversion emitted an invalid directive)
 ///
-#define PRAGMA_OMP_TARGET(...) PRAGMA_ACC(__VA_ARGS__)
+#define PRAGMA_OMP_TARGET(...) PRAGMA_ACC_SERIAL(__VA_ARGS__)
+
+///
+/// @brief finalize the omp target region
+/// @details replace to _Pragma("acc end serial")
+///
+#define PRAGMA_OMP_END_TARGET PRAGMA_ACC_END_SERIAL
 
 ///
 /// @brief _Pragma("omp target update [clause [[,] clause] ... ]")

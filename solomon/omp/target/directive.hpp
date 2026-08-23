@@ -79,6 +79,14 @@
 /// @details Map variables to a device data environment and execute the construct on that device.
 ///
 #define PRAGMA_OMP_TARGET(...) PRAGMA_OMP(target SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET), __VA_ARGS__))
+///
+/// @brief finalize the omp target region
+///
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_TARGET
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_TARGET PRAGMA_OMP(end target)
+#endif  // !defined(SOLOMON_FORTRAN)
 
 ///
 /// @brief _Pragma("omp target update [clause [[,] clause] ... ]")
