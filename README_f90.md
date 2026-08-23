@@ -241,6 +241,8 @@
      * Assign the contents of `FC` and `FLAGS` to the variables `SOLOMON_FC` and `SOLOMON_FLAGS`, respectively
        * `fortran.mk` automatically detects `_OPENACC` / `_OPENMP` by probing `SOLOMON_FC` with `SOLOMON_FLAGS`; therefore, the OpenACC/OpenMP enabling flag (e.g., `-acc=gpu`, `-mp=gpu`, `-fopenmp`, `-fiopenmp`) must be included in either `SOLOMON_FC` or `SOLOMON_FLAGS`
        * If neither `_OPENACC` nor `_OPENMP` is detected, `fortran.mk` prints a note (`solomon: note: ...`) and all directives expand to serial code; add the enabling flag if offloading was intended (v2.0.0 or later)
+     * Fortran string concatenation (`//`) in source files is protected during preprocessing, so it can be used freely (v2.0.0 or later; both `fortran.mk` and `spp.sh`)
+       * The token `__SOLOMON_FC_CONCAT__` is reserved by Solomon for this protection and must not appear in user code
      * Change the target files for compilation to the `.f90` files located under the `spp` directory
      * Specify an absolute or relative path to include `fortran.mk`, the auxiliary Makefile for Solomon
 
