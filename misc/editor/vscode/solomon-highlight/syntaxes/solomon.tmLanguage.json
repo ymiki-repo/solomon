@@ -1,0 +1,14 @@
+{
+    "scopeName": "solomon.injection",
+    "injectionSelector": "L:source.c, L:source.cpp, L:source.fortran.free, L:source.fortran.fixed",
+    "patterns": [
+        {
+            "name": "keyword.control.directive.solomon",
+            "match": "\\b(?:SOLOMON|PRAGMA_ACC|PRAGMA_OMP|ACC_CLAUSE|OMP_CLAUSE|OMP_TARGET)_[A-Z0-9_]+\\b"
+        },
+        {
+            "name": "keyword.control.directive.solomon",
+            "match": "\\bOMP_PASS_LIST\\b"
+        }
+    ]
+}

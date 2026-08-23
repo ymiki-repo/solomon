@@ -341,6 +341,16 @@
   | `retrieve_args.jl` | 入力フィルタリングマクロの生成 | 128 |
   | `sort_clause.jl` | 節ソートマクロの生成 | 32 |
 
+### エディタ支援（シンタックスハイライトと clang-format）
+
+Solomon は単なるプリプロセッサマクロのため，エディタは既定ではハイライトしません．`SOLOMON_*` マクロと2段記法（`PRAGMA_ACC_*`, `PRAGMA_OMP_*`, `ACC_CLAUSE_*`, `OMP_CLAUSE_*`, `OMP_TARGET_*`）を指示文らしく見せる設定ファイルを `misc/editor/` に同梱しています（v2.0.0 以降）:
+
+* vim / neovim: `misc/editor/vim/after/syntax/{c,cpp,fortran}.vim` を `~/.vim/after/syntax/` へコピー（または symlink）してください（neovim は `~/.config/nvim/after/syntax/`）
+* emacs: `init.el` に `(load "/path/to/solomon/misc/editor/emacs/solomon-highlight.el")` を追加してください
+* VS Code: フォルダ `misc/editor/vscode/solomon-highlight/` を `~/.vscode/extensions/` へコピー（または symlink）し，VS Code を再起動してください
+  * これはビルド不要のローカル injection grammar（テキスト2ファイル）です．VS Code は `settings.json` だけでは正規表現ベースのハイライトを追加できないため，展開済みローカル拡張として読み込ませる方式を採っています（マーケットプレイスへの公開は行いません）
+* clang-format: リポジトリ直下の `.clang-format` に Solomon の指示文マクロを `StatementMacros`/`AttributeMacros` として登録してあり，整形時に指示文行が崩れません．参考設定（強制ではありません）なので，マクロのリストをご自身の `.clang-format` へコピーしてお使いください
+
 ## サンプルコード
 
 ### diffusion: メモリ律速な問題の実装例

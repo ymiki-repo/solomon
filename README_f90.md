@@ -340,6 +340,16 @@
   | `retrieve_args.jl` | Generate input filtering macros | 128 |
   | `sort_clause.jl` | Generate clause sorting macros | 32 |
 
+### Editor support (syntax highlighting and clang-format)
+
+Since Solomon provides plain preprocessor macros, editors do not highlight them by default. Configuration files that make the `SOLOMON_*` macros and the two-level notations (`PRAGMA_ACC_*`, `PRAGMA_OMP_*`, `ACC_CLAUSE_*`, `OMP_CLAUSE_*`, `OMP_TARGET_*`) look like directives are bundled under `misc/editor/` (v2.0.0 or later):
+
+* vim / neovim: copy (or symlink) `misc/editor/vim/after/syntax/{c,cpp,fortran}.vim` into `~/.vim/after/syntax/` (neovim: `~/.config/nvim/after/syntax/`)
+* emacs: add `(load "/path/to/solomon/misc/editor/emacs/solomon-highlight.el")` to your `init.el`
+* VS Code: copy (or symlink) the folder `misc/editor/vscode/solomon-highlight/` into `~/.vscode/extensions/` and restart VS Code
+  * this is a build-free local injection grammar (two plain-text files); VS Code cannot apply regex-based highlighting through `settings.json` alone, so this folder is loaded as an unpacked local extension (nothing is published to the marketplace)
+* clang-format: the repository root `.clang-format` registers the Solomon directive macros in `StatementMacros`/`AttributeMacros` so that formatting does not mangle directive lines; it is a reference setting (not enforced), so copy the macro lists into your own `.clang-format`
+
 ## Samples
 
 ### diffusion: sample of memory-intensive application
