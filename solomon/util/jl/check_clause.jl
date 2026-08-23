@@ -28,7 +28,7 @@ function generate(io::IO, N_max::Int)
     for ii in 1:N_max
         print(io, "#define CHECK_CLAUSE_", ii, "(...) CHECK_CLAUSE(__VA_ARGS__)")
         if ii > 1
-            print(io, " CHECK_CLAUSE_", ii - 1, "(ARGS_WITH_NUM(PICKUP_INTERNAL_DIRECTIVE_TAGS(__VA_ARGS__)) APPEND_ARGS(PICKUP_INTERNAL_RETRIEVE_CLAUSE_CANDIDATE(PICKUP_INTERNAL_CLAUSE_ARGS(__VA_ARGS__))))")
+            print(io, " CHECK_CLAUSE_", ii - 1, "(ARGS_WITH_NUM(PICKUP_INTERNAL_DIRECTIVE_TAGS(__VA_ARGS__)) SOLOMON_APPEND_ARGS(PICKUP_INTERNAL_RETRIEVE_CLAUSE_CANDIDATE(PICKUP_INTERNAL_CLAUSE_ARGS(__VA_ARGS__))))")
         end
         println(io)
     end

@@ -13,19 +13,19 @@
 
 #if __cplusplus >= 202002L
 // __VA_OPT__ is C++20 feature (https://cpprefjp.github.io/lang/cpp20/va_opt.html)
-#define APPEND_ARGS(...) __VA_OPT__(, ) __VA_ARGS__
+#define SOLOMON_APPEND_ARGS(...) __VA_OPT__(, ) __VA_ARGS__
 #else  //__cplusplus >= 202002L
 // fallback implementation: C++17 or lower do not have __VA_OPT__
 // #if defined(__GNUC__)
 // use GCC extension
-#define APPEND_ARGS(...) , ##__VA_ARGS__
+#define SOLOMON_APPEND_ARGS(...) , ##__VA_ARGS__
 // #endif  // defined(__GNUC__)
 #endif  //__cplusplus >= 202002L
 
 #include "impl/num_args.hpp"// include NUM_ARGS(...) from auto-generated file
 #include "impl/retrieve_args.hpp"// include EXTRACT_ARGS_N(...) and RETRIEVE_ARGS_N(...) from auto-generated file
 
-#define ARGS_WITH_NUM(...) NUM_ARGS(__VA_ARGS__) APPEND_ARGS(__VA_ARGS__)
+#define ARGS_WITH_NUM(...) NUM_ARGS(__VA_ARGS__) SOLOMON_APPEND_ARGS(__VA_ARGS__)
 
 #define _EXTRACT_ARGS(N, ...) UTIL_CLOAK_CAT(EXTRACT_ARGS_, N)(__VA_ARGS__)
 ///

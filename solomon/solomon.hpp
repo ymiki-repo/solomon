@@ -17,6 +17,20 @@
 ///
 #define SOLOMON_VERSION 2.0.0
 
+// accept SOLOMON_-prefixed spellings of the configuration macros (v2.0.0 or later); the unprefixed spellings also keep working
+#if defined(SOLOMON_OFFLOAD_BY_OPENACC) && !defined(OFFLOAD_BY_OPENACC)
+#define OFFLOAD_BY_OPENACC
+#endif  // defined(SOLOMON_OFFLOAD_BY_OPENACC) && !defined(OFFLOAD_BY_OPENACC)
+#if defined(SOLOMON_OFFLOAD_BY_OPENACC_PARALLEL) && !defined(OFFLOAD_BY_OPENACC_PARALLEL)
+#define OFFLOAD_BY_OPENACC_PARALLEL
+#endif  // defined(SOLOMON_OFFLOAD_BY_OPENACC_PARALLEL) && !defined(OFFLOAD_BY_OPENACC_PARALLEL)
+#if defined(SOLOMON_OFFLOAD_BY_OPENMP_TARGET) && !defined(OFFLOAD_BY_OPENMP_TARGET)
+#define OFFLOAD_BY_OPENMP_TARGET
+#endif  // defined(SOLOMON_OFFLOAD_BY_OPENMP_TARGET) && !defined(OFFLOAD_BY_OPENMP_TARGET)
+#if defined(SOLOMON_OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE) && !defined(OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE)
+#define OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE
+#endif  // defined(SOLOMON_OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE) && !defined(OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE)
+
 // OpenMP for multicore CPU is always available
 #if defined(_OPENMP)
 #include "omp.hpp"
@@ -40,7 +54,7 @@
 ///
 /// @brief "arg" appears only in the fallback mode (when GPU offloading is disabled)
 ///
-#define IF_NOT_OFFLOADED(arg)
+#define SOLOMON_IF_NOT_OFFLOADED(arg)
 
 // set backend
 #if defined(OFFLOAD_BY_OPENACC)
@@ -53,311 +67,306 @@
 // fallback mode when both OpenACC and OpenMP target are not enabled
 #include "fallback.hpp"
 
-#undef IF_NOT_OFFLOADED
+#undef SOLOMON_IF_NOT_OFFLOADED
 ///
 /// @brief "arg" appears only in the fallback mode (when GPU offloading is disabled)
 ///
-#define IF_NOT_OFFLOADED(arg) arg
+#define SOLOMON_IF_NOT_OFFLOADED(arg) arg
 #else
 // no offloading backend is available
 #include "fallback.hpp"
 
-#undef IF_NOT_OFFLOADED
+#undef SOLOMON_IF_NOT_OFFLOADED
 ///
 /// @brief "arg" appears only in the fallback mode (when GPU offloading is disabled)
 ///
-#define IF_NOT_OFFLOADED(arg) arg
+#define SOLOMON_IF_NOT_OFFLOADED(arg) arg
 #endif  // defined(_OPENMP)
 
 ///
 /// @brief offload the specified loop
 ///
-#define OFFLOAD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
+#define SOLOMON_OFFLOAD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
 
 ///
 /// @brief finalize the offloading of the specified loop
 ///
 #if !defined(SOLOMON_FORTRAN)
-#define END_OFFLOAD
+#define SOLOMON_END_OFFLOAD
 #else  // !defined(SOLOMON_FORTRAN)
-#define END_OFFLOAD PRAGMA_ACC_END_OFFLOADING_DEFAULT
+#define SOLOMON_END_OFFLOAD PRAGMA_ACC_END_OFFLOADING_DEFAULT
 #endif  // !defined(SOLOMON_FORTRAN)
 
 #if defined(OFFLOAD_BY_OPENACC)
 ///
 /// @brief offload the immediately following loop and distribute it over thread-blocks (OpenACC: _Pragma("acc parallel [...]") _Pragma("acc loop gang [...]"))
-/// @note do not pass AS_GRID, AS_BLOCK, AS_THREAD, ACC_CLAUSE_GANG, ACC_CLAUSE_WORKER, or ACC_CLAUSE_VECTOR to OFFLOAD_OUTER_LOOP(...) because the conflicting clauses are already included in the macro
+/// @note do not pass SOLOMON_CLAUSE_BLOCK, SOLOMON_CLAUSE_THREAD, ACC_CLAUSE_GANG, ACC_CLAUSE_WORKER, or ACC_CLAUSE_VECTOR to SOLOMON_OFFLOAD_OUTER_LOOP(...) because the conflicting clauses are already included in the macro
 ///
-#define OFFLOAD_OUTER_LOOP(...) PRAGMA_ACC_PARALLEL(__VA_ARGS__) PRAGMA_ACC_LOOP(ACC_CLAUSE_GANG APPEND_ARGS(__VA_ARGS__))
+#define SOLOMON_OFFLOAD_OUTER_LOOP(...) PRAGMA_ACC_PARALLEL(__VA_ARGS__) PRAGMA_ACC_LOOP(ACC_CLAUSE_GANG SOLOMON_APPEND_ARGS(__VA_ARGS__))
 ///
 /// @brief parallelize the immediately following loop over threads within a thread-block (OpenACC: _Pragma("acc loop vector [...]"))
-/// @note must be used in conjunction with OFFLOAD_OUTER_LOOP(...) to parallelize the immediately following loop over threads within a thread-block
-/// @note do not pass AS_GRID, AS_BLOCK, AS_THREAD, ACC_CLAUSE_GANG, ACC_CLAUSE_WORKER, or ACC_CLAUSE_VECTOR to PARALLELIZE_INNER_LOOP(...) because the conflicting clauses are already included in the macro
+/// @note must be used in conjunction with SOLOMON_OFFLOAD_OUTER_LOOP(...) to parallelize the immediately following loop over threads within a thread-block
+/// @note do not pass SOLOMON_CLAUSE_BLOCK, SOLOMON_CLAUSE_THREAD, ACC_CLAUSE_GANG, ACC_CLAUSE_WORKER, or ACC_CLAUSE_VECTOR to SOLOMON_PARALLELIZE_INNER_LOOP(...) because the conflicting clauses are already included in the macro
 ///
-#define PARALLELIZE_INNER_LOOP(...) PRAGMA_ACC_LOOP(ACC_CLAUSE_VECTOR APPEND_ARGS(__VA_ARGS__))
+#define SOLOMON_PARALLELIZE_INNER_LOOP(...) PRAGMA_ACC_LOOP(ACC_CLAUSE_VECTOR SOLOMON_APPEND_ARGS(__VA_ARGS__))
 ///
 /// @brief finalize the offloading of the outer loop
 ///
-#define END_OFFLOAD_OUTER_LOOP PRAGMA_ACC_END_PARALLEL
+#define SOLOMON_END_OFFLOAD_OUTER_LOOP PRAGMA_ACC_END_PARALLEL
 #elif defined(OFFLOAD_BY_OPENMP_TARGET)
 ///
 /// @brief offload the immediately following loop and distribute it over thread-blocks (OpenMP target: _Pragma("omp target teams distribute [...]"))
 ///
-#define OFFLOAD_OUTER_LOOP(...) PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(__VA_ARGS__)
+#define SOLOMON_OFFLOAD_OUTER_LOOP(...) PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(__VA_ARGS__)
 ///
 /// @brief parallelize the immediately following loop over threads within a thread-block (OpenMP target: _Pragma("omp parallel for [...]"))
-/// @note must be used in conjunction with OFFLOAD_OUTER_LOOP(...) to parallelize the immediately following loop over threads within a thread-block
+/// @note must be used in conjunction with SOLOMON_OFFLOAD_OUTER_LOOP(...) to parallelize the immediately following loop over threads within a thread-block
 ///
-#define PARALLELIZE_INNER_LOOP(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
+#define SOLOMON_PARALLELIZE_INNER_LOOP(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
 ///
 /// @brief finalize the offloading of the outer loop
 ///
-#define END_OFFLOAD_OUTER_LOOP
+#define SOLOMON_END_OFFLOAD_OUTER_LOOP
 #elif defined(_OPENMP)
 ///
 /// @brief parallelize the immediately following loop (OpenMP for multicore CPU: _Pragma("omp parallel for [...]"))
 ///
-#define OFFLOAD_OUTER_LOOP(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
+#define SOLOMON_OFFLOAD_OUTER_LOOP(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
 ///
-/// @brief do nothing (OpenMP for multicore CPU: OFFLOAD_OUTER_LOOP(...) has already parallelized the outer loop; the immediately following loop runs sequentially within each thread)
+/// @brief do nothing (OpenMP for multicore CPU: SOLOMON_OFFLOAD_OUTER_LOOP(...) has already parallelized the outer loop; the immediately following loop runs sequentially within each thread)
 ///
-#define PARALLELIZE_INNER_LOOP(...)
+#define SOLOMON_PARALLELIZE_INNER_LOOP(...)
 ///
 /// @brief finalize the offloading of the outer loop
 ///
-#define END_OFFLOAD_OUTER_LOOP
+#define SOLOMON_END_OFFLOAD_OUTER_LOOP
 #else  // defined(_OPENMP)
 ///
 /// @brief offload the immediately following loop (fallback mode: no offloading)
 ///
-#define OFFLOAD_OUTER_LOOP(...)
+#define SOLOMON_OFFLOAD_OUTER_LOOP(...)
 ///
 /// @brief parallelize the immediately following loop (fallback mode: no offloading)
 ///
-#define PARALLELIZE_INNER_LOOP(...)
+#define SOLOMON_PARALLELIZE_INNER_LOOP(...)
 ///
 /// @brief finalize the offloading of the outer loop
 ///
-#define END_OFFLOAD_OUTER_LOOP
+#define SOLOMON_END_OFFLOAD_OUTER_LOOP
 #endif  // defined(OFFLOAD_BY_OPENACC)
 
 ///
 /// @brief indicate parallelism to compiler
 ///
-#define AS_INDEPENDENT ACC_CLAUSE_INDEPENDENT
+#define SOLOMON_CLAUSE_INDEPENDENT ACC_CLAUSE_INDEPENDENT
 
 ///
 /// @brief omit vectorization
 ///
-#define AS_SEQUENTIAL ACC_CLAUSE_SEQ
+#define SOLOMON_CLAUSE_SEQUENTIAL ACC_CLAUSE_SEQ
 
 ///
 /// @brief suggest number of threads per thread-block
 ///
-#define NUM_THREADS(n) ACC_CLAUSE_VECTOR_LENGTH(n)
+#define SOLOMON_CLAUSE_NUM_THREADS(n) ACC_CLAUSE_VECTOR_LENGTH(n)
 
 ///
 /// @brief suggest number of thread-blocks
 ///
-#define NUM_BLOCKS(n) ACC_CLAUSE_NUM_GANGS(n)
+#define SOLOMON_CLAUSE_NUM_BLOCKS(n) ACC_CLAUSE_NUM_GANGS(n)
 
 ///
-/// @brief deprecated alias of NUM_BLOCKS
-/// @deprecated NUM_GRIDS(n) was renamed to NUM_BLOCKS(n) in v2.0.0
+/// @brief deprecated alias of SOLOMON_CLAUSE_NUM_BLOCKS
+/// @deprecated NUM_GRIDS(n) was renamed to SOLOMON_CLAUSE_NUM_BLOCKS(n) in v2.0.0
 ///
-#define NUM_GRIDS(n) NUM_BLOCKS(n)
+#define SOLOMON_CLAUSE_NUM_GRIDS(n) SOLOMON_CLAUSE_NUM_BLOCKS(n)
 #if defined(__clang__) && (__clang_major__ >= 14)
-#pragma clang deprecated(NUM_GRIDS, "NUM_GRIDS(n) was renamed to NUM_BLOCKS(n) in v2.0.0")
+#pragma clang deprecated(SOLOMON_CLAUSE_NUM_GRIDS, "SOLOMON_CLAUSE_NUM_GRIDS(n) is a deprecated alias of SOLOMON_CLAUSE_NUM_BLOCKS(n)")
 #endif  // defined(__clang__) && (__clang_major__ >= 14)
 
 ///
 /// @brief suggest parallelization hierarchy: thread(CUDA)/vector(OpenACC)/thread(OpenMP target)
 ///
-#define AS_THREAD ACC_CLAUSE_VECTOR
+#define SOLOMON_CLAUSE_THREAD ACC_CLAUSE_VECTOR
 
 ///
 /// @brief suggest parallelization hierarchy: block(CUDA)/gang(OpenACC)/teams(OpenMP target)
 ///
-#define AS_BLOCK ACC_CLAUSE_GANG
+#define SOLOMON_CLAUSE_BLOCK ACC_CLAUSE_GANG
 
 ///
-/// @brief deprecated alias of AS_BLOCK
-/// @deprecated AS_GRID was renamed to AS_BLOCK in v2.0.0
+/// @brief deprecated alias of SOLOMON_CLAUSE_BLOCK
+/// @deprecated AS_GRID was renamed to SOLOMON_CLAUSE_BLOCK in v2.0.0
 ///
-#define AS_GRID AS_BLOCK
+#define SOLOMON_CLAUSE_GRID SOLOMON_CLAUSE_BLOCK
 #if defined(__clang__) && (__clang_major__ >= 14)
-#pragma clang deprecated(AS_GRID, "AS_GRID was renamed to AS_BLOCK in v2.0.0")
+#pragma clang deprecated(SOLOMON_CLAUSE_GRID, "SOLOMON_CLAUSE_GRID is a deprecated alias of SOLOMON_CLAUSE_BLOCK")
 #endif  // defined(__clang__) && (__clang_major__ >= 14)
 
 ///
 /// @brief collapse tightly-nested loops
 ///
-#define COLLAPSE(n) ACC_CLAUSE_COLLAPSE(n)
+#define SOLOMON_CLAUSE_COLLAPSE(n) ACC_CLAUSE_COLLAPSE(n)
 
 ///
 /// @brief declaration of the specified functions are mapped to device
 ///
-#define DECLARE_OFFLOADED(...) PRAGMA_ACC_ROUTINE(__VA_ARGS__)
+#define SOLOMON_DECLARE_OFFLOADED(...) PRAGMA_ACC_ROUTINE(__VA_ARGS__)
 
 ///
 /// @brief declaration of the specified functions are mapped to device
 ///
-#define DECLARE_OFFLOADED_END PRAGMA_OMP_END_DECLARE_TARGET
-///
-/// @brief declaration of the specified functions are mapped to device
-///
-#define DECLARE_END_OFFLOADED PRAGMA_OMP_END_DECLARE_TARGET
+#define SOLOMON_DECLARE_OFFLOADED_END PRAGMA_OMP_END_DECLARE_TARGET
 
 ///
 /// @brief launch kernels asynchronously
 ///
-#define AS_ASYNC(...) ACC_CLAUSE_ASYNC(__VA_ARGS__)
+#define SOLOMON_CLAUSE_ASYNC(...) ACC_CLAUSE_ASYNC(__VA_ARGS__)
 
 ///
 /// @brief launch kernels asynchronously with the specified queue ID
-/// @details In OpenACC, ASYNC_QUEUE(id) is converted to async(id) and launches work asynchronously on queue id.
-///          WAIT_QUEUE(id) waits for completion of that queue.
-///          In OpenMP target directives, explicit queue IDs are not supported; therefore, ASYNC_QUEUE(id) is ignored.
+/// @details In OpenACC, SOLOMON_CLAUSE_ASYNC_QUEUE(id) is converted to async(id) and launches work asynchronously on queue id.
+///          SOLOMON_WAIT_QUEUE(id) waits for completion of that queue.
+///          In OpenMP target directives, explicit queue IDs are not supported; therefore, SOLOMON_CLAUSE_ASYNC_QUEUE(id) is ignored.
 ///
 #if defined(OFFLOAD_BY_OPENACC)
-#define ASYNC_QUEUE(id) ACC_CLAUSE_ASYNC(id)
+#define SOLOMON_CLAUSE_ASYNC_QUEUE(id) ACC_CLAUSE_ASYNC(id)
 #else  // defined(OFFLOAD_BY_OPENACC)
-// #warning "ASYNC_QUEUE(id) is ignored: explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC)."
-#define ASYNC_QUEUE(id)
-// #define ASYNC_QUEUE(id) _Pragma("GCC warning \"ASYNC_QUEUE(id) is ignored: explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC).\"")
-// #define ASYNC_QUEUE(id) SOLOMON_EMIT_WARNING("ASYNC_QUEUE(" #id ") is ignored at " __FILE__ ":" PRAGMA_STR(__LINE__) ": explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC).")
+#define SOLOMON_CLAUSE_ASYNC_QUEUE(id)
 #endif  // defined(OFFLOAD_BY_OPENACC)
 
 ///
 /// @brief synchronize asynchronously launched kernel
 ///
-#define SYNCHRONIZE(...) PRAGMA_ACC_WAIT(__VA_ARGS__)
+#define SOLOMON_SYNCHRONIZE(...) PRAGMA_ACC_WAIT(__VA_ARGS__)
 
 ///
 /// @brief synchronize asynchronously launched kernels with the specified queue ID
-/// @details In OpenACC, WAIT_QUEUE(id) is converted to wait(id) and waits for completion of asynchronously launched kernels on queue id.
-///          In OpenMP target directives, explicit queue IDs are not supported; therefore, WAIT_QUEUE(id) is ignored.
+/// @details In OpenACC, SOLOMON_WAIT_QUEUE(id) is converted to wait(id) and waits for completion of asynchronously launched kernels on queue id.
+///          In OpenMP target directives, explicit queue IDs are not supported; therefore, SOLOMON_WAIT_QUEUE(id) is ignored.
 ///
 #if defined(OFFLOAD_BY_OPENACC)
-#define WAIT_QUEUE(id) PRAGMA_ACC_WAIT(id)
+#define SOLOMON_WAIT_QUEUE(id) PRAGMA_ACC_WAIT(id)
 #else  // defined(OFFLOAD_BY_OPENACC)
-// #warning "WAIT_QUEUE(id) is ignored: explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC)."
-#define WAIT_QUEUE(id)
-// #define WAIT_QUEUE(id) _Pragma("GCC warning \"WAIT_QUEUE(id) is ignored: explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC).\"")
-// #define WAIT_QUEUE(id) SOLOMON_EMIT_WARNING("WAIT_QUEUE(" #id ") is ignored at " __FILE__ ":" PRAGMA_STR(__LINE__) ": explicit queue IDs for asynchronous execution are not available in OpenMP target directives (only supported in OpenACC).")
+#define SOLOMON_WAIT_QUEUE(id)
 #endif  // defined(OFFLOAD_BY_OPENACC)
 
 ///
 /// @brief atomic construct
 ///
-#define ATOMIC(...) PRAGMA_ACC_ATOMIC(__VA_ARGS__)
+#define SOLOMON_ATOMIC(...) PRAGMA_ACC_ATOMIC(__VA_ARGS__)
 
 ///
 /// @brief atomic construct (default mode: x++; x--; ++x; --x; x binop= expr; x = x binop expr; or x = expr binop x;)
 ///
-#define ATOMIC_UPDATE PRAGMA_ACC_ATOMIC_UPDATE
+#define SOLOMON_ATOMIC_UPDATE PRAGMA_ACC_ATOMIC_UPDATE
 
 ///
 /// @brief atomic construct (read: v = x;)
 ///
-#define ATOMIC_READ PRAGMA_ACC_ATOMIC_READ
+#define SOLOMON_ATOMIC_READ PRAGMA_ACC_ATOMIC_READ
 
 ///
 /// @brief atomic construct (write: x = expr;)
 ///
-#define ATOMIC_WRITE PRAGMA_ACC_ATOMIC_WRITE
+#define SOLOMON_ATOMIC_WRITE PRAGMA_ACC_ATOMIC_WRITE
 
 ///
 /// @brief atomic construct (v = update-expr, where update-expr is one of: x++; x--; ++x; --x; x binop= expr; x = x binop expr; or x = expr binop x;)
 ///
-#define ATOMIC_CAPTURE PRAGMA_ACC_ATOMIC_CAPTURE
+#define SOLOMON_ATOMIC_CAPTURE PRAGMA_ACC_ATOMIC_CAPTURE
 
 ///
 /// @brief perform reduction
 ///
-#define REDUCTION(...) ACC_CLAUSE_REDUCTION(__VA_ARGS__)
+#define SOLOMON_CLAUSE_REDUCTION(...) ACC_CLAUSE_REDUCTION(__VA_ARGS__)
 
 ///
 /// @brief if clause
 ///
-#define ENABLE_IF(condition) ACC_CLAUSE_IF(condition)
+#define SOLOMON_CLAUSE_IF(condition) ACC_CLAUSE_IF(condition)
 
 ///
 /// @brief specify private variables
 ///
-#define AS_PRIVATE(...) ACC_CLAUSE_PRIVATE(__VA_ARGS__)
+#define SOLOMON_CLAUSE_PRIVATE(...) ACC_CLAUSE_PRIVATE(__VA_ARGS__)
 
 ///
 /// @brief specify first private variables
 ///
-#define AS_FIRSTPRIVATE(...) ACC_CLAUSE_FIRSTPRIVATE(__VA_ARGS__)
+#define SOLOMON_CLAUSE_FIRSTPRIVATE(...) ACC_CLAUSE_FIRSTPRIVATE(__VA_ARGS__)
 
 ///
 /// @brief makes the address of device data available on the host
 ///
-#define DATA_ACCESS_BY_HOST(...) PRAGMA_ACC_HOST_DATA(__VA_ARGS__)
+#define SOLOMON_DATA_ACCESS_BY_HOST(...) PRAGMA_ACC_HOST_DATA(__VA_ARGS__)
 
 ///
 /// @brief defines data accessible by the device
 ///
-#define DATA_ACCESS_BY_DEVICE(...) PRAGMA_ACC_DATA(__VA_ARGS__)
+#define SOLOMON_DATA_ACCESS_BY_DEVICE(...) PRAGMA_ACC_DATA(__VA_ARGS__)
 
 ///
 /// @brief use device data from host
 ///
-#define USE_DEVICE_DATA_FROM_HOST(...) PRAGMA_ACC_HOST_DATA_USE_DEVICE(__VA_ARGS__)
+#define SOLOMON_USE_DEVICE_DATA_FROM_HOST(...) PRAGMA_ACC_HOST_DATA_USE_DEVICE(__VA_ARGS__)
 
 ///
 /// @brief specify the pointer is allocated on device
 ///
-#define AS_DEVICE_PTR(...) ACC_CLAUSE_DEVICEPTR(__VA_ARGS__)
+#define SOLOMON_CLAUSE_DEVICE_PTR(...) ACC_CLAUSE_DEVICEPTR(__VA_ARGS__)
 
 ///
 /// @brief allocate device memory
 ///
-#define MALLOC_ON_DEVICE(...) PRAGMA_ACC_ENTER_DATA_CREATE(__VA_ARGS__)
+#define SOLOMON_MALLOC_ON_DEVICE(...) PRAGMA_ACC_ENTER_DATA_CREATE(__VA_ARGS__)
 ///
 /// @brief allocate device memory
 ///
-#define ALLOCATE_ON_DEVICE(...) MALLOC_ON_DEVICE(__VA_ARGS__)
+#define SOLOMON_ALLOCATE_ON_DEVICE(...) SOLOMON_MALLOC_ON_DEVICE(__VA_ARGS__)
 
 ///
 /// @brief release device memory
 ///
-#define FREE_FROM_DEVICE(...) PRAGMA_ACC_EXIT_DATA_DELETE(__VA_ARGS__)
+#define SOLOMON_FREE_FROM_DEVICE(...) PRAGMA_ACC_EXIT_DATA_DELETE(__VA_ARGS__)
 ///
 /// @brief release device memory
 ///
-#define DEALLOCATE_ON_DEVICE(...) FREE_FROM_DEVICE(__VA_ARGS__)
+#define SOLOMON_DEALLOCATE_ON_DEVICE(...) SOLOMON_FREE_FROM_DEVICE(__VA_ARGS__)
 
 ///
 /// @brief memcpy from device to host
 ///
-#define MEMCPY_D2H(...) PRAGMA_ACC_UPDATE_HOST(__VA_ARGS__)
+#define SOLOMON_MEMCPY_D2H(...) PRAGMA_ACC_UPDATE_HOST(__VA_ARGS__)
 
 ///
 /// @brief memcpy from host to device
 ///
-#define MEMCPY_H2D(...) PRAGMA_ACC_UPDATE_DEVICE(__VA_ARGS__)
+#define SOLOMON_MEMCPY_H2D(...) PRAGMA_ACC_UPDATE_DEVICE(__VA_ARGS__)
 
 ///
 /// @brief declaration of the specified variables are mapped to device
 ///
-#define DECLARE_DATA_ON_DEVICE(...) PRAGMA_ACC_DATA_PRESENT(__VA_ARGS__)
+#define SOLOMON_DECLARE_DATA_ON_DEVICE(...) PRAGMA_ACC_DATA_PRESENT(__VA_ARGS__)
 
 ///
 /// @brief specify variables to be copied (copy from host to device before the computation, copy from device to host after the computation)
 ///
-#define COPY_BEFORE_AND_AFTER_EXEC(...) ACC_CLAUSE_COPY(__VA_ARGS__)
+#define SOLOMON_CLAUSE_COPY_BEFORE_AND_AFTER_EXEC(...) ACC_CLAUSE_COPY(__VA_ARGS__)
 
 ///
 /// @brief argument to specify variables to be copied (copy from host to device before the computation)
 ///
-#define COPY_H2D_BEFORE_EXEC(...) ACC_CLAUSE_COPYIN(__VA_ARGS__)
+#define SOLOMON_CLAUSE_COPY_H2D_BEFORE_EXEC(...) ACC_CLAUSE_COPYIN(__VA_ARGS__)
 
 ///
 /// @brief argument to specify variables to be copied (copy from device to host after the computation)
 ///
-#define COPY_D2H_AFTER_EXEC(...) ACC_CLAUSE_COPYOUT(__VA_ARGS__)
+#define SOLOMON_CLAUSE_COPY_D2H_AFTER_EXEC(...) ACC_CLAUSE_COPYOUT(__VA_ARGS__)
+
+// unprefixed spellings of the user-facing macros (v1.x compatible; default OFF)
+#if defined(SOLOMON_WITH_SHORT_NAMES)
+#include "short_names.hpp"
+#endif  // defined(SOLOMON_WITH_SHORT_NAMES)
 
 #endif  // !defined(SOLOMON_SOLOMON_HPP)
