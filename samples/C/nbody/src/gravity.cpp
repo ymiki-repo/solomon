@@ -17,7 +17,7 @@
 #include "type.hpp"
 
 void calc_acc(const int Ni, position *ipos, acceleration *iacc, const int Nj, position *jpos, const float eps) {
-  OFFLOAD(NUM_THREADS(NTHREADS), AS_INDEPENDENT)
+  SOLOMON_OFFLOAD(SOLOMON_CLAUSE_NUM_THREADS(NTHREADS), SOLOMON_CLAUSE_INDEPENDENT)
   for (std::remove_const_t<decltype(Ni)> ii = 0; ii < Ni; ii++) {
     // initialization
     position pi = ipos[ii];
@@ -59,7 +59,7 @@ void trim_acc(const int Ni, acceleration *acc, const float newton
               position *pos, const float epsinv
 #endif  // CALCULATE_POTENTIAL
 ) {
-  OFFLOAD(AS_INDEPENDENT)
+  SOLOMON_OFFLOAD(SOLOMON_CLAUSE_INDEPENDENT)
   for (std::remove_const_t<decltype(Ni)> ii = 0; ii < Ni; ii++) {
     // initialization
     acceleration ai = acc[ii];

@@ -27,7 +27,7 @@ static const float newton = 1.0F;  // gravitational constant
 
 #ifndef BENCHMARK_MODE
 void kick(const int num, velocity *vel, acceleration *acc, const float dt) {
-  OFFLOAD(AS_INDEPENDENT)
+  SOLOMON_OFFLOAD(SOLOMON_CLAUSE_INDEPENDENT)
   for (std::remove_const_t<decltype(num)> ii = 0; ii < num; ii++) {
     // initialization
     auto vi = vel[ii];
@@ -42,7 +42,7 @@ void kick(const int num, velocity *vel, acceleration *acc, const float dt) {
 }
 
 void drift(const int num, position *pos, velocity *vel, const float dt) {
-  OFFLOAD(AS_INDEPENDENT)
+  SOLOMON_OFFLOAD(SOLOMON_CLAUSE_INDEPENDENT)
   for (std::remove_const_t<decltype(num)> ii = 0; ii < num; ii++) {
     // initialization
     auto pi = pos[ii];
@@ -63,7 +63,7 @@ void
 #endif  // CALCULATE_POTENTIAL
 write_snapshot(const int num, position *pos, velocity *vel, velocity *vel_tmp, acceleration *acc, char *file, const int snp_id, const float time, const float dt) {
   // memcpy from device to host
-  MEMCPY_D2H(pos [0:num], vel [0:num], acc [0:num])
+  SOLOMON_MEMCPY_D2H(pos [0:num], vel [0:num], acc [0:num])
 
   // backward integration for velocity
   const auto dt_2 = std::ldexp(dt, -1);
@@ -160,7 +160,7 @@ int main(void) {
   velocity *vel, *vel_tmp;
   acceleration *acc;
   allocate_Nbody_particles(&pos, &vel, &vel_tmp, &acc, num);
-  MALLOC_ON_DEVICE(pos [0:num], vel [0:num], acc [0:num])
+  SOLOMON_MALLOC_ON_DEVICE(pos [0:num], vel [0:num], acc [0:num])
 
   // initialize N-body simulation
   auto time = 0.0F;
@@ -177,7 +177,7 @@ int main(void) {
   if (step == 0) {
     set_uniform_sphere(num, pos, vel, Mtot, rad, virial, newton);
     // memcpy from host to device
-    MEMCPY_H2D(pos [0:num], vel [0:num])
+    SOLOMON_MEMCPY_H2D(pos [0:num], vel [0:num])
     calc_acc(num, pos, acc, num, pos, eps);
     trim_acc(num, acc, newton
 #ifdef CALCULATE_POTENTIAL
@@ -237,7 +237,7 @@ int main(void) {
 #endif  // CALCULATE_POTENTIAL
 
   // memory deallocation
-  FREE_FROM_DEVICE(pos [0:num], vel [0:num], acc [0:num])
+  SOLOMON_FREE_FROM_DEVICE(pos [0:num], vel [0:num], acc [0:num])
   release_Nbody_particles(pos, vel, vel_tmp, acc);
 #else  // BENCHMARK_MODE
   const float Mtot = 1.0F;
@@ -274,12 +274,12 @@ int main(void) {
     velocity *vel, *vel_tmp;
     acceleration *acc;
     allocate_Nbody_particles(&pos, &vel, &vel_tmp, &acc, num);
-    MALLOC_ON_DEVICE(pos [0:num], vel [0:num], acc [0:num])
+    SOLOMON_MALLOC_ON_DEVICE(pos [0:num], vel [0:num], acc [0:num])
 
     // generate initial-condition
     set_uniform_sphere(num, pos, vel, Mtot, rad, virial, newton);
     // memcpy from host to device
-    MEMCPY_H2D(pos [0:num], vel [0:num])
+    SOLOMON_MEMCPY_H2D(pos [0:num], vel [0:num])
     struct timespec ini;
     struct timespec end;
     const int iter = NMAX_CRIT / ((num < NMAX_CRIT) ? num : NMAX_CRIT);
@@ -303,7 +303,7 @@ int main(void) {
     fprintf(fp, ",%d,%e,%e,%e\n", num, elapsed, Npairs / elapsed, 1.0e-12 * FLOPS_COUNT * Npairs / elapsed);
 
     // memory deallocation
-    FREE_FROM_DEVICE(pos [0:num], vel [0:num], acc [0:num])
+    SOLOMON_FREE_FROM_DEVICE(pos [0:num], vel [0:num], acc [0:num])
     release_Nbody_particles(pos, vel, vel_tmp, acc);
   }
   fclose(fp);

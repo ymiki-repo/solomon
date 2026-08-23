@@ -30,8 +30,8 @@ contains
 
     cc = 1.0 - (ce + cw + cn + cs + ct + cb)
 
-    OFFLOAD(AS_INDEPENDENT, COLLAPSE(3), ACC_CLAUSE_PRESENT(f, fn), \
-            AS_PRIVATE(i,j,k,ip,im,jp,jm,kp,km,w,e,n,s,b,t))
+    SOLOMON_OFFLOAD(SOLOMON_CLAUSE_INDEPENDENT, SOLOMON_CLAUSE_COLLAPSE(3), ACC_CLAUSE_PRESENT(f, fn), \
+            SOLOMON_CLAUSE_PRIVATE(i,j,k,ip,im,jp,jm,kp,km,w,e,n,s,b,t))
     do k=1, nz
        do j=1, ny
           do i=1, nx
@@ -49,7 +49,7 @@ contains
           end do ! i
        end do ! j
     end do ! k
-    END_OFFLOAD
+    SOLOMON_END_OFFLOAD
 
     diffusion3d = real(nx*ny*nz,dp)*13.0_dp
   end function diffusion3d

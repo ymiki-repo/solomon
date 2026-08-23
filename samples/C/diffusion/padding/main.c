@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 
 #if defined(APPLY_FIRST_TOUCH)
   // first touch
-  OFFLOAD()
+  SOLOMON_OFFLOAD()
   for (int ii = 0; ii < n; ii++) {
     f[ii] = 0.0F;
     fn[ii] = 0.0F;
