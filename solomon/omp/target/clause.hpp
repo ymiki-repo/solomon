@@ -36,28 +36,28 @@
 ///
 /// @brief add OpenMP target clause "device_type (host | nohost | any)" if applicable
 ///
-#define OMP_TARGET_CLAUSE_DEVICE_TYPE(type) device_type(type), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_TARGET)
+#define OMP_TARGET_CLAUSE_DEVICE_TYPE(type) device_type(type), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET)
 
 ///
 /// @brief add OpenMP target clause "enter (extended_list)" if applicable
 ///
 /// @param[in] extended_list A comma-separated list of named variables, procedure names, and named common blocks.
 ///
-#define OMP_TARGET_CLAUSE_ENTER(...) enter(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_TARGET)
+#define OMP_TARGET_CLAUSE_ENTER(...) enter(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET)
 
 ///
 /// @brief add OpenMP target clause "indirect [(invoked_by_fptr)]" if applicable
 ///
 /// @param[in] invoked_by_fptr Determines if the procedures in an enter clause may be invoked indirectly.
 ///
-#define OMP_TARGET_CLAUSE_INDIRECT(...) indirect(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_TARGET)
+#define OMP_TARGET_CLAUSE_INDIRECT(...) indirect(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET)
 
 ///
 /// @brief add OpenMP target clause "link (list)" if applicable
 ///
 /// @param[in] list Supports compilation of functions called in a target region that refer to the list items.
 ///
-#define OMP_TARGET_CLAUSE_LINK(...) link(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_TARGET)
+#define OMP_TARGET_CLAUSE_LINK(...) link(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -171,14 +171,14 @@
 ///
 /// @param[in] list A comma-separated list of file-scope, namespace-scope, or static block-scope variables that do not have incomplete types.
 ///
-#define OMP_TARGET_CLAUSE_USE_DEVICE_PTR(...) use_device_ptr(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET_DATA)
+#define OMP_TARGET_CLAUSE_USE_DEVICE_PTR(...) use_device_ptr(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA)
 
 ///
 /// @brief add OpenMP target clause "use_device_addr (list)" if applicable
 ///
 /// @param[in] list A comma-separated list of file-scope, namespace-scope, or static block-scope variables that do not have incomplete types.
 ///
-#define OMP_TARGET_CLAUSE_USE_DEVICE_ADDR(...) use_device_addr(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET_DATA)
+#define OMP_TARGET_CLAUSE_USE_DEVICE_ADDR(...) use_device_addr(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA)
 
 ///
 /// @brief add OpenMP target clause "defaultmap (implicit_behavior [: variable_category])" if applicable
@@ -186,7 +186,7 @@
 /// @param[in] implicit_behavior alloc, default, firstprivate, from, none, present, to, tofrom
 /// @param[in] variable_category aggregate, all, pointer, scalar
 ///
-#define OMP_TARGET_CLAUSE_DEFAULTMAP(...) defaultmap(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET)
+#define OMP_TARGET_CLAUSE_DEFAULTMAP(...) defaultmap(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET)
 
 ///
 /// @brief add OpenMP target clause "defaultmap (none)" if applicable
@@ -203,14 +203,14 @@
 ///
 /// @param[in] list Indicates that list items already have device addresses, so may be directly accessed from target device. May include array sections.
 ///
-#define OMP_TARGET_CLAUSE_HAS_DEVICE_ADDR(...) has_device_addr(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET)
+#define OMP_TARGET_CLAUSE_HAS_DEVICE_ADDR(...) has_device_addr(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET)
 
 ///
 /// @brief add OpenMP target clause "is_device_ptr (list)" if applicable
 ///
 /// @param[in] list Indicates list items are device pointers.
 ///
-#define OMP_TARGET_CLAUSE_IS_DEVICE_PTR(...) is_device_ptr(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET)
+#define OMP_TARGET_CLAUSE_IS_DEVICE_PTR(...) is_device_ptr(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET)
 
 ///
 /// @brief add OpenMP target clause "uses_allocators ([[alloc_mod,] alloc_mod]: allocator)" if applicable
@@ -220,21 +220,21 @@
 /// @remarks mem_space_handle: Variable of memspace_handle_t type
 /// @remarks traits_array: Constant array of traits type (omp_alloctrait_t)
 ///
-#define OMP_TARGET_CLAUSE_USES_ALLOCATORS(...) uses_allocators(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET)
+#define OMP_TARGET_CLAUSE_USES_ALLOCATORS(...) uses_allocators(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET)
 
 ///
 /// @brief add OpenMP target clause "from ([motion_modifier[,] [motion_modifier[,] ...]:] locator_list)" if applicable
 ///
 /// @param[in] motion_modifier present, mapper (mapper_identifier), iterator (iterators_definition)
 ///
-#define OMP_TARGET_CLAUSE_FROM(...) from(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET_UPDATE)
+#define OMP_TARGET_CLAUSE_FROM(...) from(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE)
 
 ///
 /// @brief add OpenMP target clause "to ([motion_modifier[,] [motion_modifier[,] ...]:] locator_list)" if applicable
 ///
 /// @param[in] motion_modifier present, mapper (mapper_identifier), iterator (iterators_definition)
 ///
-#define OMP_TARGET_CLAUSE_TO(...) to(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET_UPDATE)
+#define OMP_TARGET_CLAUSE_TO(...) to(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -455,7 +455,7 @@
 ///
 /// @param[in] device_description An expression of type integer that refers to the device number or, if ancestor modifier is specified, must be 1.
 ///
-#define OMP_TARGET_CLAUSE_DEVICE(...) device(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DISPATCH, CLAUSE_TAG_OMP_INTEROP, CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TARGET_DATA, CLAUSE_TAG_OMP_TARGET_ENTER_DATA, CLAUSE_TAG_OMP_TARGET_EXIT_DATA, CLAUSE_TAG_OMP_TARGET_UPDATE)
+#define OMP_TARGET_CLAUSE_DEVICE(...) device(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISPATCH, SOLOMON_INTERNAL_TAG_OMP_INTEROP, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)

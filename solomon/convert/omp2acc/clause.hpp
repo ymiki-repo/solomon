@@ -21,13 +21,13 @@
 /// @brief add OpenMP target clause "aligned (list [: alignment])" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_ALIGNED(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_ALIGNED(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "simdlen (length)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_SIMDLEN(length) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_SIMDLEN(length) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "device_type (host | nohost | any)" if applicable
@@ -39,19 +39,19 @@
 /// @brief add OpenMP target clause "enter (extended_list)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_ENTER(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_ENTER(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "indirect [(invoked_by_fptr)]" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_INDIRECT(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_INDIRECT(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "link (list)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_LINK(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_LINK(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -74,7 +74,7 @@
 /// @brief add OpenMP target clause "proc_bind (close | primary | spread)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_PROC_BIND(attr) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_PROC_BIND(attr) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "num_teams ([lower_bound:] upper_bound)" if applicable
@@ -92,13 +92,13 @@
 /// @brief add OpenMP target clause "nontemporal (list)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_NONTEMPORAL(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_NONTEMPORAL(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "safelen (length)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_SAFELEN(length) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_SAFELEN(length) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -109,25 +109,25 @@
 /// @brief add OpenMP target clause "ordered [(n)]" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_ORDERED(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_ORDERED(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "schedule ([modifier] [, modifier] kind [, chunk_size])" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_SCHEDULE(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_SCHEDULE(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "dist_schedule (kind [, chunk_size])" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_DIST_SCHEDULE(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_DIST_SCHEDULE(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "bind (binding)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_BIND(binding) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_BIND(binding) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -150,7 +150,7 @@
 /// @brief add OpenMP target clause "defaultmap (implicit_behavior [: variable_category])" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_DEFAULTMAP(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_DEFAULTMAP(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "defaultmap (none)" if applicable
@@ -180,7 +180,7 @@
 /// @brief add OpenMP target clause "uses_allocators ([[alloc_mod,] alloc_mod]: allocator)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_USES_ALLOCATORS(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_USES_ALLOCATORS(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "from ([motion_modifier[,] [motion_modifier[,] ...]:] locator_list)" if applicable
@@ -209,31 +209,31 @@
 /// @brief add OpenMP target memory-order-clause "seq_cst" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_SEQ_CST MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_SEQ_CST SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target memory-order-clause "acq_rel" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_ACQ_REL MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_ACQ_REL SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target memory-order-clause "release" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_RELEASE MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_RELEASE SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target memory-order-clause "acquire" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_ACQUIRE MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_ACQUIRE SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target memory-order-clause "relaxed" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_RELAXED MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_RELAXED SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target atomic-clause "read" if applicable
@@ -263,25 +263,25 @@
 /// @brief add OpenMP target extended-atomic-clause "compare" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_COMPARE MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_COMPARE SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target extended-atomic-clause "fail (seq_cst | acquire | relaxed)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_FAIL(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_FAIL(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target extended-atomic-clause "weak" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_WEAK MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_WEAK SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target extended-atomic-clause "hint (hint_expression)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_HINT(expression) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_HINT(expression) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "simd" if applicable
@@ -298,31 +298,31 @@
 /// @brief add OpenMP target clause "default (shared)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_DEFAULT_SHARED MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_DEFAULT_SHARED SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "default (firstprivate)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_DEFAULT_FIRSTPRIVATE MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_DEFAULT_FIRSTPRIVATE SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "default (private)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_DEFAULT_PRIVATE MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_DEFAULT_PRIVATE SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "default (none)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_DEFAULT_NONE MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_DEFAULT_NONE SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "shared (list)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_SHARED(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_SHARED(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "private (list)" if applicable
@@ -340,13 +340,13 @@
 /// @brief add OpenMP target clause "lastprivate ([lastprivate_modifier:] list)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_LASTPRIVATE(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_LASTPRIVATE(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "linear (linear_list [: linear_step])" or "linear (linear_list [: linear_modifier [, linear_modifier]])" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_LINEAR(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_LINEAR(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -357,7 +357,7 @@
 /// @brief add OpenMP target clause "allocate ([allocator:] list)" or "allocate (allocate_modifier [, allocate_modifier]: list)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_ALLOCATE(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_ALLOCATE(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -379,7 +379,7 @@
 /// @brief add OpenMP target clause "depend ([depend_modifier,] dependence_type: locator_list)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_DEPEND(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_DEPEND(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "depend (in: locator_list)" if applicable
@@ -396,7 +396,7 @@
 /// @brief add OpenMP target clause "device ([ancestor | device_num:] device_description)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_DEVICE(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_DEVICE(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -424,7 +424,7 @@
 /// @brief add OpenMP target clause "map ([[map_modifier, [map_modifier, ...]] map_type:] locator_list)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_MAP(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_MAP(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenMP target clause "map (alloc: list)" if applicable
@@ -471,7 +471,7 @@
 /// @brief add OpenMP target clause "order ([order_modifier:] concurrent)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_ORDER(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_ORDER(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -499,6 +499,6 @@
 /// @brief add OpenMP target clause "in_reduction ([reduction_modifier,] reduction_identifier: list)" if applicable
 /// @details ignore the clause
 ///
-#define OMP_TARGET_CLAUSE_IN_REDUCTION(...) MISSING_CLAUSE
+#define OMP_TARGET_CLAUSE_IN_REDUCTION(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 #endif  // !defined(SOLOMON_CONVERT_OMP2ACC_CLAUSE_HPP)

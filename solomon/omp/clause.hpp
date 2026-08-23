@@ -23,14 +23,14 @@
 ///
 /// @param[in] list A comma-separated list of file-scope, namespace-scope, or static block-scope variables that do not have incomplete types.
 ///
-#define OMP_CLAUSE_EXCLUSIVE(...) exclusive(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_SCAN)
+#define OMP_CLAUSE_EXCLUSIVE(...) exclusive(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SCAN)
 
 ///
 /// @brief add OpenMP clause "inclusive (list)" if applicable
 ///
 /// @param[in] list A comma-separated list of file-scope, namespace-scope, or static block-scope variables that do not have incomplete types.
 ///
-#define OMP_CLAUSE_INCLUSIVE(...) inclusive(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_SCAN)
+#define OMP_CLAUSE_INCLUSIVE(...) inclusive(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SCAN)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -43,31 +43,31 @@
 /// @param[in] list Declares one or more list items to be aligned to the specified number of bytes.
 /// @param[in] alignment Optional constant positive integer expression
 ///
-#define OMP_CLAUSE_ALIGNED(...) aligned(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_SIMD, CLAUSE_TAG_OMP_SIMD)
+#define OMP_CLAUSE_ALIGNED(...) aligned(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_SIMD, SOLOMON_INTERNAL_TAG_OMP_SIMD)
 
 ///
 /// @brief add OpenMP clause "inbranch" if applicable
 ///
-#define OMP_CLAUSE_INBRANCH inbranch, ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_SIMD)
+#define OMP_CLAUSE_INBRANCH inbranch, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_SIMD)
 
 ///
 /// @brief add OpenMP clause "notinbranch" if applicable
 ///
-#define OMP_CLAUSE_NOTINBRANCH notinbranch, ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_SIMD)
+#define OMP_CLAUSE_NOTINBRANCH notinbranch, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_SIMD)
 
 ///
 /// @brief add OpenMP clause "simdlen (length)" if applicable
 ///
 /// @param[in] length Specifies the preferred number of iterations to be executed concurrently.
 ///
-#define OMP_CLAUSE_SIMDLEN(length) simdlen(length), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_SIMD, CLAUSE_TAG_OMP_SIMD)
+#define OMP_CLAUSE_SIMDLEN(length) simdlen(length), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_SIMD, SOLOMON_INTERNAL_TAG_OMP_SIMD)
 
 ///
 /// @brief add OpenMP clause "uniform (list)" if applicable
 ///
 /// @param[in] list Declares arguments to have an invariant value for all concurrent invocations of the function in the execution of a single SIMD loop.
 ///
-#define OMP_CLAUSE_UNIFORM(...) uniform(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_SIMD)
+#define OMP_CLAUSE_UNIFORM(...) uniform(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_SIMD)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -77,17 +77,17 @@
 ///
 /// @brief add OpenMP clause "sizes (size_list)" if applicable
 ///
-#define OMP_CLAUSE_SIZES(...) sizes(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TILE)
+#define OMP_CLAUSE_SIZES(...) sizes(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TILE)
 
 ///
 /// @brief add OpenMP clause "full" if applicable
 ///
-#define OMP_CLAUSE_FULL full, ARGS_WITH_NUM(CLAUSE_TAG_OMP_UNROLL)
+#define OMP_CLAUSE_FULL full, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_UNROLL)
 
 ///
 /// @brief add OpenMP clause "partial [(unroll_factor)]" if applicable
 ///
-#define OMP_CLAUSE_PARTIAL(...) partial(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_UNROLL)
+#define OMP_CLAUSE_PARTIAL(...) partial(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_UNROLL)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -97,14 +97,14 @@
 ///
 /// @brief add OpenMP clause "copyin (list)" if applicable
 ///
-#define OMP_CLAUSE_COPYIN(...) copyin(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_COPYIN)
+#define OMP_CLAUSE_COPYIN(...) copyin(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_COPYIN)
 
 ///
 /// @brief add OpenMP clause "num_threads (nthreads)" if applicable
 ///
 /// @param[in] nthreads Specifies the number of threads to execute.
 ///
-#define OMP_CLAUSE_NUM_THREADS(nthreads) num_threads(nthreads), ARGS_WITH_NUM(CLAUSE_TAG_OMP_PARALLEL)
+#define OMP_CLAUSE_NUM_THREADS(nthreads) num_threads(nthreads), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL)
 
 ///
 /// @brief add OpenMP clause "proc_bind (close | primary | spread)" if applicable
@@ -114,42 +114,42 @@
 /// @remarks primary: Instructs the execution environment to assign every thread in the team to the same place as the primary thread.
 /// @remarks spread: Creates a sparse distribution for a team of T threads among the P places of the parent's place partition.
 ///
-#define OMP_CLAUSE_PROC_BIND(attr) proc_bind(attr), ARGS_WITH_NUM(CLAUSE_TAG_OMP_PARALLEL)
+#define OMP_CLAUSE_PROC_BIND(attr) proc_bind(attr), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL)
 
 ///
 /// @brief add OpenMP clause "num_teams ([lower_bound:] upper_bound)" if applicable
 ///
 /// @param[in] upper_bound
 ///
-#define OMP_CLAUSE_NUM_TEAMS(...) num_teams(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_NUM_TEAMS(...) num_teams(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @brief add OpenMP clause "thread_limit (num)" if applicable
 ///
 /// @param[in] num
 ///
-#define OMP_CLAUSE_THREAD_LIMIT(num) thread_limit(num), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TEAMS, CLAUSE_TAG_OMP_TARGET)
+#define OMP_CLAUSE_THREAD_LIMIT(num) thread_limit(num), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_TARGET)
 
 ///
 /// @brief add OpenMP clause "nontemporal (list)" if applicable
 ///
 /// @param[in] list Accesses to the storage locations in list have low temporal locality across the iterations in which those storage locations are accessed.
 ///
-#define OMP_CLAUSE_NONTEMPORAL(...) nontemporal(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_SIMD)
+#define OMP_CLAUSE_NONTEMPORAL(...) nontemporal(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SIMD)
 
 ///
 /// @brief add OpenMP clause "safelen (length)" if applicable
 ///
 /// @param[in] length If used then no two iterations executed concurrently with SIMD instructions can have a greater distance in the logical iteration space than the value of length.
 ///
-#define OMP_CLAUSE_SAFELEN(length) safelen(length), ARGS_WITH_NUM(CLAUSE_TAG_OMP_SIMD)
+#define OMP_CLAUSE_SAFELEN(length) safelen(length), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SIMD)
 
 ///
 /// @brief add OpenMP clause "filter (thread_num)" if applicable
 ///
 /// @param[in] thread_num Selects which thread executes.
 ///
-#define OMP_CLAUSE_FILTER(thread_num) filter(thread_num), ARGS_WITH_NUM(CLAUSE_TAG_OMP_MASKED)
+#define OMP_CLAUSE_FILTER(thread_num) filter(thread_num), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_MASKED)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -161,14 +161,14 @@
 ///
 /// @param[in] list
 ///
-#define OMP_CLAUSE_COPYPRIVATE(...) copyprivate(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_SINGLE)
+#define OMP_CLAUSE_COPYPRIVATE(...) copyprivate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SINGLE)
 
 ///
 /// @brief add OpenMP clause "ordered [(n)]" if applicable
 ///
 /// @param[in] n The loops or how many loops to associate with a construct.
 ///
-#define OMP_CLAUSE_ORDERED(...) ordered(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_FOR)
+#define OMP_CLAUSE_ORDERED(...) ordered(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR)
 
 ///
 /// @brief add OpenMP clause "schedule ([modifier] [, modifier] kind [, chunk_size])" if applicable
@@ -184,7 +184,7 @@
 /// @remarks nonmonotonic: Chunks are assigned to threads in any order and the behavior of an application that depends on execution order of the chunks is unspecified.
 /// @remarks simd: Ignored when the loop is not associated with a SIMD construct, else new_chunk_size for all except the first and last chunks is chunk_size/simd_width * simd_width (simd_width: implementation-defined value).
 ///
-#define OMP_CLAUSE_SCHEDULE(...) schedule(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_FOR)
+#define OMP_CLAUSE_SCHEDULE(...) schedule(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR)
 
 ///
 /// @brief add OpenMP clause "dist_schedule (kind [, chunk_size])" if applicable
@@ -196,14 +196,14 @@
 /// @remarks auto: Compiler and/or runtime decides.
 /// @remarks runtime: Uses run-sched-var ICV.
 ///
-#define OMP_CLAUSE_DIST_SCHEDULE(...) dist_schedule(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DISTRIBUTE)
+#define OMP_CLAUSE_DIST_SCHEDULE(...) dist_schedule(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE)
 
 ///
 /// @brief add OpenMP clause "bind (binding)" if applicable
 ///
 /// @param[in] binding teams, parallel, or thread.
 ///
-#define OMP_CLAUSE_BIND(binding) bind(binding), ARGS_WITH_NUM(CLAUSE_TAG_OMP_LOOP)
+#define OMP_CLAUSE_BIND(binding) bind(binding), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_LOOP)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -215,7 +215,7 @@
 ///
 /// @param[in] off_modifier iterator(iterators_definition)
 ///
-#define OMP_CLAUSE_AFFINITY(...) affinity(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASK)
+#define OMP_CLAUSE_AFFINITY(...) affinity(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASK)
 
 ///
 /// @brief add OpenMP clause "detach (event_handle)" if applicable
@@ -223,50 +223,50 @@
 ///
 /// @param[in] event_handle type omp_event_handle_t
 ///
-#define OMP_CLAUSE_DETACH(event_handle) detach(event_handle), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASK)
+#define OMP_CLAUSE_DETACH(event_handle) detach(event_handle), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASK)
 
 ///
 /// @brief add OpenMP clause "final (omp_logical_expression)" if applicable
 ///
 /// @param[in] expression The generated task will be a final task if the expression evaluates to true.
 ///
-#define OMP_CLAUSE_FINAL(expression) final(expression), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_FINAL(expression) final(expression), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
 /// @brief add OpenMP clause "mergeable" if applicable
 ///
-#define OMP_CLAUSE_MERGEABLE mergeable, ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_MERGEABLE mergeable, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
 /// @brief add OpenMP clause "priority (value)" if applicable
 ///
 /// @param[in] value Hint to the runtime. Sets max priority value.
 ///
-#define OMP_CLAUSE_PRIORITY(value) priority(value), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_PRIORITY(value) priority(value), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
 /// @brief add OpenMP clause "untied" if applicable
 /// @details Task is an untied task, meaning any thread in the team can resume the task region after a suspension.
 ///
-#define OMP_CLAUSE_UNTIED untied, ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_UNTIED untied, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
 /// @brief add OpenMP clause "grainsize ([strict:] grain_size" if applicable
 /// @details Causes the number of logical loop iterations assigned to each created task to be greater than or equal to the minimum of the value of the grain-size expression and the number of logical loop iterations, but less than twice the value of the grain-size expression. strict forces use of exact grain size, except for last iteration.
 ///
-#define OMP_CLAUSE_GRAINSIZE(...) grainsize(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_GRAINSIZE(...) grainsize(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
 /// @brief add OpenMP clause "nogroup" if applicable
 /// @details Prevents creation of implicit taskgroup region.
 ///
-#define OMP_CLAUSE_NOGROUP nogroup, ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_NOGROUP nogroup, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
 /// @brief add OpenMP clause "num_tasks ([strict:] num_tasks" if applicable
 /// @details Create as many tasks as the minimum of the num_tasks expression and the number of logical loop iterations. strict forces exactly num_tasks tasks to be created.
 ///
-#define OMP_CLAUSE_NUM_TASKS(...) num_tasks(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_NUM_TASKS(...) num_tasks(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -279,12 +279,12 @@
 /// @param[in] interop_modifier prefer_type (preference_list)
 /// @param[in] interop_type target, targetsync
 ///
-#define OMP_CLAUSE_INIT(...) init(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_INTEROP)
+#define OMP_CLAUSE_INIT(...) init(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_INTEROP)
 
 ///
 /// @brief add OpenMP clause "use (interop_var)" if applicable
 ///
-#define OMP_CLAUSE_USE(var) use(var), ARGS_WITH_NUM(CLAUSE_TAG_OMP_INTEROP)
+#define OMP_CLAUSE_USE(var) use(var), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_INTEROP)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -297,42 +297,42 @@
 /// @param[in] reduction_modifier inscan, task, default
 /// @param[in] reduction_identifier +, *, &, |, ^, &&, ||
 ///
-#define OMP_CLAUSE_TASK_REDUCTION(...) task_reduction(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASKGROUP)
+#define OMP_CLAUSE_TASK_REDUCTION(...) task_reduction(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKGROUP)
 
 ///
 /// @brief add OpenMP clause "destroy (depend object)" if applicable
 ///
-#define OMP_CLAUSE_DESTROY(...) destroy(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DEPOBJ)
+#define OMP_CLAUSE_DESTROY(...) destroy(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ)
 
 ///
 /// @brief pass additional list if applicable
 ///
-#define OMP_PASS_LIST(...) (__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_TARGET, CLAUSE_TAG_OMP_FLUSH, CLAUSE_TAG_OMP_DEPOBJ)
+#define OMP_PASS_LIST(...) (__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET, SOLOMON_INTERNAL_TAG_OMP_FLUSH, SOLOMON_INTERNAL_TAG_OMP_DEPOBJ)
 
 ///
 /// @brief add OpenMP memory-order-clause "seq_cst" if applicable
 ///
-#define OMP_CLAUSE_SEQ_CST seq_cst, ARGS_WITH_NUM(CLAUSE_TAG_OMP_FLUSH, CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_SEQ_CST seq_cst, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FLUSH, SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP memory-order-clause "acq_rel" if applicable
 ///
-#define OMP_CLAUSE_ACQ_REL acq_rel, ARGS_WITH_NUM(CLAUSE_TAG_OMP_FLUSH, CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_ACQ_REL acq_rel, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FLUSH, SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP memory-order-clause "release" if applicable
 ///
-#define OMP_CLAUSE_RELEASE release, ARGS_WITH_NUM(CLAUSE_TAG_OMP_FLUSH, CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_RELEASE release, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FLUSH, SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP memory-order-clause "acquire" if applicable
 ///
-#define OMP_CLAUSE_ACQUIRE acquire, ARGS_WITH_NUM(CLAUSE_TAG_OMP_FLUSH, CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_ACQUIRE acquire, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FLUSH, SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP memory-order-clause "relaxed" if applicable
 ///
-#define OMP_CLAUSE_RELAXED relaxed, ARGS_WITH_NUM(CLAUSE_TAG_OMP_FLUSH, CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_RELAXED relaxed, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FLUSH, SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 // FIXME: collision with OMP_CLAUSE_UPDATE AS_OMP_ATOMIC_CLAUSE(update)
 // ///
@@ -341,34 +341,34 @@
 // ///
 // /// @param[in] task_dependence_type in, out, inout, inoutset, mutexinoutset
 // ///
-// #define OMP_CLAUSE_UPDATE(...) update(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DEPOBJ)
+// #define OMP_CLAUSE_UPDATE(...) update(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ)
 
 ///
 /// @brief add OpenMP atomic-clause "read" if applicable
 ///
-#define OMP_CLAUSE_READ read, ARGS_WITH_NUM(CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_READ read, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP atomic-clause "write" if applicable
 ///
-#define OMP_CLAUSE_WRITE write, ARGS_WITH_NUM(CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_WRITE write, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP atomic-clause "update" if applicable
 ///
-#define OMP_CLAUSE_UPDATE update, ARGS_WITH_NUM(CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_UPDATE update, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP extended-atomic-clause "capture" if applicable
 /// @details Capture the value of the variable being updated atomically.
 ///
-#define OMP_CLAUSE_CAPTURE capture, ARGS_WITH_NUM(CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_CAPTURE capture, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP extended-atomic-clause "compare" if applicable
 /// @details Perform the atomic update conditionally.
 ///
-#define OMP_CLAUSE_COMPARE compare, ARGS_WITH_NUM(CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_COMPARE compare, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP extended-atomic-clause "fail (seq_cst | acquire | relaxed)" if applicable
@@ -376,32 +376,32 @@
 ///
 /// @param[in] arg seq_cst (OMP_CLAUSE_SEQ_CST), acquire (OMP_CLAUSE_ACQUIRE), or relaxed (OMP_CLAUSE_RELAXED)
 ///
-#define OMP_CLAUSE_FAIL(...) fail(APPEND_CLAUSES(ARGS_WITH_NUM(CLAUSE_TAG_OMP_ATOMIC), __VA_ARGS__)), ARGS_WITH_NUM(CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_FAIL(...) fail(SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC), __VA_ARGS__)), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP extended-atomic-clause "weak" if applicable
 /// @details Specify that the comparison performed by a conditional atomic update may spuriously fail, evaluating to not equal even when the values are equal.
 ///
-#define OMP_CLAUSE_WEAK weak, ARGS_WITH_NUM(CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_WEAK weak, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP extended-atomic-clause "hint (hint_expression)" if applicable
 ///
-#define OMP_CLAUSE_HINT(expression) hint(expression), ARGS_WITH_NUM(CLAUSE_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_HINT(expression) hint(expression), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
 ///
 /// @brief add OpenMP clause "threads" if applicable
 ///
-#define OMP_CLAUSE_THREADS threads, ARGS_WITH_NUM(CLAUSE_TAG_OMP_ORDERED)
+#define OMP_CLAUSE_THREADS threads, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ORDERED)
 
 ///
 /// @brief add OpenMP clause "simd" if applicable
 ///
 #if defined(__NVCOMPILER)
 // extension in NVIDIA HPC SDK: accepts _Pragma("omp target teams loop simd")
-#define OMP_CLAUSE_SIMD simd, ARGS_WITH_NUM(CLAUSE_TAG_OMP_ORDERED, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_TASKLOOP, CLAUSE_TAG_OMP_TARGET)
+#define OMP_CLAUSE_SIMD simd, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ORDERED, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TARGET)
 #else  // defined(__NVCOMPILER)
-#define OMP_CLAUSE_SIMD simd, ARGS_WITH_NUM(CLAUSE_TAG_OMP_ORDERED, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_SIMD simd, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ORDERED, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 #endif  // #if defined(__NVCOMPILER)
 
 ///
@@ -412,7 +412,7 @@
 /// @remarks source: Specifies the satisfaction of cross-iteration dependences that arise from the current iteration. If source is specified, then the vector argument is optional; if vector is omitted, it is assumed to be omp_cur_iteration. At most one doacross clause can be specified on a directive with source as the dependence_type.
 /// @remarks sink: Specifies a cross-iteration dependence, where vector indicates the iteration that satisfies the dependence. If vector does not occur in the iteration space, the doacross clause is ignored. If all doacross clauses on an ordered construct are ignored then the construct is ignored.
 ///
-#define OMP_CLAUSE_DOACROSS(...) doacross(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_ORDERED)
+#define OMP_CLAUSE_DOACROSS(...) doacross(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ORDERED)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -423,7 +423,7 @@
 /// @brief add OpenMP clause "default (shared | firstprivate | private | none)" if applicable
 /// @details Default data-sharing attributes are disabled. All variables in a construct must be declared inside the construct or appear in a data-sharing attribute clause.
 ///
-#define OMP_CLAUSE_DEFAULT(attr) default(attr), ARGS_WITH_NUM(CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKLOOP, CLAUSE_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_DEFAULT(attr) default(attr), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @brief add OpenMP clause "default (shared)" if applicable
@@ -453,19 +453,19 @@
 /// @brief add OpenMP clause "shared (list)" if applicable
 /// @details Variables in list are shared between threads or explicit tasks executing the construct.
 ///
-#define OMP_CLAUSE_SHARED(...) shared(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKLOOP, CLAUSE_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_SHARED(...) shared(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @brief add OpenMP clause "private (list)" if applicable
 /// @details Creates a new variable for each item in list that is private to each thread or explicit task. The private variable is not given an initial value.
 ///
-#define OMP_CLAUSE_PRIVATE(...) private(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_LOOP, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_SCOPE, CLAUSE_TAG_OMP_SECTION, CLAUSE_TAG_OMP_SIMD, CLAUSE_TAG_OMP_SINGLE, CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKLOOP, CLAUSE_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_PRIVATE(...) private(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTION, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_SINGLE, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @brief add OpenMP clause "firstprivate (list)" if applicable
 /// @details Declares list items to be private to each thread or explicit task and assigns them the value the original variable has at the time the construct is encountered.
 ///
-#define OMP_CLAUSE_FIRSTPRIVATE(...) firstprivate(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_SCOPE, CLAUSE_TAG_OMP_SECTION, CLAUSE_TAG_OMP_SIMD, CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKLOOP, CLAUSE_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_FIRSTPRIVATE(...) firstprivate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTION, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @brief add OpenMP clause "lastprivate ([lastprivate_modifier:] list)" if applicable
@@ -474,7 +474,7 @@
 /// @param[in] lastprivate_modifier conditional
 /// @remarks conditional: Uses the value from the thread that executed the highest index iteration number.
 ///
-#define OMP_CLAUSE_LASTPRIVATE(...) lastprivate(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_LOOP, CLAUSE_TAG_OMP_SECTION, CLAUSE_TAG_OMP_SIMD, CLAUSE_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_LASTPRIVATE(...) lastprivate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_SECTION, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
 /// @brief add OpenMP clause "linear (linear_list [: linear_step])" or "linear (linear_list [: linear_modifier [, linear_modifier]])" if applicable
@@ -489,7 +489,7 @@
 /// @remarks uval: The value is linear, may not be modified
 /// @remarks The ref and uval modifiers may only be specified for a linear clause on the declare simd directive, and only for arguments that are passed by reference.
 ///
-#define OMP_CLAUSE_LINEAR(...) linear(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DECLARE_SIMD, CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_SIMD)
+#define OMP_CLAUSE_LINEAR(...) linear(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_SIMD, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_SIMD)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -503,7 +503,7 @@
 /// @param[in] allocator an expression of "type omp_allocator_handle_t"
 /// @param[in] alignment a constant positive integer power of 2
 ///
-#define OMP_CLAUSE_ALLOCATE(...) allocate(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_SCOPE, CLAUSE_TAG_OMP_SECTION, CLAUSE_TAG_OMP_SINGLE, CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKGROUP, CLAUSE_TAG_OMP_TASKLOOP, CLAUSE_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_ALLOCATE(...) allocate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTION, SOLOMON_INTERNAL_TAG_OMP_SINGLE, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKGROUP, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -516,7 +516,7 @@
 ///
 /// @param[in] n A constant positive integer expression that specifies how many loops are associated with the construct.
 ///
-#define OMP_CLAUSE_COLLAPSE(n) collapse(n), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_LOOP, CLAUSE_TAG_OMP_SIMD, CLAUSE_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_COLLAPSE(n) collapse(n), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -535,7 +535,7 @@
 /// @remarks inoutset: If the storage location of at least one of the list items matches the storage location of a list item appearing in a depend clause with an in, out, inout, or mutexinoutset dependence-type on a construct from which a sibling task was previously generated, then the generated task will be a dependent task of that sibling task.
 /// @remarks depobj: The task dependences are derived from the depend clause specified in the depobj constructs that initialized dependences represented by the depend objects specified in the depend clause as if the depend clauses of the depobj constructs were specified in the current construct.
 ///
-#define OMP_CLAUSE_DEPEND(...) depend(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DEPOBJ, CLAUSE_TAG_OMP_DISPATCH, CLAUSE_TAG_OMP_INTEROP, CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TARGET_ENTER_DATA, CLAUSE_TAG_OMP_TARGET_EXIT_DATA, CLAUSE_TAG_OMP_TARGET_UPDATE, CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKWAIT)
+#define OMP_CLAUSE_DEPEND(...) depend(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ, SOLOMON_INTERNAL_TAG_OMP_DISPATCH, SOLOMON_INTERNAL_TAG_OMP_INTEROP, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKWAIT)
 
 ///
 /// @brief add OpenMP clause "depend (in: locator_list)" if applicable
@@ -552,7 +552,7 @@
 /// @details The effect of the if clause depends on the construct to which it is applied. For combined or composite constructs, it only applies to the semantics of the construct named in the directive-name-modifier if one is specified. If no modifier is specified for a combined or composite construct then the if clause applies to all constructs to which an if clause can apply.
 ///
 #define OMP_CLAUSE_IF(...) \
-  if (__VA_ARGS__) , ARGS_WITH_NUM(CLAUSE_TAG_OMP_CANCEL, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_SIMD, CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TARGET_DATA, CLAUSE_TAG_OMP_TARGET_ENTER_DATA, CLAUSE_TAG_OMP_TARGET_EXIT_DATA, CLAUSE_TAG_OMP_TARGET_UPDATE, CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TASKLOOP, CLAUSE_TAG_OMP_TEAMS)
+  if (__VA_ARGS__) , SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_CANCEL, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -566,7 +566,7 @@
 /// @param[in] map_type alloc, to, from, tofrom, release, delete
 /// @param[in] map_modifier always, close, present, mapper(mapper-id), iterator(iterators-definition)
 ///
-#define OMP_CLAUSE_MAP(...) map(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TARGET_DATA, CLAUSE_TAG_OMP_TARGET_ENTER_DATA, CLAUSE_TAG_OMP_TARGET_EXIT_DATA, CLAUSE_TAG_OMP_DECLARE_MAPPER)
+#define OMP_CLAUSE_MAP(...) map(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_DECLARE_MAPPER)
 
 ///
 /// @brief add OpenMP clause "map (tofrom: alloc)" if applicable
@@ -609,7 +609,7 @@
 ///
 /// @param[in] order_modifier reproducible, unconstrained
 ///
-#define OMP_CLAUSE_ORDER(...) order(__VA_ARGS__ concurrent), ARGS_WITH_NUM(CLAUSE_TAG_OMP_DISTRIBUTE, CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_LOOP, CLAUSE_TAG_OMP_SIMD)
+#define OMP_CLAUSE_ORDER(...) order(__VA_ARGS__ concurrent), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_SIMD)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -621,7 +621,7 @@
 /// @details Overrides any synchronization that would otherwise occur at the end of a construct. It can also specify that an interoperability requirement set includes the nowait property. If the construct includes an implicit barrier, the nowait clause specifies that the barrier will not occur.
 /// @remarks parallel for, parallel sections, or parallel for simd cannot use nowait clause
 ///
-#define OMP_CLAUSE_NOWAIT nowait, ARGS_WITH_NUM(CLAUSE_TAG_OMP_DISPATCH, CLAUSE_TAG_OMP_INTEROP, CLAUSE_TAG_OMP_SCOPE, CLAUSE_TAG_OMP_SINGLE, CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_TARGET_ENTER_DATA, CLAUSE_TAG_OMP_TARGET_EXIT_DATA, CLAUSE_TAG_OMP_TARGET_UPDATE, CLAUSE_TAG_OMP_TASKWAIT, CLAUSE_TAG_OMP_WORKSHARE, CLAUSE_TAG_OMP_NOWAIT)
+#define OMP_CLAUSE_NOWAIT nowait, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISPATCH, SOLOMON_INTERNAL_TAG_OMP_INTEROP, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SINGLE, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_TASKWAIT, SOLOMON_INTERNAL_TAG_OMP_WORKSHARE, SOLOMON_INTERNAL_TAG_OMP_NOWAIT)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -635,7 +635,7 @@
 /// @param[in] reduction_modifier inscan, task, default
 /// @param[in] reduction_identifier +, *, &, |, ^, &&, ||
 ///
-#define OMP_CLAUSE_REDUCTION(...) reduction(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_FOR, CLAUSE_TAG_OMP_LOOP, CLAUSE_TAG_OMP_PARALLEL, CLAUSE_TAG_OMP_SCOPE, CLAUSE_TAG_OMP_SECTION, CLAUSE_TAG_OMP_SIMD, CLAUSE_TAG_OMP_TASKLOOP, CLAUSE_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_REDUCTION(...) reduction(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTION, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @brief add OpenMP clause "in_reduction ([reduction_modifier,] reduction_identifier: list)" if applicable
@@ -645,6 +645,6 @@
 /// @param[in] reduction_modifier inscan, task, default
 /// @param[in] reduction_identifier +, *, &, |, ^, &&, ||
 ///
-#define OMP_CLAUSE_IN_REDUCTION(...) in_reduction(__VA_ARGS__), ARGS_WITH_NUM(CLAUSE_TAG_OMP_TASK, CLAUSE_TAG_OMP_TARGET, CLAUSE_TAG_OMP_IN_REDUCTION)
+#define OMP_CLAUSE_IN_REDUCTION(...) in_reduction(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_IN_REDUCTION)
 
 #endif  // !defined(SOLOMON_OMP_CLAUSE_HPP)

@@ -23,10 +23,10 @@ function generate(io::IO, N_max::Int)
     println(io, "#if !defined(SOLOMON_UTIL_IMPL_RETRIEVE_ARGS_HPP)")
 	println(io, "#define SOLOMON_UTIL_IMPL_RETRIEVE_ARGS_HPP")
 
-    # generate EXTRACT_ARGS_N(...)
+    # generate SOLOMON_INTERNAL_EXTRACT_ARGS_N(...)
 	println(io)
     for ii in 0:N_max
-        print(io, "#define EXTRACT_ARGS_", ii, "(")
+        print(io, "#define SOLOMON_INTERNAL_EXTRACT_ARGS_", ii, "(")
         for jj in 1:ii
             print(io, "arg", jj, ", ")
         end
@@ -40,10 +40,10 @@ function generate(io::IO, N_max::Int)
         println(io)
     end
 
-    # generate RETRIEVE_ARGS_N(...)
+    # generate SOLOMON_INTERNAL_RETRIEVE_ARGS_N(...)
 	println(io)
     for ii in 0:N_max
-        print(io, "#define RETRIEVE_ARGS_", ii, "(")
+        print(io, "#define SOLOMON_INTERNAL_RETRIEVE_ARGS_", ii, "(")
         for jj in 1:ii
             print(io, "arg", jj, ", ")
         end
@@ -53,8 +53,8 @@ function generate(io::IO, N_max::Int)
     # Add comment about exceeding the limit
     println(io)
     println(io, "///")
-    println(io, "/// @warning Using EXTRACT_ARGS_N or RETRIEVE_ARGS_N with N > $N_max will cause a compile error:")
-    println(io, "///          - Error message: 'EXTRACT_ARGS_$(N_max + 1)' or 'RETRIEVE_ARGS_$(N_max + 1)' was not declared")
+    println(io, "/// @warning Using SOLOMON_INTERNAL_EXTRACT_ARGS_N or SOLOMON_INTERNAL_RETRIEVE_ARGS_N with N > $N_max will cause a compile error:")
+    println(io, "///          - Error message: 'SOLOMON_INTERNAL_EXTRACT_ARGS_$(N_max + 1)' or 'SOLOMON_INTERNAL_RETRIEVE_ARGS_$(N_max + 1)' was not declared")
     println(io, "///          - To fix: cd solomon/util && julia jl/extract_args.jl --max N")
     println(io, "///                   (where N >= your required argument count)")
     println(io, "///")

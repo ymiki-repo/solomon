@@ -15,11 +15,11 @@
 ///
 /// @brief matching macro to be ignored
 ///
-#define COMPARE_CLAUSE_TAG_MISSING(x) x
+#define COMPARE_SOLOMON_INTERNAL_TAG_MISSING(x) x
 
 ///
 /// @brief missing clause
 ///
-#define MISSING_CLAUSE missing, ARGS_WITH_NUM(CLAUSE_TAG_MISSING)
+#define SOLOMON_INTERNAL_MISSING_CLAUSE missing, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_MISSING)
 
 #endif  // !defined(SOLOMON_UTIL_MISSING_HPP)

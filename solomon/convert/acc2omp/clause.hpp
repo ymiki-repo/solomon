@@ -22,13 +22,13 @@
 /// @brief add OpenACC clause "self [(condition)]" or "self (list)" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_SELF(...) MISSING_CLAUSE
+#define ACC_CLAUSE_SELF(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "default (none | present)" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_DEFAULT(mode) MISSING_CLAUSE
+#define ACC_CLAUSE_DEFAULT(mode) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "default (none)" if applicable
@@ -64,7 +64,7 @@
 /// @brief add OpenACC clause "finalize" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_FINALIZE MISSING_CLAUSE
+#define ACC_CLAUSE_FINALIZE SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "num_gangs (n)" if applicable
@@ -76,7 +76,7 @@
 /// @brief add OpenACC clause "num_workers (n)" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_NUM_WORKERS(n) MISSING_CLAUSE
+#define ACC_CLAUSE_NUM_WORKERS(n) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "vector_length (n)" if applicable
@@ -134,7 +134,7 @@
 /// @brief add OpenACC clause "no_create (list)" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_NO_CREATE(...) MISSING_CLAUSE
+#define ACC_CLAUSE_NO_CREATE(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "delete (list)" if applicable
@@ -146,7 +146,7 @@
 /// @brief add OpenACC clause "present (list)" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_PRESENT(...) MISSING_CLAUSE
+#define ACC_CLAUSE_PRESENT(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "deviceptr (list)" if applicable
@@ -158,13 +158,13 @@
 /// @brief add OpenACC clause "attach (list)" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_ATTACH(...) MISSING_CLAUSE
+#define ACC_CLAUSE_ATTACH(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "detach (list)" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_DETACH(...) MISSING_CLAUSE
+#define ACC_CLAUSE_DETACH(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 #if _OPENMP >= 201811
 ///
@@ -185,7 +185,7 @@
 /// @brief add OpenACC clause "if_present" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_IF_PRESENT MISSING_CLAUSE
+#define ACC_CLAUSE_IF_PRESENT SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "collapse (n)" if applicable
@@ -197,13 +197,13 @@
 /// @brief add OpenACC clause "seq" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_SEQ MISSING_CLAUSE
+#define ACC_CLAUSE_SEQ SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "auto" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_AUTO MISSING_CLAUSE
+#define ACC_CLAUSE_AUTO SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "independent" if applicable
@@ -215,25 +215,25 @@
 /// @brief add OpenACC clause "tile (expression_list)" if applicable
 /// @details ignore the clause (_Pragma("omp tile sizes (size_list)") might be the correspondence)
 ///
-#define ACC_CLAUSE_TILE(...) MISSING_CLAUSE
+#define ACC_CLAUSE_TILE(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "gang" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_GANG MISSING_CLAUSE
+#define ACC_CLAUSE_GANG SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "worker" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_WORKER MISSING_CLAUSE
+#define ACC_CLAUSE_WORKER SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "vector" if applicable
 /// @details ignore the clause
 ///
-#define ACC_CLAUSE_VECTOR MISSING_CLAUSE
+#define ACC_CLAUSE_VECTOR SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "read" if applicable (read: v = x;)
@@ -281,7 +281,7 @@
 /// @brief add OpenACC clause "bind (name or string)" if applicable
 /// @details ignore the clause (_Pragma("acc routine [clause [[,] clause]...]") ==>> _Pragma("omp declare target [clause [[,] clause]...]"): enter, indirect, link are candidates)
 ///
-#define ACC_CLAUSE_BIND(arg) MISSING_CLAUSE
+#define ACC_CLAUSE_BIND(arg) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 ///
 /// @brief add OpenACC clause "nohost" if applicable
@@ -299,6 +299,6 @@
 /// @brief add OpenACC clause "link (list)" if applicable
 /// @details ignore the clause (declare directive is also ignored)
 ///
-#define ACC_CLAUSE_LINK(...) MISSING_CLAUSE
+#define ACC_CLAUSE_LINK(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 
 #endif  // !defined(SOLOMON_CONVERT_ACC2OMP_CLAUSE_HPP)
