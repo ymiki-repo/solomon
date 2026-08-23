@@ -24,6 +24,9 @@
 #include "convert/acc2omp/clause.hpp"
 #include "convert/acc2omp/directive.hpp"
 #else   // defined(_OPENMP)
+// serial execution: all directive macros expand to nothing
+#include "serial/fallback.hpp"
+
 #if !defined(USE_SOLOMON_RUNTIME)
 ///
 /// @brief empty definition of USE_SOLOMON_RUNTIME when OpenMP is not available

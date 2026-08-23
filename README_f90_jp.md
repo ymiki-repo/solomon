@@ -204,6 +204,7 @@
   | `-DOFFLOAD_BY_OPENMP_TARGET` | OpenMP target | デフォルトでは `loop` 指示文を使用 |
   | `-DOFFLOAD_BY_OPENMP_TARGET -DOFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE` | OpenMP target | デフォルトでは `distribute` 指示文を使用 |
   | | 縮退モード | OpenMP を用いたマルチコアCPU向けのスレッド並列 |
+  | | シリアルモード | OpenACC・OpenMP のいずれも有効化されていない場合は，全ての指示文が除去されシリアルコードとしてコンパイルされます（v2.0.0 以降） |
 
 * **半自動コード生成・コンパイル方法**
 
@@ -238,6 +239,8 @@
      * Makefile中の変数`FLAGS`にOpenACC または OpenMP target の機能を有効化するオプションを追加
      * コンパイルオプションの変数`FLAGS`にSolomonの動作モードのプリプロセスフラグを追加
      * `FC`および`FLAGS`の内容を変数`SOLOMON_FC`と`SOLOMON_FLAGS`にそれぞれ指定
+       * `fortran.mk` は `SOLOMON_FC` と `SOLOMON_FLAGS` を用いてコンパイラを起動し `_OPENACC` / `_OPENMP` を自動検出するため，OpenACC/OpenMP を有効化するフラグ（`-acc=gpu`, `-mp=gpu`, `-fopenmp`, `-fiopenmp` など）を `SOLOMON_FC` または `SOLOMON_FLAGS` のいずれかに必ず含めてください
+       * `_OPENACC` / `_OPENMP` のいずれも検出されなかった場合は注意メッセージ（`solomon: note: ...`）が表示され，全ての指示文はシリアルコードに展開されます．オフロードを意図していた場合は有効化フラグを追加してください（v2.0.0 以降）
      * コンパイルの対象のファイルをsppディレクトリの下にある.f90に変更
      * Solomonの補助Makefileである`fortran.mk`をincludeするように絶対パスあるいは相対パスで指定
 
@@ -249,12 +252,13 @@
 
       ```sh
       export SOLOMON_DIR=/path/to/Solomon
-      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # NVIDIA HPC SDK の場合
-      $(SOLOMON_DIR)/spp.sh -compiler="amdflang -fopenmp" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # AMD ROCm の場合
-      $(SOLOMON_DIR)/spp.sh -compiler="ifx -fiopenmp" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # Intel oneAPI の場合
+      $(SOLOMON_DIR)/spp.sh -compiler=nvfortran -acc=gpu -mp=gpu -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # NVIDIA HPC SDK の場合
+      $(SOLOMON_DIR)/spp.sh -compiler=amdflang -fopenmp -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # AMD ROCm の場合
+      $(SOLOMON_DIR)/spp.sh -compiler=ifx -fiopenmp -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # Intel oneAPI の場合
       ```
 
-      * `-compiler=...` の引数は使用する環境に応じて適宜置き換えてください
+      * `-compiler=...` の引数およびコンパイラフラグは使用する環境に応じて適宜置き換えてください
+      * `-compiler=...`, `-I...`, `-D...` 以外のコンパイラフラグ（`-acc=gpu`, `-mp=gpu`, `-fopenmp`, `-fiopenmp` など）は `_OPENACC` / `_OPENMP` の自動検出時にコンパイラへ渡されるため，`-D_OPENACC=...` / `-D_OPENMP=...` を手動で指定する必要はありません（v2.0.0 以降．従来の `-compiler="nvfortran -acc=gpu"` という書き方も引き続き使用できます）
       * GPU アーキテクチャを指定するフラグ（`-gpu=...`, `--offload-arch=...`, `-Xs "-device ..."`）は `spp.sh` ではプリプロセスとマクロ検出のみを行うため不要で，最終的な compile/link 時に指定してください
       * `$(SOLOMON_DIR)/spp.sh` については，Solomonのパスに`PATH`を通した上で`spp.sh`として実行することもできます
 

@@ -179,6 +179,7 @@
   | `-DOFFLOAD_BY_OPENMP_TARGET` | OpenMP target | use `loop` directive in default |
   | `-DOFFLOAD_BY_OPENMP_TARGET -DOFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE` | OpenMP target | use `distribute` directive in default |
   | | fallback mode | thread-parallelization for multicore CPUs using OpenMP |
+  | | serial mode | when neither OpenACC nor OpenMP is enabled, all directives are removed and the code compiles as a serial program (v2.0.0 or later) |
 
 * Adding the compile flag `-DPRINT_GENERATED_PRAGMA` allows you to output the actually generated directives as compile-time messages
   * In LLVM, this is treated as a warning, so when specifying `-Werror`, also pass `-Wno-error=pragma-messages` to prevent these messages from being treated as errors

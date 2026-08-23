@@ -204,6 +204,7 @@
   | `-DOFFLOAD_BY_OPENMP_TARGET` | OpenMP target | use `loop` directive in default |
   | `-DOFFLOAD_BY_OPENMP_TARGET -DOFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE` | OpenMP target | use `distribute` directive in default |
   | | fallback mode | thread-parallelization for multicore CPUs using OpenMP |
+  | | serial mode | when neither OpenACC nor OpenMP is enabled, all directives are removed and the code compiles as a serial program (v2.0.0 or later) |
 
 * **Semi-automatic code generation and compilation method**
 
@@ -238,6 +239,8 @@
      * Add the options to enable OpenACC or OpenMP target features to the `FLAGS` variable in the Makefile
      * Add the preprocessor flags for the Solomon execution mode to the compiler options variable `FLAGS`
      * Assign the contents of `FC` and `FLAGS` to the variables `SOLOMON_FC` and `SOLOMON_FLAGS`, respectively
+       * `fortran.mk` automatically detects `_OPENACC` / `_OPENMP` by probing `SOLOMON_FC` with `SOLOMON_FLAGS`; therefore, the OpenACC/OpenMP enabling flag (e.g., `-acc=gpu`, `-mp=gpu`, `-fopenmp`, `-fiopenmp`) must be included in either `SOLOMON_FC` or `SOLOMON_FLAGS`
+       * If neither `_OPENACC` nor `_OPENMP` is detected, `fortran.mk` prints a note (`solomon: note: ...`) and all directives expand to serial code; add the enabling flag if offloading was intended (v2.0.0 or later)
      * Change the target files for compilation to the `.f90` files located under the `spp` directory
      * Specify an absolute or relative path to include `fortran.mk`, the auxiliary Makefile for Solomon
 
@@ -249,12 +252,13 @@
 
       ```sh
       export SOLOMON_DIR=/path/to/Solomon
-      $(SOLOMON_DIR)/spp.sh -compiler="nvfortran -acc=gpu -mp=gpu" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # for NVIDIA HPC SDK
-      $(SOLOMON_DIR)/spp.sh -compiler="amdflang -fopenmp" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # for AMD ROCm
-      $(SOLOMON_DIR)/spp.sh -compiler="ifx -fiopenmp" -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # for Intel oneAPI
+      $(SOLOMON_DIR)/spp.sh -compiler=nvfortran -acc=gpu -mp=gpu -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENACC main.f90 > spp/main.f90 # for NVIDIA HPC SDK
+      $(SOLOMON_DIR)/spp.sh -compiler=amdflang -fopenmp -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # for AMD ROCm
+      $(SOLOMON_DIR)/spp.sh -compiler=ifx -fiopenmp -I$(SOLOMON_DIR) -DOFFLOAD_BY_OPENMP_TARGET main.f90 > spp/main.f90 # for Intel oneAPI
       ```
 
-      * Replace the `-compiler=...` argument as appropriate for your environment
+      * Replace the `-compiler=...` argument and the compiler flags as appropriate for your environment
+      * Compiler flags other than `-compiler=...`, `-I...`, and `-D...` (e.g., `-acc=gpu`, `-mp=gpu`, `-fopenmp`, `-fiopenmp`) are passed to the compiler when probing `_OPENACC` / `_OPENMP`, so `-D_OPENACC=...` / `-D_OPENMP=...` need not be specified manually (v2.0.0 or later; the previous style `-compiler="nvfortran -acc=gpu"` also keeps working)
       * Target GPU architecture flags (`-gpu=...`, `--offload-arch=...`, `-Xs "-device ..."`) are not required for `spp.sh`, since it only performs preprocessing and macro detection; specify them at the actual compile/link step instead
       * Regarding `$(SOLOMON_DIR)/spp.sh`, you can also add the Solomon path to your `PATH` environment variable and execute it simply as `spp.sh`
   1. Create a dedicated directory named `spp` under the Fortran source directory to store the files processed by Solomon, using the following command:
