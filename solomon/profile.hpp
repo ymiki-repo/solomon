@@ -67,11 +67,19 @@ static inline void solomon_internal_profile_mark(const char *name) { __itt_marke
 
 #endif  // defined(SOLOMON_TAGGED_PROFILE) && !defined(SOLOMON_FORTRAN)
 
+#if defined(SOLOMON_TAGGED_PROFILE) && defined(SOLOMON_FORTRAN)
+// Fortran: the macros expand to calls into the bundled helper (solomon/profile/solomon_profile.c);
+// compile the helper with the same compiler and offloading flags (plus -DSOLOMON_TAGGED_PROFILE) and link its object
+#define SOLOMON_INTERNAL_PROFILE_ENABLED_FORTRAN
+#endif  // defined(SOLOMON_TAGGED_PROFILE) && defined(SOLOMON_FORTRAN)
+
 ///
 /// @brief begin a named profiler range (manual tagging; no trailing semicolon is required)
 ///
 #if defined(SOLOMON_INTERNAL_PROFILE_ENABLED)
 #define SOLOMON_PROFILE_RANGE_BEGIN(name) solomon_internal_profile_push(name);
+#elif defined(SOLOMON_INTERNAL_PROFILE_ENABLED_FORTRAN)
+#define SOLOMON_PROFILE_RANGE_BEGIN(name) call solomon_profile_range_begin(name)
 #else  // defined(SOLOMON_INTERNAL_PROFILE_ENABLED)
 #define SOLOMON_PROFILE_RANGE_BEGIN(name)
 #endif  // defined(SOLOMON_INTERNAL_PROFILE_ENABLED)
@@ -81,6 +89,8 @@ static inline void solomon_internal_profile_mark(const char *name) { __itt_marke
 ///
 #if defined(SOLOMON_INTERNAL_PROFILE_ENABLED)
 #define SOLOMON_PROFILE_RANGE_END solomon_internal_profile_pop();
+#elif defined(SOLOMON_INTERNAL_PROFILE_ENABLED_FORTRAN)
+#define SOLOMON_PROFILE_RANGE_END call solomon_profile_range_end()
 #else  // defined(SOLOMON_INTERNAL_PROFILE_ENABLED)
 #define SOLOMON_PROFILE_RANGE_END
 #endif  // defined(SOLOMON_INTERNAL_PROFILE_ENABLED)
@@ -90,6 +100,8 @@ static inline void solomon_internal_profile_mark(const char *name) { __itt_marke
 ///
 #if defined(SOLOMON_INTERNAL_PROFILE_ENABLED)
 #define SOLOMON_PROFILE_MARK(name) solomon_internal_profile_mark(name);
+#elif defined(SOLOMON_INTERNAL_PROFILE_ENABLED_FORTRAN)
+#define SOLOMON_PROFILE_MARK(name) call solomon_profile_mark(name)
 #else  // defined(SOLOMON_INTERNAL_PROFILE_ENABLED)
 #define SOLOMON_PROFILE_MARK(name)
 #endif  // defined(SOLOMON_INTERNAL_PROFILE_ENABLED)
@@ -106,6 +118,12 @@ static inline void solomon_internal_profile_mark(const char *name) { __itt_marke
 #define SOLOMON_INTERNAL_TAG_MARK(mname) SOLOMON_PROFILE_MARK(SOLOMON_INTERNAL_PROFILE_TAG(mname))
 #define SOLOMON_INTERNAL_TAG_PUSH(mname) SOLOMON_PROFILE_RANGE_BEGIN(SOLOMON_INTERNAL_PROFILE_TAG(mname))
 #define SOLOMON_INTERNAL_TAG_POP SOLOMON_PROFILE_RANGE_END
+#elif defined(SOLOMON_INTERNAL_PROFILE_ENABLED_FORTRAN) && defined(SOLOMON_TAGGED_PROFILE_AUTO)
+// Fortran cannot concatenate string literals in the preprocessor; pass file, line, and macro name separately
+#define SOLOMON_INTERNAL_TAG_RANGE(mname, directive) call solomon_profile_range_begin_at(__FILE__, __LINE__, mname) directive call solomon_profile_range_end()
+#define SOLOMON_INTERNAL_TAG_MARK(mname) call solomon_profile_mark_at(__FILE__, __LINE__, mname)
+#define SOLOMON_INTERNAL_TAG_PUSH(mname) call solomon_profile_range_begin_at(__FILE__, __LINE__, mname)
+#define SOLOMON_INTERNAL_TAG_POP call solomon_profile_range_end()
 #else  // defined(SOLOMON_INTERNAL_PROFILE_ENABLED) && defined(SOLOMON_TAGGED_PROFILE_AUTO)
 #define SOLOMON_INTERNAL_TAG_RANGE(mname, directive) directive
 #define SOLOMON_INTERNAL_TAG_MARK(mname)

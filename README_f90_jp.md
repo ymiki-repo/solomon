@@ -341,6 +341,20 @@
   | `retrieve_args.jl` | 入力フィルタリングマクロの生成 | 128 |
   | `sort_clause.jl` | 節ソートマクロの生成 | 32 |
 
+### プロファイラタグ（NVTX, rocTX, ITT）
+
+Solomon はベンダー中立なプロファイラタグを発行できます（v2.0.0 以降）．バックエンド（NVIDIA NVTX / AMD rocTX / Intel ITT）は使用中のコンパイラから自動選択されるため，ベンダー固有名がコードに現れることはありません（強制したい場合は `SOLOMON_TAGGED_PROFILE_WITH_NVTX` / `..._WITH_ROCTX` / `..._WITH_ITT` を定義してください）．
+
+* `-DSOLOMON_TAGGED_PROFILE` で手動タグ用マクロが有効になります（他の Solomon マクロと同様，行末セミコロンなしで記述します）:
+  * `SOLOMON_PROFILE_RANGE_BEGIN("name")` / `SOLOMON_PROFILE_RANGE_END`: 名前付き区間
+  * `SOLOMON_PROFILE_MARK("name")`: 瞬間イベント
+* `-DSOLOMON_TAGGED_PROFILE_AUTO` を定義すると，さらに Solomon の指示文マクロに `"FILE:LINE MACRO"` 形式のタグが自動で付きます:
+  * データ転送・同期系（`SOLOMON_MEMCPY_*`, `SOLOMON_MALLOC_ON_DEVICE`, `SOLOMON_FREE_FROM_DEVICE`, `SOLOMON_SYNCHRONIZE` など）は操作全体を覆う区間になります
+  * カーネル起動系ループマクロ（`SOLOMON_OFFLOAD`, `SOLOMON_OFFLOAD_OUTER_LOOP`）はマクロからループの終端が見えないため瞬間マークのみです．カーネル実行時間の計測には手動区間マクロ（またはプロファイラ自身のカーネルトレース）をお使いください
+  * `SOLOMON_OFFLOAD_SERIAL`〜`SOLOMON_END_OFFLOAD_SERIAL` は実区間になります
+* リンク: NVTX は NVIDIA HPC SDK のオフロードフラグがあれば追加フラグ不要です．rocTX は `-lroctx64`，ITT は `-littnotify` を追加でリンクしてください
+* Fortran: 同梱ヘルパーを同じコンパイラ・フラグでコンパイルしてリンクしてください（例: `nvc -c -mp=gpu -DSOLOMON_TAGGED_PROFILE $(SOLOMON_DIR)/profile/solomon_profile.c`．define なしでコンパイルすると no-op になります）．自動タグの `FILE` は `spp.sh`/`fortran.mk` の中間ファイル名になる点にご注意ください
+
 ### エディタ支援（シンタックスハイライトと clang-format）
 
 Solomon は単なるプリプロセッサマクロのため，エディタは既定ではハイライトしません．`SOLOMON_*` マクロと2段記法（`PRAGMA_ACC_*`, `PRAGMA_OMP_*`, `ACC_CLAUSE_*`, `OMP_CLAUSE_*`, `OMP_TARGET_*`）を指示文らしく見せる設定ファイルを `misc/editor/` に同梱しています（v2.0.0 以降）:
