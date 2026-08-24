@@ -218,6 +218,20 @@
   | `retrieve_args.jl` | Generate input filtering macros | 128 |
   | `sort_clause.jl` | Generate clause sorting macros | 32 |
 
+### Profiler tags (NVTX, rocTX, ITT)
+
+Solomon can emit vendor-neutral profiler tags (v2.0.0 or later). The backend (NVIDIA NVTX, AMD rocTX, or Intel ITT) is selected automatically from the compiler in use, so vendor names never appear in your code; to force one, define `SOLOMON_TAGGED_PROFILE_WITH_NVTX`, `..._WITH_ROCTX`, or `..._WITH_ITT`.
+
+* `-DSOLOMON_TAGGED_PROFILE` enables the manual tagging macros (write them without trailing semicolons, like the other Solomon macros):
+  * `SOLOMON_PROFILE_RANGE_BEGIN("name")` / `SOLOMON_PROFILE_RANGE_END`: a named range
+  * `SOLOMON_PROFILE_MARK("name")`: an instantaneous event
+* `-DSOLOMON_TAGGED_PROFILE_AUTO` additionally tags the Solomon directive macros automatically with `"FILE:LINE MACRO"` strings:
+  * data-movement and synchronization macros (`SOLOMON_MEMCPY_*`, `SOLOMON_MALLOC_ON_DEVICE`, `SOLOMON_FREE_FROM_DEVICE`, `SOLOMON_SYNCHRONIZE`, ...) get ranges covering the operation
+  * kernel-launching loop macros (`SOLOMON_OFFLOAD`, `SOLOMON_OFFLOAD_OUTER_LOOP`) get instantaneous marks only, since a macro cannot see the end of the following loop; use the manual range macros (or the profiler's own kernel trace) to measure kernel execution time
+  * `SOLOMON_OFFLOAD_SERIAL`/`SOLOMON_END_OFFLOAD_SERIAL` get a real range
+* linking: NVTX needs no extra flags with the NVIDIA HPC SDK offloading flags; add `-lroctx64` for rocTX and `-littnotify` for ITT
+* Fortran: additionally compile the bundled helper with the same compiler/flags and link its object, e.g., `nvc -c -mp=gpu -DSOLOMON_TAGGED_PROFILE $(SOLOMON_DIR)/profile/solomon_profile.c` (without the define, the helper becomes no-ops); note that `FILE` in automatic tags shows the intermediate file name produced by `spp.sh`/`fortran.mk`
+
 ### Editor support (syntax highlighting and clang-format)
 
 Since Solomon provides plain preprocessor macros, editors do not highlight them by default. Configuration files that make the `SOLOMON_*` macros and the two-level notations (`PRAGMA_ACC_*`, `PRAGMA_OMP_*`, `ACC_CLAUSE_*`, `OMP_CLAUSE_*`, `OMP_TARGET_*`) look like directives are bundled under `misc/editor/` (v2.0.0 or later):
