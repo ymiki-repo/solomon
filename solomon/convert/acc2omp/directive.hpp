@@ -42,15 +42,13 @@
 
 ///
 /// @brief _Pragma("acc serial [clause [[,] clause] ... ]")
-/// @details ignore the construct
+/// @details replace to _Pragma("omp target [clause [[,] clause] ... ]") for single-thread execution on the device (v2.0.0 or later; the construct was ignored before)
 ///
-#define PRAGMA_ACC_SERIAL(...)
+#define PRAGMA_ACC_SERIAL(...) PRAGMA_OMP_TARGET(__VA_ARGS__)
 ///
-/// @brief finalize the ignored serial region (acc serial is not supported in OpenMP target backend)
+/// @brief finalize the serial region
 ///
-#if defined(SOLOMON_FORTRAN)
-#define PRAGMA_ACC_END_SERIAL
-#endif  // defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_END_SERIAL PRAGMA_OMP_END_TARGET
 
 ///
 /// @brief _Pragma("acc data [clause [[,] clause] ... ]")

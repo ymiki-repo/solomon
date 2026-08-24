@@ -370,13 +370,15 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
   | **`SOLOMON_OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(...)` | `!$acc kernels __VA_ARGS__` <br> `!$acc loop __VA_ARGS__` <br> `!$acc parallel __VA_ARGS__` <br> `!$acc loop __VA_ARGS__` <br> `!$omp target teams loop __VA_ARGS__` <br> `!$omp target teams distribute parallel do __VA_ARGS__` | OpenACC (kernels) <br><br> OpenACC (parallel) <br><br> OpenMP (loop) <br> OpenMP (distribute) |
   | **`SOLOMON_OFFLOAD_OUTER_LOOP(...)`** | `!$acc parallel __VA_ARGS__ !$acc loop gang __VA_ARGS__` <br> `!$omp target teams distribute __VA_ARGS__` <br> `!$omp parallel do __VA_ARGS__` | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） |
   | **`SOLOMON_PARALLELIZE_INNER_LOOP(...)`** | `!$acc loop vector __VA_ARGS__` <br> `!$omp parallel do __VA_ARGS__` <br> 無視される（外側ループが並列化済みのため） | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） |
+  | **`SOLOMON_OFFLOAD_SERIAL(...)`** <br> `PRAGMA_ACC_SERIAL(...)` <br> `PRAGMA_OMP_TARGET(...)` | <br> `!$acc serial __VA_ARGS__` <br> `!$omp target __VA_ARGS__` | <br> OpenACC <br> OpenMP <br> 直後の構造化ブロックをデバイス上で単一スレッド実行する．reduction 結果をデバイス上に保持したい場合などに有用（v2.0.0 以降） |
+  | **`SOLOMON_END_OFFLOAD_SERIAL`** | `!$acc end serial` <br> `!$omp end target` | OpenACC <br> OpenMP <br> serial 領域を終端する（v2.0.0 以降） |
   | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | OpenACC <br> OpenMP |
   | **`SOLOMON_WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | `!$acc wait id` | OpenACC (only) |
   | **`SOLOMON_DECLARE_OFFLOADED(...)`** <br> `PRAGMA_ACC_ROUTINE(...)` <br> `PRAGMA_OMP_DECLARE_TARGET(...)` | `!$acc routine __VA_ARGS__` <br> `!$omp declare target __VA_ARGS__` | OpenACC <br> OpenMP |
-  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | （何も出力しない） | OpenMP (only) | Fortran では手続内の `SOLOMON_DECLARE_OFFLOADED(...)` が自己完結するため本マクロは空に展開される．書いても無害だが不要（v2.0.0 以降） |
-  | **`SOLOMON_CLAUSE_TARGETS(...)`** | `(__VA_ARGS__)` | OpenACC/OpenMP | 手続を名前で指定する: `SOLOMON_DECLARE_OFFLOADED(SOLOMON_CLAUSE_TARGETS(func), ...)` は `!$acc routine (func) ...` / `!$omp declare target (func)` に展開される（v2.0.0 以降） |
-  | **`SOLOMON_DECLARE_ON_DEVICE(...)`** | `!$acc declare create(__VA_ARGS__)` <br> `!$omp declare target (__VA_ARGS__)` | OpenACC <br> OpenMP | モジュール・手続の宣言部でデバイス常駐変数を宣言する（v2.0.0 以降） |
-  | **`SOLOMON_DECLARE_ON_DEVICE_LINKED(...)`** | `!$acc declare link(__VA_ARGS__)` <br> `!$omp declare target link(__VA_ARGS__)` | OpenACC <br> OpenMP | link 意味論でデバイス常駐変数を宣言する（v2.0.0 以降） |
+  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | （何も出力しない） | OpenMP (only) <br> Fortran では手続内の `SOLOMON_DECLARE_OFFLOADED(...)` が自己完結するため本マクロは空に展開される．書いても無害だが不要（v2.0.0 以降） |
+  | **`SOLOMON_CLAUSE_TARGETS(...)`** | `(__VA_ARGS__)` | OpenACC/OpenMP <br> 手続を名前で指定する: `SOLOMON_DECLARE_OFFLOADED(SOLOMON_CLAUSE_TARGETS(func), ...)` は `!$acc routine (func) ...` / `!$omp declare target (func)` に展開される（v2.0.0 以降） |
+  | **`SOLOMON_DECLARE_ON_DEVICE(...)`** | `!$acc declare create(__VA_ARGS__)` <br> `!$omp declare target (__VA_ARGS__)` | OpenACC <br> OpenMP <br> モジュール・手続の宣言部でデバイス常駐変数を宣言する（v2.0.0 以降） |
+  | **`SOLOMON_DECLARE_ON_DEVICE_LINKED(...)`** | `!$acc declare link(__VA_ARGS__)` <br> `!$omp declare target link(__VA_ARGS__)` | OpenACC <br> OpenMP <br> link 意味論でデバイス常駐変数を宣言する（v2.0.0 以降） |
   | **`SOLOMON_ATOMIC(...)`** <br> `PRAGMA_ACC_ATOMIC(...)` <br> `PRAGMA_OMP_TARGET_ATOMIC(...)` | `!$acc atomic __VA_ARGS__` <br> `!$omp atomic __VA_ARGS__` | OpenACC <br> OpenMP |
   | **`SOLOMON_ATOMIC_UPDATE`** <br> `PRAGMA_ACC_ATOMIC_UPDATE` <br> `PRAGMA_OMP_TARGET_ATOMIC_UPDATE` | `!$acc atomic update` <br> `!$omp atomic update` | OpenACC <br> OpenMP |
   | **`SOLOMON_ATOMIC_READ`** <br> `PRAGMA_ACC_ATOMIC_READ` <br> `PRAGMA_OMP_TARGET_ATOMIC_READ` | `!$acc atomic read` <br> `!$omp atomic read` | OpenACC <br> OpenMP |
@@ -418,7 +420,7 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
     | ---- | ---- | ---- |
     | `PRAGMA_ACC_PARALLEL(...)` | `!$acc parallel __VA_ARGS__` | `PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(__VA_ARGS__)` |
     | `PRAGMA_ACC_KERNELS(...)` | `!$acc kernels __VA_ARGS__` | `PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(__VA_ARGS__)` |
-    | `PRAGMA_ACC_SERIAL(...)` | `!$acc serial __VA_ARGS__` | N/A（OpenMP target 使用時には無視される） |
+    | `PRAGMA_ACC_SERIAL(...)` | `!$acc serial __VA_ARGS__` | `PRAGMA_OMP_TARGET(__VA_ARGS__)`（v2.0.0 以降） |
     | `PRAGMA_ACC_LOOP(...)` | `!$acc loop __VA_ARGS__` | N/A（OpenMP target 使用時には無視される） |
     | `PRAGMA_ACC_CACHE(...)` | `!$acc cache(__VA_ARGS__)` | N/A（OpenMP target 使用時には無視される） |
     | `PRAGMA_ACC_ATOMIC(...)` | `!$acc atomic __VA_ARGS__` | `PRAGMA_OMP_TARGET_ATOMIC(__VA_ARGS__)` |
@@ -432,7 +434,7 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
 
     | 入力 | OpenMP target 使用時の出力 | OpenACC 使用時の出力 | 縮退モード（演算加速器を用いないCPU実行）での出力 |
     | ---- | ---- | ---- | ---- |
-    | `PRAGMA_OMP_TARGET(...)` | `!$omp target __VA_ARGS__` | `PRAGMA_ACC(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
+    | `PRAGMA_OMP_TARGET(...)` | `!$omp target __VA_ARGS__` | `PRAGMA_ACC_SERIAL(__VA_ARGS__)` (v2.0.0 or later) | N/A（縮退モードでは無視される） |
     | `PRAGMA_OMP_TARGET_PARALLEL(...)` | `!$omp target parallel __VA_ARGS__` | `PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL(__VA_ARGS__)` |
     | `PRAGMA_OMP_TARGET_PARALLEL_DO(...)` | `!$omp target parallel do __VA_ARGS__` | `PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL_DO(__VA_ARGS__)` |
     | `PRAGMA_OMP_TARGET_PARALLEL_DO_SIMD(...)` | `!$omp target parallel do simd __VA_ARGS__` | `PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT, ##__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL_DO_SIMD(__VA_ARGS__)` |

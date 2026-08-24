@@ -254,13 +254,15 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
   | **`SOLOMON_OFFLOAD(...)`** <br> `PRAGMA_ACC_KERNELS_LOOP(...)` <br> `PRAGMA_ACC_PARALLEL_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_LOOP(...)` <br> `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(...)` | <br> `_Pragma("acc kernels __VA_ARGS__") _Pragma("acc loop __VA_ARGS__")` <br> `_Pragma("acc parallel __VA_ARGS__") _Pragma("acc loop __VA_ARGS__")` <br> `_Pragma("omp target teams loop __VA_ARGS__")` <br> `_Pragma("omp target teams distribute parallel for __VA_ARGS__")` | <br> OpenACC (kernels) <br> OpenACC (parallel) <br> OpenMP (loop) <br> OpenMP (distribute) |
   | **`SOLOMON_OFFLOAD_OUTER_LOOP(...)`** | `_Pragma("acc parallel __VA_ARGS__") _Pragma("acc loop gang __VA_ARGS__")` <br> `_Pragma("omp target teams distribute __VA_ARGS__")` <br> `_Pragma("omp parallel for __VA_ARGS__")` | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） |
   | **`SOLOMON_PARALLELIZE_INNER_LOOP(...)`** | `_Pragma("acc loop vector __VA_ARGS__")` <br> `_Pragma("omp parallel for __VA_ARGS__")` <br> 無視される（外側ループが並列化済みのため） | OpenACC <br> OpenMP target <br> OpenMP（縮退モード） |
+  | **`SOLOMON_OFFLOAD_SERIAL(...)`** <br> `PRAGMA_ACC_SERIAL(...)` <br> `PRAGMA_OMP_TARGET(...)` | <br> `_Pragma("acc serial __VA_ARGS__")` <br> `_Pragma("omp target __VA_ARGS__")` | <br> OpenACC <br> OpenMP <br> 直後の構造化ブロックをデバイス上で単一スレッド実行する．reduction 結果をデバイス上に保持したい場合などに有用（v2.0.0 以降） |
+  | **`SOLOMON_END_OFFLOAD_SERIAL`** | （C/C++ では何も出力しない） | OpenACC/OpenMP <br> serial 領域を終端する（v2.0.0 以降） |
   | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `_Pragma("acc wait __VA_ARGS__")` <br> `_Pragma("omp taskwait __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | <br> `_Pragma("acc wait id")` | <br> OpenACC (only) |
   | **`SOLOMON_DECLARE_OFFLOADED(...)`** <br> `PRAGMA_ACC_ROUTINE(...)` <br> `PRAGMA_OMP_DECLARE_TARGET(...)` | <br> `_Pragma("acc routine __VA_ARGS__")` <br> `_Pragma("omp declare target __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
-  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | <br> `_Pragma("omp end declare target")` | <br> OpenMP (only) | `SOLOMON_DECLARE_OFFLOADED(...)` の対形式でのみ必要（`SOLOMON_CLAUSE_TARGETS(...)` を用いる名前形式の後には書かないこと）．Fortran では空に展開される（v2.0.0 以降） |
-  | **`SOLOMON_CLAUSE_TARGETS(...)`** | `(__VA_ARGS__)` | OpenACC/OpenMP | 手続を名前で指定する: `SOLOMON_DECLARE_OFFLOADED(SOLOMON_CLAUSE_TARGETS(func), ...)` は `_Pragma("acc routine (func) ...")` / `_Pragma("omp declare target (func)")` に展開される．単独指示文であり end は不要（v2.0.0 以降） |
-  | **`SOLOMON_DECLARE_ON_DEVICE(...)`** | `_Pragma("acc declare create(__VA_ARGS__)")` <br> `_Pragma("omp declare target (__VA_ARGS__)")` | OpenACC <br> OpenMP | ファイルスコープでデバイス常駐変数を宣言する．end は不要（v2.0.0 以降） |
-  | **`SOLOMON_DECLARE_ON_DEVICE_LINKED(...)`** | `_Pragma("acc declare link(__VA_ARGS__)")` <br> `_Pragma("omp declare target link(__VA_ARGS__)")` | OpenACC <br> OpenMP | link 意味論でデバイス常駐変数を宣言する（v2.0.0 以降） |
+  | **`SOLOMON_DECLARE_OFFLOADED_END`** <br> `PRAGMA_OMP_END_DECLARE_TARGET` | <br> `_Pragma("omp end declare target")` | <br> OpenMP (only) <br> `SOLOMON_DECLARE_OFFLOADED(...)` の対形式でのみ必要（`SOLOMON_CLAUSE_TARGETS(...)` を用いる名前形式の後には書かないこと）．Fortran では空に展開される（v2.0.0 以降） |
+  | **`SOLOMON_CLAUSE_TARGETS(...)`** | `(__VA_ARGS__)` | OpenACC/OpenMP <br> 手続を名前で指定する: `SOLOMON_DECLARE_OFFLOADED(SOLOMON_CLAUSE_TARGETS(func), ...)` は `_Pragma("acc routine (func) ...")` / `_Pragma("omp declare target (func)")` に展開される．単独指示文であり end は不要（v2.0.0 以降） |
+  | **`SOLOMON_DECLARE_ON_DEVICE(...)`** | `_Pragma("acc declare create(__VA_ARGS__)")` <br> `_Pragma("omp declare target (__VA_ARGS__)")` | OpenACC <br> OpenMP <br> ファイルスコープでデバイス常駐変数を宣言する．end は不要（v2.0.0 以降） |
+  | **`SOLOMON_DECLARE_ON_DEVICE_LINKED(...)`** | `_Pragma("acc declare link(__VA_ARGS__)")` <br> `_Pragma("omp declare target link(__VA_ARGS__)")` | OpenACC <br> OpenMP <br> link 意味論でデバイス常駐変数を宣言する（v2.0.0 以降） |
   | **`SOLOMON_ATOMIC(...)`** <br> `PRAGMA_ACC_ATOMIC(...)` <br> `PRAGMA_OMP_TARGET_ATOMIC(...)` | <br> `_Pragma("acc atomic __VA_ARGS__")` <br> `_Pragma("omp atomic __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_ATOMIC_UPDATE`** <br> `PRAGMA_ACC_ATOMIC_UPDATE` <br> `PRAGMA_OMP_TARGET_ATOMIC_UPDATE` | <br> `_Pragma("acc atomic update")` <br> `_Pragma("omp atomic update")` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_ATOMIC_READ`** <br> `PRAGMA_ACC_ATOMIC_READ` <br> `PRAGMA_OMP_TARGET_ATOMIC_READ` | <br> `_Pragma("acc atomic read")` <br> `_Pragma("omp atomic read")` | <br> OpenACC <br> OpenMP |
@@ -284,7 +286,7 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
     | ---- | ---- | ---- |
     | `PRAGMA_ACC_PARALLEL(...)` | `_Pragma("acc parallel __VA_ARGS__")` | `PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(__VA_ARGS__)` |
     | `PRAGMA_ACC_KERNELS(...)` | `_Pragma("acc kernels __VA_ARGS__")` | `PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(__VA_ARGS__)` |
-    | `PRAGMA_ACC_SERIAL(...)` | `_Pragma("acc serial __VA_ARGS__")` | N/A（OpenMP target 使用時には無視される） |
+    | `PRAGMA_ACC_SERIAL(...)` | `_Pragma("acc serial __VA_ARGS__")` | `PRAGMA_OMP_TARGET(__VA_ARGS__)`（v2.0.0 以降） |
     | `PRAGMA_ACC_LOOP(...)` | `_Pragma("acc loop __VA_ARGS__")` | N/A（OpenMP target 使用時には無視される） |
     | `PRAGMA_ACC_CACHE(...)` | `_Pragma("acc cache(__VA_ARGS__)")` | N/A（OpenMP target 使用時には無視される） |
     | `PRAGMA_ACC_ATOMIC(...)` | `_Pragma("acc atomic __VA_ARGS__")` | `PRAGMA_OMP_TARGET_ATOMIC(__VA_ARGS__)` |
@@ -298,7 +300,7 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
 
     | 入力 | OpenMP target 使用時の出力 | OpenACC 使用時の出力 | 縮退モード（演算加速器を用いないCPU実行）での出力 |
     | ---- | ---- | ---- | ---- |
-    | `PRAGMA_OMP_TARGET(...)` | `_Pragma("omp target __VA_ARGS__")` | `PRAGMA_ACC(__VA_ARGS__)` | N/A（縮退モードでは無視される） |
+    | `PRAGMA_OMP_TARGET(...)` | `_Pragma("omp target __VA_ARGS__")` | `PRAGMA_ACC_SERIAL(__VA_ARGS__)` (v2.0.0 or later) | N/A（縮退モードでは無視される） |
     | `PRAGMA_OMP_TARGET_PARALLEL(...)` | `_Pragma("omp target parallel __VA_ARGS__")` | `PRAGMA_ACC_LAUNCH_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL(__VA_ARGS__)` |
     | `PRAGMA_OMP_TARGET_PARALLEL_FOR(...)` | `_Pragma("omp target parallel for __VA_ARGS__")` | `PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)` |
     | `PRAGMA_OMP_TARGET_PARALLEL_FOR_SIMD(...)` | `_Pragma("omp target parallel for simd __VA_ARGS__")` | `PRAGMA_ACC_OFFLOADING_DEFAULT(ACC_CLAUSE_INDEPENDENT, ##__VA_ARGS__)` | `PRAGMA_OMP_PARALLEL_FOR_SIMD(__VA_ARGS__)` |

@@ -267,6 +267,17 @@
 #endif  // defined(OFFLOAD_BY_OPENACC)
 
 ///
+/// @brief offload the immediately following structured block for single-thread execution on the device (OpenACC: acc serial, OpenMP target: omp target without teams) (v2.0.0 or later)
+/// @note useful to keep results (e.g., of a reduction) on the device: copy them into device-resident buffers without a round trip of arrays to the host
+///
+#define SOLOMON_OFFLOAD_SERIAL(...) PRAGMA_ACC_SERIAL(__VA_ARGS__)
+
+///
+/// @brief finalize the serial region (v2.0.0 or later)
+///
+#define SOLOMON_END_OFFLOAD_SERIAL PRAGMA_ACC_END_SERIAL
+
+///
 /// @brief synchronize asynchronously launched kernel
 ///
 #define SOLOMON_SYNCHRONIZE(...) PRAGMA_ACC_WAIT(__VA_ARGS__)

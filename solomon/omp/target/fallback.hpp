@@ -68,6 +68,10 @@
 /// @details Map variables to a device data environment and execute the construct on that device.
 ///
 #define PRAGMA_OMP_TARGET(...)
+///
+/// @brief finalize the ignored omp target region
+///
+#define PRAGMA_OMP_END_TARGET
 
 ///
 /// @brief _Pragma("omp target update [clause [[,] clause] ... ]")
