@@ -83,10 +83,13 @@
 #define SOLOMON_IF_NOT_OFFLOADED(arg) arg
 #endif  // defined(_OPENMP)
 
+// vendor-neutral profiler tags (enabled via SOLOMON_TAGGED_PROFILE / SOLOMON_TAGGED_PROFILE_AUTO)
+#include "profile.hpp"
+
 ///
 /// @brief offload the specified loop
 ///
-#define SOLOMON_OFFLOAD(...) PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
+#define SOLOMON_OFFLOAD(...) SOLOMON_INTERNAL_TAG_MARK("SOLOMON_OFFLOAD") PRAGMA_ACC_OFFLOADING_DEFAULT(__VA_ARGS__)
 
 ///
 /// @brief finalize the offloading of the specified loop
@@ -102,7 +105,7 @@
 /// @brief offload the immediately following loop and distribute it over thread-blocks (OpenACC: _Pragma("acc parallel [...]") _Pragma("acc loop gang [...]"))
 /// @note do not pass SOLOMON_CLAUSE_BLOCK, SOLOMON_CLAUSE_THREAD, ACC_CLAUSE_GANG, ACC_CLAUSE_WORKER, or ACC_CLAUSE_VECTOR to SOLOMON_OFFLOAD_OUTER_LOOP(...) because the conflicting clauses are already included in the macro
 ///
-#define SOLOMON_OFFLOAD_OUTER_LOOP(...) PRAGMA_ACC_PARALLEL(__VA_ARGS__) PRAGMA_ACC_LOOP(ACC_CLAUSE_GANG SOLOMON_APPEND_ARGS(__VA_ARGS__))
+#define SOLOMON_OFFLOAD_OUTER_LOOP(...) SOLOMON_INTERNAL_TAG_MARK("SOLOMON_OFFLOAD_OUTER_LOOP") PRAGMA_ACC_PARALLEL(__VA_ARGS__) PRAGMA_ACC_LOOP(ACC_CLAUSE_GANG SOLOMON_APPEND_ARGS(__VA_ARGS__))
 ///
 /// @brief parallelize the immediately following loop over threads within a thread-block (OpenACC: _Pragma("acc loop vector [...]"))
 /// @note must be used in conjunction with SOLOMON_OFFLOAD_OUTER_LOOP(...) to parallelize the immediately following loop over threads within a thread-block
@@ -117,7 +120,7 @@
 ///
 /// @brief offload the immediately following loop and distribute it over thread-blocks (OpenMP target: _Pragma("omp target teams distribute [...]"))
 ///
-#define SOLOMON_OFFLOAD_OUTER_LOOP(...) PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(__VA_ARGS__)
+#define SOLOMON_OFFLOAD_OUTER_LOOP(...) SOLOMON_INTERNAL_TAG_MARK("SOLOMON_OFFLOAD_OUTER_LOOP") PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(__VA_ARGS__)
 ///
 /// @brief parallelize the immediately following loop over threads within a thread-block (OpenMP target: _Pragma("omp parallel for [...]"))
 /// @note must be used in conjunction with SOLOMON_OFFLOAD_OUTER_LOOP(...) to parallelize the immediately following loop over threads within a thread-block
@@ -131,7 +134,7 @@
 ///
 /// @brief parallelize the immediately following loop (OpenMP for multicore CPU: _Pragma("omp parallel for [...]"))
 ///
-#define SOLOMON_OFFLOAD_OUTER_LOOP(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
+#define SOLOMON_OFFLOAD_OUTER_LOOP(...) SOLOMON_INTERNAL_TAG_MARK("SOLOMON_OFFLOAD_OUTER_LOOP") PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
 ///
 /// @brief do nothing (OpenMP for multicore CPU: SOLOMON_OFFLOAD_OUTER_LOOP(...) has already parallelized the outer loop; the immediately following loop runs sequentially within each thread)
 ///
@@ -270,17 +273,17 @@
 /// @brief offload the immediately following structured block for single-thread execution on the device (OpenACC: acc serial, OpenMP target: omp target without teams) (v2.0.0 or later)
 /// @note useful to keep results (e.g., of a reduction) on the device: copy them into device-resident buffers without a round trip of arrays to the host
 ///
-#define SOLOMON_OFFLOAD_SERIAL(...) PRAGMA_ACC_SERIAL(__VA_ARGS__)
+#define SOLOMON_OFFLOAD_SERIAL(...) SOLOMON_INTERNAL_TAG_PUSH("SOLOMON_OFFLOAD_SERIAL") PRAGMA_ACC_SERIAL(__VA_ARGS__)
 
 ///
 /// @brief finalize the serial region (v2.0.0 or later)
 ///
-#define SOLOMON_END_OFFLOAD_SERIAL PRAGMA_ACC_END_SERIAL
+#define SOLOMON_END_OFFLOAD_SERIAL PRAGMA_ACC_END_SERIAL SOLOMON_INTERNAL_TAG_POP
 
 ///
 /// @brief synchronize asynchronously launched kernel
 ///
-#define SOLOMON_SYNCHRONIZE(...) PRAGMA_ACC_WAIT(__VA_ARGS__)
+#define SOLOMON_SYNCHRONIZE(...) SOLOMON_INTERNAL_TAG_RANGE("SOLOMON_SYNCHRONIZE", PRAGMA_ACC_WAIT(__VA_ARGS__))
 
 ///
 /// @brief synchronize asynchronously launched kernels with the specified queue ID
@@ -288,7 +291,7 @@
 ///          In OpenMP target directives, explicit queue IDs are not supported; therefore, SOLOMON_WAIT_QUEUE(id) is ignored.
 ///
 #if defined(OFFLOAD_BY_OPENACC)
-#define SOLOMON_WAIT_QUEUE(id) PRAGMA_ACC_WAIT(id)
+#define SOLOMON_WAIT_QUEUE(id) SOLOMON_INTERNAL_TAG_RANGE("SOLOMON_WAIT_QUEUE", PRAGMA_ACC_WAIT(id))
 #else  // defined(OFFLOAD_BY_OPENACC)
 #define SOLOMON_WAIT_QUEUE(id)
 #endif  // defined(OFFLOAD_BY_OPENACC)
@@ -341,17 +344,17 @@
 ///
 /// @brief makes the address of device data available on the host
 ///
-#define SOLOMON_DATA_ACCESS_BY_HOST(...) PRAGMA_ACC_HOST_DATA(__VA_ARGS__)
+#define SOLOMON_DATA_ACCESS_BY_HOST(...) SOLOMON_INTERNAL_TAG_MARK("SOLOMON_DATA_ACCESS_BY_HOST") PRAGMA_ACC_HOST_DATA(__VA_ARGS__)
 
 ///
 /// @brief defines data accessible by the device
 ///
-#define SOLOMON_DATA_ACCESS_BY_DEVICE(...) PRAGMA_ACC_DATA(__VA_ARGS__)
+#define SOLOMON_DATA_ACCESS_BY_DEVICE(...) SOLOMON_INTERNAL_TAG_MARK("SOLOMON_DATA_ACCESS_BY_DEVICE") PRAGMA_ACC_DATA(__VA_ARGS__)
 
 ///
 /// @brief use device data from host
 ///
-#define SOLOMON_USE_DEVICE_DATA_FROM_HOST(...) PRAGMA_ACC_HOST_DATA_USE_DEVICE(__VA_ARGS__)
+#define SOLOMON_USE_DEVICE_DATA_FROM_HOST(...) SOLOMON_INTERNAL_TAG_MARK("SOLOMON_USE_DEVICE_DATA_FROM_HOST") PRAGMA_ACC_HOST_DATA_USE_DEVICE(__VA_ARGS__)
 
 ///
 /// @brief specify the pointer is allocated on device
@@ -361,7 +364,7 @@
 ///
 /// @brief allocate device memory
 ///
-#define SOLOMON_MALLOC_ON_DEVICE(...) PRAGMA_ACC_ENTER_DATA_CREATE(__VA_ARGS__)
+#define SOLOMON_MALLOC_ON_DEVICE(...) SOLOMON_INTERNAL_TAG_RANGE("SOLOMON_MALLOC_ON_DEVICE", PRAGMA_ACC_ENTER_DATA_CREATE(__VA_ARGS__))
 ///
 /// @brief allocate device memory
 ///
@@ -370,7 +373,7 @@
 ///
 /// @brief release device memory
 ///
-#define SOLOMON_FREE_FROM_DEVICE(...) PRAGMA_ACC_EXIT_DATA_DELETE(__VA_ARGS__)
+#define SOLOMON_FREE_FROM_DEVICE(...) SOLOMON_INTERNAL_TAG_RANGE("SOLOMON_FREE_FROM_DEVICE", PRAGMA_ACC_EXIT_DATA_DELETE(__VA_ARGS__))
 ///
 /// @brief release device memory
 ///
@@ -379,17 +382,17 @@
 ///
 /// @brief memcpy from device to host
 ///
-#define SOLOMON_MEMCPY_D2H(...) PRAGMA_ACC_UPDATE_HOST(__VA_ARGS__)
+#define SOLOMON_MEMCPY_D2H(...) SOLOMON_INTERNAL_TAG_RANGE("SOLOMON_MEMCPY_D2H", PRAGMA_ACC_UPDATE_HOST(__VA_ARGS__))
 
 ///
 /// @brief memcpy from host to device
 ///
-#define SOLOMON_MEMCPY_H2D(...) PRAGMA_ACC_UPDATE_DEVICE(__VA_ARGS__)
+#define SOLOMON_MEMCPY_H2D(...) SOLOMON_INTERNAL_TAG_RANGE("SOLOMON_MEMCPY_H2D", PRAGMA_ACC_UPDATE_DEVICE(__VA_ARGS__))
 
 ///
 /// @brief declaration of the specified variables are mapped to device
 ///
-#define SOLOMON_DECLARE_DATA_ON_DEVICE(...) PRAGMA_ACC_DATA_PRESENT(__VA_ARGS__)
+#define SOLOMON_DECLARE_DATA_ON_DEVICE(...) SOLOMON_INTERNAL_TAG_MARK("SOLOMON_DECLARE_DATA_ON_DEVICE") PRAGMA_ACC_DATA_PRESENT(__VA_ARGS__)
 
 ///
 /// @brief specify variables to be copied (copy from host to device before the computation, copy from device to host after the computation)
