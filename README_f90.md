@@ -343,7 +343,7 @@
 
 ### Profiler tags (NVTX, rocTX, ITT)
 
-Solomon can emit vendor-neutral profiler tags (v2.0.0 or later). The backend (NVIDIA NVTX, AMD rocTX, or Intel ITT) is selected automatically from the compiler in use, so vendor names never appear in your code; to force one, define `SOLOMON_TAGGED_PROFILE_WITH_NVTX`, `..._WITH_ROCTX`, or `..._WITH_ITT`.
+Solomon can emit vendor-neutral profiler tags (v2.0.0 or later). The backend (NVIDIA NVTX, AMD rocTX, or Intel ITT) is selected automatically from the compiler in use, so vendor names never appear in your code; to force one, define `SOLOMON_TAGGED_PROFILE_WITH_NVTX`, `..._WITH_ROCTX`, or `..._WITH_ITT`. Exception: AMD compilers define no identification macro in the host-side pass, so rocTX cannot be auto-selected; always define `SOLOMON_TAGGED_PROFILE_WITH_ROCTX` explicitly there.
 
 * `-DSOLOMON_TAGGED_PROFILE` enables the manual tagging macros (write them without trailing semicolons, like the other Solomon macros):
   * `SOLOMON_PROFILE_RANGE_BEGIN("name")` / `SOLOMON_PROFILE_RANGE_END`: a named range
@@ -352,7 +352,7 @@ Solomon can emit vendor-neutral profiler tags (v2.0.0 or later). The backend (NV
   * data-movement and synchronization macros (`SOLOMON_MEMCPY_*`, `SOLOMON_MALLOC_ON_DEVICE`, `SOLOMON_FREE_FROM_DEVICE`, `SOLOMON_SYNCHRONIZE`, ...) get ranges covering the operation
   * kernel-launching loop macros (`SOLOMON_OFFLOAD`, `SOLOMON_OFFLOAD_OUTER_LOOP`) get instantaneous marks only, since a macro cannot see the end of the following loop; use the manual range macros (or the profiler's own kernel trace) to measure kernel execution time
   * `SOLOMON_OFFLOAD_SERIAL`/`SOLOMON_END_OFFLOAD_SERIAL` get a real range
-* linking: NVTX needs no extra flags with the NVIDIA HPC SDK offloading flags; add `-lroctx64` for rocTX; for ITT, add `-I$VTUNE_PROFILER_DIR/sdk/include` when compiling and `-L$VTUNE_PROFILER_DIR/sdk/lib64 -littnotify` when linking (`VTUNE_PROFILER_DIR` is set by VTune's `env/vars.sh`)
+* linking: NVTX needs no extra flags with the NVIDIA HPC SDK offloading flags; for rocTX, add `-I$ROCM_PATH/include` when compiling and `-L$ROCM_PATH/lib -lroctx64` when linking; for ITT, add `-I$VTUNE_PROFILER_DIR/sdk/include` when compiling and `-L$VTUNE_PROFILER_DIR/sdk/lib64 -littnotify` when linking (`VTUNE_PROFILER_DIR` is set by VTune's `env/vars.sh`)
 * Fortran: additionally compile the bundled helper with the same compiler/flags and link its object, e.g., `nvc -c -mp=gpu -DSOLOMON_TAGGED_PROFILE $(SOLOMON_DIR)/profile/solomon_profile.c` (without the define, the helper becomes no-ops); note that `FILE` in automatic tags shows the intermediate file name produced by `spp.sh`/`fortran.mk`
 
 ### Editor support (syntax highlighting and clang-format)
