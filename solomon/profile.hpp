@@ -48,7 +48,14 @@ static inline void solomon_internal_profile_pop(void) { (void)roctxRangePop(); }
 static inline void solomon_internal_profile_mark(const char *name) { roctxMarkA(name); }
 #define SOLOMON_INTERNAL_PROFILE_ENABLED
 #elif defined(SOLOMON_TAGGED_PROFILE_WITH_ITT)
-// ITT (Intel Instrumentation and Tracing Technology); add -littnotify to the link line
+// ITT (Intel Instrumentation and Tracing Technology); the header and library ship with VTune:
+// add -I${VTUNE_PROFILER_DIR}/sdk/include to the compilation flags and
+// -L${VTUNE_PROFILER_DIR}/sdk/lib64 -littnotify to the link flags
+#if defined(__has_include)
+#if !__has_include(<ittnotify.h>)
+#error "ittnotify.h not found: add -I${VTUNE_PROFILER_DIR}/sdk/include to the compilation flags (and -L${VTUNE_PROFILER_DIR}/sdk/lib64 -littnotify when linking)"
+#endif
+#endif  // defined(__has_include)
 #include <ittnotify.h>
 static inline __itt_domain *solomon_internal_profile_domain(void) {
   static __itt_domain *domain = (void *)0;
