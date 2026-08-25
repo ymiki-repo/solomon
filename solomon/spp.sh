@@ -109,7 +109,7 @@ case "$SRC" in
 	cpp -P $MACRO -DSOLOMON_FORTRAN $INCS $DEFS _$SRC.spp -o _$SRC.i
 	rc=$?
 	if [ "$rc" -eq 0 ]; then
-	    sed -e 's/^#pragma /!$/g' -e 's,__SOLOMON_FC_CONCAT__,//,g' _$SRC.i
+	    sed -e 's/^#pragma solomon_fprof //' -e 's/^#pragma /!$/g' -e 's,__SOLOMON_FC_CONCAT__,//,g' _$SRC.i
 	fi
 	rm -f _$SRC.spp _$SRC.i
 	exit $rc

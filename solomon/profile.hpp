@@ -126,11 +126,16 @@ static inline void solomon_internal_profile_mark(const char *name) { __itt_marke
 #define SOLOMON_INTERNAL_TAG_PUSH(mname) SOLOMON_PROFILE_RANGE_BEGIN(SOLOMON_INTERNAL_PROFILE_TAG(mname))
 #define SOLOMON_INTERNAL_TAG_POP SOLOMON_PROFILE_RANGE_END
 #elif defined(SOLOMON_INTERNAL_PROFILE_ENABLED_FORTRAN) && defined(SOLOMON_TAGGED_PROFILE_AUTO)
-// Fortran cannot concatenate string literals in the preprocessor; pass file, line, and macro name separately
-#define SOLOMON_INTERNAL_TAG_RANGE(mname, directive) call solomon_profile_range_begin_at(__FILE__, __LINE__, mname) directive call solomon_profile_range_end()
-#define SOLOMON_INTERNAL_TAG_MARK(mname) call solomon_profile_mark_at(__FILE__, __LINE__, mname)
-#define SOLOMON_INTERNAL_TAG_PUSH(mname) call solomon_profile_range_begin_at(__FILE__, __LINE__, mname)
-#define SOLOMON_INTERNAL_TAG_POP call solomon_profile_range_end()
+// Fortran cannot concatenate string literals in the preprocessor; pass file, line, and macro name separately.
+// the generated call statements are emitted through the _Pragma mechanism ("#pragma solomon_fprof call ...",
+// restored to plain call statements by the sed stage of spp.sh / fortran.mk) so that each statement is
+// guaranteed to land on its own line regardless of the cpp version in use
+#include "pragma.hpp"
+#define SOLOMON_INTERNAL_FPROF_CALL(...) PRAGMA(solomon_fprof __VA_ARGS__)
+#define SOLOMON_INTERNAL_TAG_RANGE(mname, directive) SOLOMON_INTERNAL_FPROF_CALL(call solomon_profile_range_begin_at(__FILE__, __LINE__, mname)) directive SOLOMON_INTERNAL_FPROF_CALL(call solomon_profile_range_end())
+#define SOLOMON_INTERNAL_TAG_MARK(mname) SOLOMON_INTERNAL_FPROF_CALL(call solomon_profile_mark_at(__FILE__, __LINE__, mname))
+#define SOLOMON_INTERNAL_TAG_PUSH(mname) SOLOMON_INTERNAL_FPROF_CALL(call solomon_profile_range_begin_at(__FILE__, __LINE__, mname))
+#define SOLOMON_INTERNAL_TAG_POP SOLOMON_INTERNAL_FPROF_CALL(call solomon_profile_range_end())
 #else  // defined(SOLOMON_INTERNAL_PROFILE_ENABLED) && defined(SOLOMON_TAGGED_PROFILE_AUTO)
 #define SOLOMON_INTERNAL_TAG_RANGE(mname, directive) directive
 #define SOLOMON_INTERNAL_TAG_MARK(mname)
