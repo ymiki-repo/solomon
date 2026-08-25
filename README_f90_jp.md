@@ -344,7 +344,7 @@
 
 ### プロファイラタグ（NVTX, rocTX, ITT）
 
-Solomon はベンダー中立なプロファイラタグを発行できます（v2.0.0 以降）．バックエンド（NVIDIA NVTX / AMD rocTX / Intel ITT）は使用中のコンパイラから自動選択されるため，ベンダー固有名がコードに現れることはありません（強制したい場合は `SOLOMON_TAGGED_PROFILE_WITH_NVTX` / `..._WITH_ROCTX` / `..._WITH_ITT` を定義してください）．
+Solomon はベンダー中立なプロファイラタグを発行できます（v2.0.0 以降）．バックエンド（NVIDIA NVTX / AMD rocTX / Intel ITT）は使用中のコンパイラから自動選択されるため，ベンダー固有名がコードに現れることはありません（強制したい場合は `SOLOMON_TAGGED_PROFILE_WITH_NVTX` / `..._WITH_ROCTX` / `..._WITH_ITT` を定義してください）．例外: AMD コンパイラはホスト側パスに識別マクロを定義しないため rocTX は自動選択できません．AMD 環境では常に `SOLOMON_TAGGED_PROFILE_WITH_ROCTX` を明示的に定義してください．
 
 * `-DSOLOMON_TAGGED_PROFILE` で手動タグ用マクロが有効になります（他の Solomon マクロと同様，行末セミコロンなしで記述します）:
   * `SOLOMON_PROFILE_RANGE_BEGIN("name")` / `SOLOMON_PROFILE_RANGE_END`: 名前付き区間
@@ -353,7 +353,7 @@ Solomon はベンダー中立なプロファイラタグを発行できます（
   * データ転送・同期系（`SOLOMON_MEMCPY_*`, `SOLOMON_MALLOC_ON_DEVICE`, `SOLOMON_FREE_FROM_DEVICE`, `SOLOMON_SYNCHRONIZE` など）は操作全体を覆う区間になります
   * カーネル起動系ループマクロ（`SOLOMON_OFFLOAD`, `SOLOMON_OFFLOAD_OUTER_LOOP`）はマクロからループの終端が見えないため瞬間マークのみです．カーネル実行時間の計測には手動区間マクロ（またはプロファイラ自身のカーネルトレース）をお使いください
   * `SOLOMON_OFFLOAD_SERIAL`〜`SOLOMON_END_OFFLOAD_SERIAL` は実区間になります
-* リンク: NVTX は NVIDIA HPC SDK のオフロードフラグがあれば追加フラグ不要です．rocTX は `-lroctx64` を追加でリンクしてください．ITT はコンパイル時に `-I$VTUNE_PROFILER_DIR/sdk/include`，リンク時に `-L$VTUNE_PROFILER_DIR/sdk/lib64 -littnotify` を追加してください（`VTUNE_PROFILER_DIR` は VTune の `env/vars.sh` が設定します）
+* リンク: NVTX は NVIDIA HPC SDK のオフロードフラグがあれば追加フラグ不要です．rocTX はコンパイル時に `-I$ROCM_PATH/include`，リンク時に `-L$ROCM_PATH/lib -lroctx64` を追加してください．ITT はコンパイル時に `-I$VTUNE_PROFILER_DIR/sdk/include`，リンク時に `-L$VTUNE_PROFILER_DIR/sdk/lib64 -littnotify` を追加してください（`VTUNE_PROFILER_DIR` は VTune の `env/vars.sh` が設定します）
 * Fortran: 同梱ヘルパーを同じコンパイラ・フラグでコンパイルしてリンクしてください（例: `nvc -c -mp=gpu -DSOLOMON_TAGGED_PROFILE $(SOLOMON_DIR)/profile/solomon_profile.c`．define なしでコンパイルすると no-op になります）．自動タグの `FILE` は `spp.sh`/`fortran.mk` の中間ファイル名になる点にご注意ください
 
 ### エディタ支援（シンタックスハイライトと clang-format）

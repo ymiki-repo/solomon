@@ -22,16 +22,29 @@
 
 #if defined(SOLOMON_TAGGED_PROFILE) && !defined(SOLOMON_FORTRAN)
 
+// the profiler APIs are host-side; in compilers which run a separate device-side pass over the
+// same translation unit (e.g., clang-based OpenMP offloading), that pass must not activate any backend
+#if defined(__AMDGCN__) || defined(__NVPTX__) || defined(__SPIR__) || defined(__SPIRV__)
+#define SOLOMON_INTERNAL_PROFILE_DEVICE_PASS
+#endif  // defined(__AMDGCN__) || defined(__NVPTX__) || defined(__SPIR__) || defined(__SPIRV__)
+
 // select the profiler backend automatically unless one is forced
+// note: AMD's OpenMP compiler defines no vendor macro in the host-side pass (verified on ROCm),
+//       so rocTX cannot be auto-selected; define SOLOMON_TAGGED_PROFILE_WITH_ROCTX explicitly
 #if !defined(SOLOMON_TAGGED_PROFILE_WITH_NVTX) && !defined(SOLOMON_TAGGED_PROFILE_WITH_ROCTX) && !defined(SOLOMON_TAGGED_PROFILE_WITH_ITT)
 #if defined(__NVCOMPILER) || defined(__NVCOMPILER_MAJOR__) || defined(__CUDACC__)
 #define SOLOMON_TAGGED_PROFILE_WITH_NVTX
 #elif defined(__INTEL_LLVM_COMPILER) || defined(__INTEL_COMPILER)
 #define SOLOMON_TAGGED_PROFILE_WITH_ITT
-#elif defined(__HIP_PLATFORM_AMD__) || defined(__AMDGCN__) || defined(__AMDGPU__)
-#define SOLOMON_TAGGED_PROFILE_WITH_ROCTX
 #endif  // defined(__NVCOMPILER) || defined(__NVCOMPILER_MAJOR__) || defined(__CUDACC__)
 #endif  // no backend forced
+
+#if defined(SOLOMON_INTERNAL_PROFILE_DEVICE_PASS)
+// device-side pass: keep every tagging macro empty (the host-side pass emits the calls)
+#undef SOLOMON_TAGGED_PROFILE_WITH_NVTX
+#undef SOLOMON_TAGGED_PROFILE_WITH_ROCTX
+#undef SOLOMON_TAGGED_PROFILE_WITH_ITT
+#endif  // defined(SOLOMON_INTERNAL_PROFILE_DEVICE_PASS)
 
 #if defined(SOLOMON_TAGGED_PROFILE_WITH_NVTX)
 // NVTX (NVIDIA Tools Extension); headers are found when the OpenACC/OpenMP offloading flags of the NVIDIA HPC SDK are enabled
@@ -41,7 +54,13 @@ static inline void solomon_internal_profile_pop(void) { (void)nvtxRangePop(); }
 static inline void solomon_internal_profile_mark(const char *name) { nvtxMarkA(name); }
 #define SOLOMON_INTERNAL_PROFILE_ENABLED
 #elif defined(SOLOMON_TAGGED_PROFILE_WITH_ROCTX)
-// rocTX (ROCm); add -lroctx64 to the link line
+// rocTX (ROCm); add -I${ROCM_PATH}/include to the compilation flags and
+// -L${ROCM_PATH}/lib -lroctx64 to the link flags
+#if defined(__has_include)
+#if !__has_include(<roctracer/roctx.h>)
+#error "roctracer/roctx.h not found: add -I${ROCM_PATH}/include to the compilation flags (and -L${ROCM_PATH}/lib -lroctx64 when linking)"
+#endif
+#endif  // defined(__has_include)
 #include <roctracer/roctx.h>
 static inline void solomon_internal_profile_push(const char *name) { (void)roctxRangePushA(name); }
 static inline void solomon_internal_profile_pop(void) { (void)roctxRangePop(); }
@@ -69,7 +88,9 @@ static inline void solomon_internal_profile_pop(void) { __itt_task_end(solomon_i
 static inline void solomon_internal_profile_mark(const char *name) { __itt_marker(solomon_internal_profile_domain(), __itt_null, __itt_string_handle_create(name), __itt_scope_task); }
 #define SOLOMON_INTERNAL_PROFILE_ENABLED
 #else  // no backend
-#warning "SOLOMON_TAGGED_PROFILE is enabled, but no profiler backend was detected for this compiler; define SOLOMON_TAGGED_PROFILE_WITH_NVTX, SOLOMON_TAGGED_PROFILE_WITH_ROCTX, or SOLOMON_TAGGED_PROFILE_WITH_ITT explicitly"
+#if !defined(SOLOMON_INTERNAL_PROFILE_DEVICE_PASS)
+#warning "SOLOMON_TAGGED_PROFILE is enabled, but no profiler backend was detected for this compiler; define SOLOMON_TAGGED_PROFILE_WITH_NVTX, SOLOMON_TAGGED_PROFILE_WITH_ROCTX (required for AMD compilers), or SOLOMON_TAGGED_PROFILE_WITH_ITT explicitly"
+#endif  // !defined(SOLOMON_INTERNAL_PROFILE_DEVICE_PASS)
 #endif  // defined(SOLOMON_TAGGED_PROFILE_WITH_NVTX)
 
 #endif  // defined(SOLOMON_TAGGED_PROFILE) && !defined(SOLOMON_FORTRAN)
