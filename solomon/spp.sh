@@ -32,8 +32,9 @@ while [ $# -gt 0 ]; do
 	    ;;
 	-*)
 	    # compiler flags (e.g., -acc, -mp=gpu, -fopenmp, --offload-arch=gfx90a)
-	    # passed to the compiler when probing _OPENACC and _OPENMP
-	    FLAGS="$FLAGS $1"
+	    # passed to the compiler when probing _OPENACC and _OPENMP;
+	    # each flag is kept quoted so that arguments containing spaces survive
+	    FLAGS="$FLAGS '$1'"
 	    shift
 	    ;;
 	*)
@@ -90,7 +91,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-MACRO=$($COMPILER $FLAGS -E $CONFTEST | grep -- "^-D")
+MACRO=$(eval "$COMPILER $FLAGS -E $CONFTEST" | grep -- "^-D")
 
 rm -f $CONFTEST
 
@@ -108,7 +109,7 @@ case "$SRC" in
 	cpp -P $MACRO -DSOLOMON_FORTRAN $INCS $DEFS _$SRC.spp -o _$SRC.i
 	rc=$?
 	if [ "$rc" -eq 0 ]; then
-	    sed -e 's/^#pragma /!$/g' -e 's,__SOLOMON_FC_CONCAT__,//,g' _$SRC.i
+	    sed -e 's/^#pragma solomon_fprof //' -e 's/^#pragma /!$/g' -e 's,__SOLOMON_FC_CONCAT__,//,g' _$SRC.i
 	fi
 	rm -f _$SRC.spp _$SRC.i
 	exit $rc

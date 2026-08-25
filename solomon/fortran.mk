@@ -8,5 +8,5 @@ spp/%.f90: %.f90
 	$(if $(findstring -D_OPENACC,$(SOLOMON_DEF))$(findstring -D_OPENMP,$(SOLOMON_DEF)),,@echo 'solomon: note: neither _OPENACC nor _OPENMP was detected from SOLOMON_FC and SOLOMON_FLAGS; all directives expand to serial code (add an offload flag such as -acc, -mp=gpu, or -fopenmp to SOLOMON_FLAGS if offloading was intended)' >&2)
 	sed 's,//,__SOLOMON_FC_CONCAT__,g' $< > spp/$*.src.f90
 	cpp -P spp/$*.src.f90 -DSOLOMON_FORTRAN $(SOLOMON_DEF) > spp/$*.i.f90
-	sed -e 's/^#pragma /!$$/g' -e 's,__SOLOMON_FC_CONCAT__,//,g' spp/$*.i.f90 > spp/$*.f90
+	sed -e 's/^#pragma solomon_fprof //' -e 's/^#pragma /!$$/g' -e 's,__SOLOMON_FC_CONCAT__,//,g' spp/$*.i.f90 > spp/$*.f90
 	@rm -f spp/$*.src.f90 spp/$*.i.f90

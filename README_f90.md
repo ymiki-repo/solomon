@@ -91,6 +91,7 @@
      * We strongly recommend not to adopt `PRAGMA_ACC_DECLARE(...)` in your codes (it is not converted to the OpenMP target backend)
        * Alternative notations are `SOLOMON_DECLARE_ON_DEVICE(...)` for device-resident variables and `SOLOMON_DECLARE_ON_DEVICE_LINKED(...)` for link semantics (v2.0.0 or later)
      * `SOLOMON_DECLARE_OFFLOADED(...)` (or `PRAGMA_ACC_ROUTINE(...)`) inside a procedure is self-contained in Fortran; `SOLOMON_DECLARE_OFFLOADED_END` is not required (it expands to nothing; writing it is harmless) (v2.0.0 or later)
+       * place it in the specification part **after** the `use`/`implicit` statements; some compilers (e.g., Intel ifx) reject the directive before `implicit none`
    * `SOLOMON_IF_NOT_OFFLOADED(arg)` is available to hide directives when GPU offloading is enabled
      * <details><summary> Example: `arg` appears only in fallback mode (when GPU offloading is disabled (both OpenACC and OpenMP target are not enabled))</summary>
 
@@ -351,7 +352,7 @@ Solomon can emit vendor-neutral profiler tags (v2.0.0 or later). The backend (NV
   * data-movement and synchronization macros (`SOLOMON_MEMCPY_*`, `SOLOMON_MALLOC_ON_DEVICE`, `SOLOMON_FREE_FROM_DEVICE`, `SOLOMON_SYNCHRONIZE`, ...) get ranges covering the operation
   * kernel-launching loop macros (`SOLOMON_OFFLOAD`, `SOLOMON_OFFLOAD_OUTER_LOOP`) get instantaneous marks only, since a macro cannot see the end of the following loop; use the manual range macros (or the profiler's own kernel trace) to measure kernel execution time
   * `SOLOMON_OFFLOAD_SERIAL`/`SOLOMON_END_OFFLOAD_SERIAL` get a real range
-* linking: NVTX needs no extra flags with the NVIDIA HPC SDK offloading flags; add `-lroctx64` for rocTX and `-littnotify` for ITT
+* linking: NVTX needs no extra flags with the NVIDIA HPC SDK offloading flags; add `-lroctx64` for rocTX; for ITT, add `-I$VTUNE_PROFILER_DIR/sdk/include` when compiling and `-L$VTUNE_PROFILER_DIR/sdk/lib64 -littnotify` when linking (`VTUNE_PROFILER_DIR` is set by VTune's `env/vars.sh`)
 * Fortran: additionally compile the bundled helper with the same compiler/flags and link its object, e.g., `nvc -c -mp=gpu -DSOLOMON_TAGGED_PROFILE $(SOLOMON_DIR)/profile/solomon_profile.c` (without the define, the helper becomes no-ops); note that `FILE` in automatic tags shows the intermediate file name produced by `spp.sh`/`fortran.mk`
 
 ### Editor support (syntax highlighting and clang-format)
