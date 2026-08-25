@@ -17,6 +17,7 @@
 ## 目次
 
 * [概要](#概要)
+* [v2.0.0 の新機能（What's new）](#v200-の新機能whats-new)
 * [意義](#意義)
   * [背景](#背景)
   * [開発方針と特徴](#開発方針と特徴)
@@ -34,6 +35,18 @@
   * [使用可能な指示文](#使用可能な指示文)
   * [使用可能な指示節・指示句](#使用可能な指示節指示句)
 * [謝辞](#謝辞)
+
+## v2.0.0 の新機能（What's new）
+
+* **Fortran サポート**: `spp.sh` / `fortran.mk` による前処理を経て，C/C++ と同じマクロが Fortran コードでも使えるようになりました（[Fortran 向け README](README_f90_jp.md)）
+* **名前空間の整理**: ユーザー向けマクロを `SOLOMON_` / `SOLOMON_CLAUSE_` 接頭辞に改名しました．v1.x の綴りは `-DSOLOMON_WITH_SHORT_NAMES` でそのまま使え，移行スクリプトも同梱しています（[v1.x との後方互換性](#v1x-との後方互換性v200-以降)）
+* **簡易記法を2階層に再設計**: `SOLOMON_CLAUSE_BLOCK` / `SOLOMON_CLAUSE_THREAD` などにより，gang↔teams / vector↔thread の対応を簡潔に指定できます
+* **シリアルフォールバック**: OpenACC・OpenMP のいずれも有効でない場合，全指示文が除去されシリアルコードとしてコンパイルされます（`-D_OPENMP` の手動指定は不要になりました）
+* **デバイス常駐変数**: `SOLOMON_DECLARE_ON_DEVICE(...)`（link 意味論には `SOLOMON_DECLARE_ON_DEVICE_LINKED(...)`）
+* **逐次オフロード領域**: `SOLOMON_OFFLOAD_SERIAL`（`acc serial` ↔ 裸の `omp target` の相互変換）
+* **関数のオフロード宣言の改善**: `SOLOMON_DECLARE_OFFLOADED` の出力不正を修正し，名前形式 `SOLOMON_CLAUSE_TARGETS(...)` を追加しました
+* **ベンダー中立プロファイラタグ**: `-DSOLOMON_TAGGED_PROFILE(_AUTO)` で NVTX / rocTX / ITT のタグを発行します（[プロファイラタグ](#プロファイラタグnvtx-roctx-itt)）
+* **エディタ支援**: vim / emacs / VS Code 向けシンタックスハイライトと `.clang-format` を同梱しています（[エディタ支援](#エディタ支援シンタックスハイライトと-clang-format)）
 
 ## 意義
 

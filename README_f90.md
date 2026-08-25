@@ -17,6 +17,7 @@
 ## Table of contents
 
 * [Summary](#summary)
+* [What's new in v2.0.0](#whats-new-in-v200)
 * [Significance](#significance)
   * [Background](#background)
   * [Development Policy and Features](#development-policy-and-features)
@@ -33,6 +34,18 @@
   * [Available directives](#available-directives)
   * [Available clauses](#available-clauses)
 * [Acknowledgment](#acknowledgment)
+
+## What's new in v2.0.0
+
+* **Fortran support**: the same macros as C/C++ now work in Fortran codes through the `spp.sh` / `fortran.mk` preprocessing (this README)
+* **Namespace cleanup**: all user-facing macros were renamed with the `SOLOMON_` / `SOLOMON_CLAUSE_` prefixes; the v1.x spellings keep working with `-DSOLOMON_WITH_SHORT_NAMES`, and a migration script is bundled ([Backward compatibility](#backward-compatibility-with-v1x-v200-or-later))
+* **Two-level simple notation**: `SOLOMON_CLAUSE_BLOCK` / `SOLOMON_CLAUSE_THREAD` express the gang↔teams / vector↔thread correspondence concisely
+* **Serial fallback**: when neither OpenACC nor OpenMP is enabled, every directive is removed and the code compiles as serial code (manually adding `-D_OPENMP` is no longer needed)
+* **Device-resident variables**: `SOLOMON_DECLARE_ON_DEVICE(...)` (`SOLOMON_DECLARE_ON_DEVICE_LINKED(...)` for link semantics)
+* **Serial offloaded regions**: `SOLOMON_OFFLOAD_SERIAL` (mutual conversion between `acc serial` and a bare `omp target`)
+* **Improved offloaded-function declarations**: fixed the broken output of `SOLOMON_DECLARE_OFFLOADED` and added the named form `SOLOMON_CLAUSE_TARGETS(...)`
+* **Vendor-neutral profiler tags**: `-DSOLOMON_TAGGED_PROFILE(_AUTO)` emits NVTX / rocTX / ITT tags ([Profiler tags](#profiler-tags-nvtx-roctx-itt))
+* **Editor support**: syntax highlighting for vim / emacs / VS Code and a `.clang-format` are bundled ([Editor support](#editor-support-syntax-highlighting-and-clang-format))
 
 ## Significance
 
