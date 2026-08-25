@@ -13,15 +13,25 @@
 * Released under the MIT license, see LICENSE.txt
 * Copyright (c) 2024 Yohei MIKI
 
-## v1.x との後方互換性（v2.0.0 以降）
+## 目次
 
-* v2.0.0 では，ユーザーコードや他ライブラリとの名前衝突を避けるため，ユーザー向けマクロを全て改名しました:
-  * 指示文マクロには `SOLOMON_` 接頭辞が付きます（例: `OFFLOAD(...)` は `SOLOMON_OFFLOAD(...)` になりました）
-  * 引数トークンには `SOLOMON_CLAUSE_` 接頭辞が付きます（例: `AS_INDEPENDENT` は `SOLOMON_CLAUSE_INDEPENDENT`，`COLLAPSE(n)` は `SOLOMON_CLAUSE_COLLAPSE(n)` になりました）
-* v1.x 向けに書かれたコードは，`SOLOMON_WITH_SHORT_NAMES` を定義する（例: コンパイルフラグに `-DSOLOMON_WITH_SHORT_NAMES` を追加する）ことで従来の接頭辞なしの綴りが有効になり，そのまま動作します（デフォルト: OFF）
-* 設定マクロには新しい綴り `-DSOLOMON_OFFLOAD_BY_*` が追加されました．従来の `-DOFFLOAD_BY_*` は無条件で使用し続けられます（`SOLOMON_WITH_SHORT_NAMES` の定義は不要です）
-* 新旧 API の完全な対応表は [misc/migrate/MIGRATION.md](misc/migrate/MIGRATION.md) を参照してください
-* 移行スクリプト `misc/migrate/solomon_migrate_v1_to_v2.sh` を同梱しています．v1.x のソースコード（およびファイル引数として明示したビルドスクリプト）を v2.0.0 の綴りに書き換えます．デフォルトは dry-run（diff 表示のみ）で，`--apply` を付けるとバックアップ（`*.v1.bak`）を残して書き換えます
+* [概要](#概要)
+* [意義](#意義)
+  * [背景](#背景)
+  * [開発方針と特徴](#開発方針と特徴)
+* [使い方](#使い方)
+  * [Solomon を用いたコードの開発方法](#solomon-を用いたコードの開発方法)
+  * [Solomon を使ったコードのコンパイル方法](#solomon-を使ったコードのコンパイル方法)
+  * [v1.x との後方互換性（v2.0.0 以降）](#v1x-との後方互換性v200-以降)
+  * [Solomon の拡張方法（コードジェネレータを用いた更新方法）](#solomon-の拡張方法コードジェネレータを用いた更新方法)
+  * [プロファイラタグ（NVTX, rocTX, ITT）](#プロファイラタグnvtx-roctx-itt)
+  * [エディタ支援（シンタックスハイライトと clang-format）](#エディタ支援シンタックスハイライトと-clang-format)
+* [サンプルコード](#サンプルコード)
+  * [diffusion: メモリ律速な問題の実装例](#diffusion-メモリ律速な問題の実装例)
+* [Solomon が提供する API](#solomon-が提供する-api)
+  * [使用可能な指示文](#使用可能な指示文)
+  * [使用可能な指示節・指示句](#使用可能な指示節指示句)
+* [謝辞](#謝辞)
 
 ## 意義
 
@@ -320,6 +330,16 @@
 
 * 使用例：[拡散方程式用の Makefile](samples/F/diffusion/Makefile)
   * 半自動コード生成・コンパイル方法の手順例です
+
+### v1.x との後方互換性（v2.0.0 以降）
+
+* v2.0.0 では，ユーザーコードや他ライブラリとの名前衝突を避けるため，ユーザー向けマクロを全て改名しました:
+  * 指示文マクロには `SOLOMON_` 接頭辞が付きます（例: `OFFLOAD(...)` は `SOLOMON_OFFLOAD(...)` になりました）
+  * 引数トークンには `SOLOMON_CLAUSE_` 接頭辞が付きます（例: `AS_INDEPENDENT` は `SOLOMON_CLAUSE_INDEPENDENT`，`COLLAPSE(n)` は `SOLOMON_CLAUSE_COLLAPSE(n)` になりました）
+* v1.x 向けに書かれたコードは，`SOLOMON_WITH_SHORT_NAMES` を定義する（例: コンパイルフラグに `-DSOLOMON_WITH_SHORT_NAMES` を追加する）ことで従来の接頭辞なしの綴りが有効になり，そのまま動作します（デフォルト: OFF）
+* 設定マクロには新しい綴り `-DSOLOMON_OFFLOAD_BY_*` が追加されました．従来の `-DOFFLOAD_BY_*` は無条件で使用し続けられます（`SOLOMON_WITH_SHORT_NAMES` の定義は不要です）
+* 新旧 API の完全な対応表は [misc/migrate/MIGRATION.md](misc/migrate/MIGRATION.md) を参照してください
+* 移行スクリプト `misc/migrate/solomon_migrate_v1_to_v2.sh` を同梱しています．v1.x のソースコード（およびファイル引数として明示したビルドスクリプト）を v2.0.0 の綴りに書き換えます．デフォルトは dry-run（diff 表示のみ）で，`--apply` を付けるとバックアップ（`*.v1.bak`）を残して書き換えます
 
 ### Solomon の拡張方法（コードジェネレータを用いた更新方法）
 

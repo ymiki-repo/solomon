@@ -13,15 +13,25 @@
 * Released under the MIT license, see LICENSE.txt
 * Copyright (c) 2024 Yohei MIKI
 
-## Backward compatibility with v1.x (v2.0.0 or later)
+## Table of contents
 
-* In v2.0.0, all user-facing macros were renamed to avoid name collisions with user codes and other libraries:
-  * directive macros now carry the `SOLOMON_` prefix (e.g., `OFFLOAD(...)` is now `SOLOMON_OFFLOAD(...)`)
-  * clause tokens now carry the `SOLOMON_CLAUSE_` prefix (e.g., `AS_INDEPENDENT` is now `SOLOMON_CLAUSE_INDEPENDENT`, and `COLLAPSE(n)` is now `SOLOMON_CLAUSE_COLLAPSE(n)`)
-* Codes written for v1.x keep working by defining `SOLOMON_WITH_SHORT_NAMES` (e.g., adding `-DSOLOMON_WITH_SHORT_NAMES` to the compilation flags), which enables the unprefixed v1.x spellings (default: OFF)
-* The configuration macros have new spellings `-DSOLOMON_OFFLOAD_BY_*`; the unprefixed `-DOFFLOAD_BY_*` spellings keep working unconditionally (defining `SOLOMON_WITH_SHORT_NAMES` is not required for them)
-* The complete old-to-new correspondence table is available in [misc/migrate/MIGRATION.md](misc/migrate/MIGRATION.md)
-* A migration script `misc/migrate/solomon_migrate_v1_to_v2.sh` is bundled: it rewrites v1.x sources (and build scripts passed explicitly as file arguments) to the v2.0.0 spellings; dry-run by default, `--apply` rewrites in place with backups (`*.v1.bak`)
+* [Summary](#summary)
+* [Significance](#significance)
+  * [Background](#background)
+  * [Development Policy and Features](#development-policy-and-features)
+* [How to use](#how-to-use)
+  * [How to develop codes using Solomon](#how-to-develop-codes-using-solomon)
+  * [How to compile codes using Solomon](#how-to-compile-codes-using-solomon)
+  * [Backward compatibility with v1.x (v2.0.0 or later)](#backward-compatibility-with-v1x-v200-or-later)
+  * [How to extend capability of Solomon (Code Generators)](#how-to-extend-capability-of-solomon-code-generators)
+  * [Profiler tags (NVTX, rocTX, ITT)](#profiler-tags-nvtx-roctx-itt)
+  * [Editor support (syntax highlighting and clang-format)](#editor-support-syntax-highlighting-and-clang-format)
+* [Samples](#samples)
+  * [diffusion: sample of memory-intensive application](#diffusion-sample-of-memory-intensive-application)
+* [Available APIs in Solomon](#available-apis-in-solomon)
+  * [Available directives](#available-directives)
+  * [Available clauses](#available-clauses)
+* [Acknowledgment](#acknowledgment)
 
 ## Significance
 
@@ -319,6 +329,16 @@
 
 * See examples: [Makefile for diffusion](samples/F/diffusion/Makefile)
   * Here is an example of the procedure for semi-automatic code generation and compilation
+
+### Backward compatibility with v1.x (v2.0.0 or later)
+
+* In v2.0.0, all user-facing macros were renamed to avoid name collisions with user codes and other libraries:
+  * directive macros now carry the `SOLOMON_` prefix (e.g., `OFFLOAD(...)` is now `SOLOMON_OFFLOAD(...)`)
+  * clause tokens now carry the `SOLOMON_CLAUSE_` prefix (e.g., `AS_INDEPENDENT` is now `SOLOMON_CLAUSE_INDEPENDENT`, and `COLLAPSE(n)` is now `SOLOMON_CLAUSE_COLLAPSE(n)`)
+* Codes written for v1.x keep working by defining `SOLOMON_WITH_SHORT_NAMES` (e.g., adding `-DSOLOMON_WITH_SHORT_NAMES` to the compilation flags), which enables the unprefixed v1.x spellings (default: OFF)
+* The configuration macros have new spellings `-DSOLOMON_OFFLOAD_BY_*`; the unprefixed `-DOFFLOAD_BY_*` spellings keep working unconditionally (defining `SOLOMON_WITH_SHORT_NAMES` is not required for them)
+* The complete old-to-new correspondence table is available in [misc/migrate/MIGRATION.md](misc/migrate/MIGRATION.md)
+* A migration script `misc/migrate/solomon_migrate_v1_to_v2.sh` is bundled: it rewrites v1.x sources (and build scripts passed explicitly as file arguments) to the v2.0.0 spellings; dry-run by default, `--apply` rewrites in place with backups (`*.v1.bak`)
 
 ### How to extend capability of Solomon (Code Generators)
 
