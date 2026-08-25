@@ -17,10 +17,11 @@
 ## 目次
 
 * [概要](#概要)
-* [v2.0.0 の新機能（What's new）](#v200-の新機能whats-new)
 * [意義](#意義)
   * [背景](#背景)
   * [開発方針と特徴](#開発方針と特徴)
+* [変更履歴（Changelog）](#変更履歴changelog)
+  * [v2.0.0（2026-08）](#v2002026-08)
 * [使い方](#使い方)
   * [Solomon を用いたコードの開発方法](#solomon-を用いたコードの開発方法)
   * [Solomon を使ったコードのコンパイル方法](#solomon-を使ったコードのコンパイル方法)
@@ -34,18 +35,6 @@
   * [使用可能な指示文](#使用可能な指示文)
   * [使用可能な指示節・指示句](#使用可能な指示節指示句)
 * [謝辞](#謝辞)
-
-## v2.0.0 の新機能（What's new）
-
-* **Fortran サポート**: `spp.sh` / `fortran.mk` による前処理を経て，C/C++ と同じマクロが Fortran コードでも使えるようになりました（この README）
-* **名前空間の整理**: ユーザー向けマクロを `SOLOMON_` / `SOLOMON_CLAUSE_` 接頭辞に改名しました．v1.x の綴りは `-DSOLOMON_WITH_SHORT_NAMES` でそのまま使え，移行スクリプトも同梱しています（[v1.x との後方互換性](#v1x-との後方互換性v200-以降)）
-* **簡易記法を2階層に再設計**: `SOLOMON_CLAUSE_BLOCK` / `SOLOMON_CLAUSE_THREAD` などにより，gang↔teams / vector↔thread の対応を簡潔に指定できます
-* **シリアルフォールバック**: OpenACC・OpenMP のいずれも有効でない場合，全指示文が除去されシリアルコードとしてコンパイルされます（`-D_OPENMP` の手動指定は不要になりました）
-* **デバイス常駐変数**: `SOLOMON_DECLARE_ON_DEVICE(...)`（link 意味論には `SOLOMON_DECLARE_ON_DEVICE_LINKED(...)`）
-* **逐次オフロード領域**: `SOLOMON_OFFLOAD_SERIAL`（`acc serial` ↔ 裸の `omp target` の相互変換）
-* **関数のオフロード宣言の改善**: `SOLOMON_DECLARE_OFFLOADED` の出力不正を修正し，名前形式 `SOLOMON_CLAUSE_TARGETS(...)` を追加しました
-* **ベンダー中立プロファイラタグ**: `-DSOLOMON_TAGGED_PROFILE(_AUTO)` で NVTX / rocTX / ITT のタグを発行します（[プロファイラタグ](#プロファイラタグnvtx-roctx-itt)）
-* **エディタ支援**: vim / emacs / VS Code 向けシンタックスハイライトと `.clang-format` を同梱しています（[エディタ支援](#エディタ支援シンタックスハイライトと-clang-format)）
 
 ## 意義
 
@@ -71,6 +60,42 @@
   * 実際のバイナリ生成はGPUベンダー製のコンパイラなどに任せるため，コンパイラの性能向上や機能拡張の恩恵をそのまま受けられます
   * 単なるマクロの集積なので，更新が停滞したとしてもユーザーコードが動かなくなるような悪影響はありません
   * ユーザーサイドでマクロを付け足すことも簡単です
+
+## 変更履歴（Changelog）
+
+### v2.0.0（2026-08）
+
+* **Fortran サポート**: `spp.sh` / `fortran.mk` による前処理を経て，C/C++ と同じマクロが Fortran コードでも使えるようになりました（この README）
+* **名前空間の整理**: ユーザー向けマクロを `SOLOMON_` / `SOLOMON_CLAUSE_` 接頭辞に改名しました．v1.x の綴りは `-DSOLOMON_WITH_SHORT_NAMES` でそのまま使え，移行スクリプトも同梱しています（[v1.x との後方互換性](#v1x-との後方互換性v200-以降)）
+* **簡易記法を2階層に再設計**: `SOLOMON_CLAUSE_BLOCK` / `SOLOMON_CLAUSE_THREAD` などにより，gang↔teams / vector↔thread の対応を簡潔に指定できます
+* **シリアルフォールバック**: OpenACC・OpenMP のいずれも有効でない場合，全指示文が除去されシリアルコードとしてコンパイルされます（`-D_OPENMP` の手動指定は不要になりました）
+* **デバイス常駐変数**: `SOLOMON_DECLARE_ON_DEVICE(...)`（link 意味論には `SOLOMON_DECLARE_ON_DEVICE_LINKED(...)`）
+* **逐次オフロード領域**: `SOLOMON_OFFLOAD_SERIAL`（`acc serial` ↔ 裸の `omp target` の相互変換）
+* **関数のオフロード宣言の改善**: `SOLOMON_DECLARE_OFFLOADED` の出力不正を修正し，名前形式 `SOLOMON_CLAUSE_TARGETS(...)` を追加しました
+* **ベンダー中立プロファイラタグ**: `-DSOLOMON_TAGGED_PROFILE(_AUTO)` で NVTX / rocTX / ITT のタグを発行します（[プロファイラタグ](#プロファイラタグnvtx-roctx-itt)）
+* **エディタ支援**: vim / emacs / VS Code 向けシンタックスハイライトと `.clang-format` を同梱しています（[エディタ支援](#エディタ支援シンタックスハイライトと-clang-format)）
+
+<details>
+<summary>v1.1.0（2025-12-05）</summary>
+
+* 指示節の自動並べ替え機能を追加しました（生成される指示文が入力順に依らず一意になります）
+* 非同期実行用の `ASYNC_QUEUE(id)` / `WAIT_QUEUE(id)` を追加しました
+* `PRINT_GENERATED_PRAGMA` を追加しました（生成された指示文をコンパイル時メッセージとして出力します）
+* 非推奨となった `use_device_ptr` に代わり `use_device_addr` を使用するようにしました
+* バグ修正: `PRAGMA_ACC_WAIT`，`AS_THREAD`/`AS_BLOCK`/`AS_GRID`，OpenACC の atomic 指示文の欠落など
+
+（表記は当時の v1.x の綴りです）
+
+</details>
+
+<details>
+<summary>v1.0.0（2024-08-22）</summary>
+
+* 初版リリース: OpenACC と OpenMP target を単一ソースで切り替えるマクロ集（[Miki & Hanawa 2024, IEEE Access](https://doi.org/10.1109/ACCESS.2024.3509380) の出版版）
+* OpenACC 記法・OpenMP target 記法の相互変換（acc2omp / omp2acc）と簡易記法
+* サンプルコード（nbody, diffusion）とコードジェネレータを同梱
+
+</details>
 
 ## 使い方
 

@@ -17,10 +17,11 @@
 ## Table of contents
 
 * [Summary](#summary)
-* [What's new in v2.0.0](#whats-new-in-v200)
 * [Significance](#significance)
   * [Background](#background)
   * [Development Policy and Features](#development-policy-and-features)
+* [Changelog](#changelog)
+  * [v2.0.0 (2026-08)](#v200-2026-08)
 * [How to use](#how-to-use)
   * [How to develop codes using Solomon](#how-to-develop-codes-using-solomon)
   * [How to compile codes using Solomon](#how-to-compile-codes-using-solomon)
@@ -34,18 +35,6 @@
   * [Available directives](#available-directives)
   * [Available clauses](#available-clauses)
 * [Acknowledgment](#acknowledgment)
-
-## What's new in v2.0.0
-
-* **Fortran support**: the same macros as C/C++ now work in Fortran codes through the `spp.sh` / `fortran.mk` preprocessing (this README)
-* **Namespace cleanup**: all user-facing macros were renamed with the `SOLOMON_` / `SOLOMON_CLAUSE_` prefixes; the v1.x spellings keep working with `-DSOLOMON_WITH_SHORT_NAMES`, and a migration script is bundled ([Backward compatibility](#backward-compatibility-with-v1x-v200-or-later))
-* **Two-level simple notation**: `SOLOMON_CLAUSE_BLOCK` / `SOLOMON_CLAUSE_THREAD` express the gang↔teams / vector↔thread correspondence concisely
-* **Serial fallback**: when neither OpenACC nor OpenMP is enabled, every directive is removed and the code compiles as serial code (manually adding `-D_OPENMP` is no longer needed)
-* **Device-resident variables**: `SOLOMON_DECLARE_ON_DEVICE(...)` (`SOLOMON_DECLARE_ON_DEVICE_LINKED(...)` for link semantics)
-* **Serial offloaded regions**: `SOLOMON_OFFLOAD_SERIAL` (mutual conversion between `acc serial` and a bare `omp target`)
-* **Improved offloaded-function declarations**: fixed the broken output of `SOLOMON_DECLARE_OFFLOADED` and added the named form `SOLOMON_CLAUSE_TARGETS(...)`
-* **Vendor-neutral profiler tags**: `-DSOLOMON_TAGGED_PROFILE(_AUTO)` emits NVTX / rocTX / ITT tags ([Profiler tags](#profiler-tags-nvtx-roctx-itt))
-* **Editor support**: syntax highlighting for vim / emacs / VS Code and a `.clang-format` are bundled ([Editor support](#editor-support-syntax-highlighting-and-clang-format))
 
 ## Significance
 
@@ -71,6 +60,42 @@
   * Since actual binary generation is delegated to the GPU vendors' compilers, you directly benefit from compiler performance improvements and feature extensions
   * Because it is simply a collection of macros, even if development/updates stagnate, it will not have adverse effects such as breaking user code
   * It is also easy for users to add their own macros on the user side
+
+## Changelog
+
+### v2.0.0 (2026-08)
+
+* **Fortran support**: the same macros as C/C++ now work in Fortran codes through the `spp.sh` / `fortran.mk` preprocessing (this README)
+* **Namespace cleanup**: all user-facing macros were renamed with the `SOLOMON_` / `SOLOMON_CLAUSE_` prefixes; the v1.x spellings keep working with `-DSOLOMON_WITH_SHORT_NAMES`, and a migration script is bundled ([Backward compatibility](#backward-compatibility-with-v1x-v200-or-later))
+* **Two-level simple notation**: `SOLOMON_CLAUSE_BLOCK` / `SOLOMON_CLAUSE_THREAD` express the gang↔teams / vector↔thread correspondence concisely
+* **Serial fallback**: when neither OpenACC nor OpenMP is enabled, every directive is removed and the code compiles as serial code (manually adding `-D_OPENMP` is no longer needed)
+* **Device-resident variables**: `SOLOMON_DECLARE_ON_DEVICE(...)` (`SOLOMON_DECLARE_ON_DEVICE_LINKED(...)` for link semantics)
+* **Serial offloaded regions**: `SOLOMON_OFFLOAD_SERIAL` (mutual conversion between `acc serial` and a bare `omp target`)
+* **Improved offloaded-function declarations**: fixed the broken output of `SOLOMON_DECLARE_OFFLOADED` and added the named form `SOLOMON_CLAUSE_TARGETS(...)`
+* **Vendor-neutral profiler tags**: `-DSOLOMON_TAGGED_PROFILE(_AUTO)` emits NVTX / rocTX / ITT tags ([Profiler tags](#profiler-tags-nvtx-roctx-itt))
+* **Editor support**: syntax highlighting for vim / emacs / VS Code and a `.clang-format` are bundled ([Editor support](#editor-support-syntax-highlighting-and-clang-format))
+
+<details>
+<summary>v1.1.0 (2025-12-05)</summary>
+
+* Added automatic sorting of clauses (the generated directives no longer depend on the input order)
+* Added `ASYNC_QUEUE(id)` / `WAIT_QUEUE(id)` for asynchronous execution
+* Added `PRINT_GENERATED_PRAGMA` (prints the generated directives as compile-time messages)
+* Switched to `use_device_addr` from the deprecated `use_device_ptr`
+* Bug fixes: `PRAGMA_ACC_WAIT`, `AS_THREAD`/`AS_BLOCK`/`AS_GRID`, missing OpenACC atomic directives, and others
+
+(entries use the v1.x spellings of that time)
+
+</details>
+
+<details>
+<summary>v1.0.0 (2024-08-22)</summary>
+
+* Initial release: macros switching OpenACC and OpenMP target directives from a single source (the version published in [Miki & Hanawa 2024, IEEE Access](https://doi.org/10.1109/ACCESS.2024.3509380))
+* Mutual conversion between the OpenACC and OpenMP target notations (acc2omp / omp2acc) and the simple notation
+* Bundled samples (nbody, diffusion) and code generators
+
+</details>
 
 ## How to use
 
