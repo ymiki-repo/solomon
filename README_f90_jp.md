@@ -8,6 +8,7 @@
 ## 概要
 
 * GPU向け指示文（OpenACC, OpenMP target）統合マクロ
+* 現在のバージョン: v2.0.0（`solomon/solomon.hpp` 内の `SOLOMON_VERSION` として定義）
 * 詳細については [Miki & Hanawa (2024, IEEE Access, vol. 12, pp. 181644-181665)](https://doi.org/10.1109/ACCESS.2024.3509380) を参照してください
 * 使用した際には [Miki & Hanawa (2024, IEEE Access, vol. 12, pp. 181644-181665)](https://doi.org/10.1109/ACCESS.2024.3509380) を引用してください
 * Released under the MIT license, see LICENSE.txt

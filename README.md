@@ -8,6 +8,7 @@
 ## Summary
 
 * Preprocessor macros to switch OpenACC and OpenMP target directives
+* Current version: v2.0.0 (defined as `SOLOMON_VERSION` in `solomon/solomon.hpp`)
 * See [Miki & Hanawa (2024, IEEE Access, vol. 12, pp. 181644-181665)](https://doi.org/10.1109/ACCESS.2024.3509380) for detail
 * Please cite [Miki & Hanawa (2024, IEEE Access, vol. 12, pp. 181644-181665)](https://doi.org/10.1109/ACCESS.2024.3509380)
 * Released under the MIT license, see LICENSE.txt
