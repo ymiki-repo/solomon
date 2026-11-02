@@ -141,7 +141,10 @@
 /// @brief _Pragma("omp teams [clause [[,] clause] ... ]")
 /// @details Creates a league of initial teams where the initial thread of each team executes the region.
 ///
-#define PRAGMA_OMP_TARGET_TEAMS(...) PRAGMA_OMP_TEAMS(__VA_ARGS__)
+/// @note in C/C++ before OpenMP 6.0, OMP_CLAUSE_IF(...) is dropped here (with the warning where it can be emitted) and does not stop
+/// the build as on PRAGMA_OMP_TEAMS(...) (the pseudo tag SOLOMON_INTERNAL_TAG_OMP_TEAMS_IF_FALLBACK; KI-33)
+///
+#define PRAGMA_OMP_TARGET_TEAMS(...) PRAGMA_OMP(teams SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_TEAMS_IF_FALLBACK), __VA_ARGS__))
 ///
 /// @brief finalize the omp target teams region
 ///
@@ -151,15 +154,17 @@
 /// @brief _Pragma("omp teams distribute [clause [[,] clause] ... ]")
 /// @details Shortcut for specifying a teams construct containing a distribute construct and no other statements.
 /// @note clause: Any clause used for teams or distribute.
+/// @note In fallback mode it becomes _Pragma("omp parallel for [clause [[,] clause] ... ]") (Fortran: parallel do), so that the loop runs on the threads.
 ///
-#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(...) PRAGMA_OMP_TEAMS_DISTRIBUTE(__VA_ARGS__)
+#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(...) PRAGMA_OMP_PARALLEL_FOR(__VA_ARGS__)
 
 ///
 /// @brief _Pragma("omp teams distribute simd [clause [[,] clause] ... ]")
 /// @details Shortcut for specifying a teams construct containing a distribute simd construct and no other statements.
 /// @note clause: Any clause used for teams or distribute simd.
+/// @note In fallback mode it becomes _Pragma("omp parallel for simd [clause [[,] clause] ... ]") (Fortran: parallel do simd), so that the loop runs on the threads.
 ///
-#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_SIMD(...) PRAGMA_OMP_TEAMS_DISTRIBUTE_SIMD(__VA_ARGS__)
+#define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_SIMD(...) PRAGMA_OMP_PARALLEL_FOR_SIMD(__VA_ARGS__)
 
 ///
 /// @brief _Pragma("omp parallel for [clause [[,] clause] ... ]")
@@ -195,13 +200,48 @@
 #define PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD(...) PRAGMA_OMP_PARALLEL_DO_SIMD(__VA_ARGS__)
 
 ///
-/// @brief add OpenMP target clause "thread_limit (num)" if applicable
+/// @brief ignore _Pragma("omp taskwait [clause [[,] clause] ... ]") issued for offloaded tasks
+/// @details Nothing runs asynchronously on the CPU in fallback mode; PRAGMA_OMP_TASKWAIT(...) (without TARGET) still emits omp taskwait.
 ///
-/// @param[in] num
+#define PRAGMA_OMP_TARGET_TASKWAIT(...)
+
 ///
-#if defined(OMP_TARGET_CLAUSE_THREAD_LIMIT)
-#undef OMP_TARGET_CLAUSE_THREAD_LIMIT
-#endif  // defined(OMP_TARGET_CLAUSE_THREAD_LIMIT)
-#define OMP_TARGET_CLAUSE_THREAD_LIMIT(num) OMP_CLAUSE_NUM_THREADS(num)
+/// @brief _Pragma("omp atomic [clause [[,] clause] ... ]")
+/// @details Atomic operations inside the parallel loops of fallback mode.
+///
+#define PRAGMA_OMP_TARGET_ATOMIC(...) PRAGMA_OMP_ATOMIC(__VA_ARGS__)
+
+///
+/// @brief the target of ACC_CLAUSE_VECTOR_LENGTH(n) and SOLOMON_CLAUSE_NUM_THREADS(n) in fallback mode: num_threads (n) for
+/// the parallel forms and thread_limit (n) for teams (each directive selects one of the two by its tags)
+/// @details OMP_TARGET_CLAUSE_THREAD_LIMIT(num) itself stays thread_limit (num), which only teams takes in fallback mode
+///
+#if defined(SOLOMON_INTERNAL_OMP_TARGET_THREADS_PER_TEAM)
+#undef SOLOMON_INTERNAL_OMP_TARGET_THREADS_PER_TEAM
+#endif  // defined(SOLOMON_INTERNAL_OMP_TARGET_THREADS_PER_TEAM)
+#define SOLOMON_INTERNAL_OMP_TARGET_THREADS_PER_TEAM(num) OMP_CLAUSE_NUM_THREADS(num), OMP_CLAUSE_THREAD_LIMIT(num)
+
+///
+/// @brief drop OpenMP target clause "if (target : condition)" in fallback mode
+/// @details The directive-name-modifier target names no constituent of the fallback directives (OpenMP 5.2 section 3.4),
+/// and a target region whose if clause is false runs on the host (section 13.8), which is what fallback mode does anyway.
+/// Use OMP_TARGET_CLAUSE_IF(condition) for a condition that should also apply to the host directive.
+///
+#if defined(OMP_TARGET_CLAUSE_IF_TARGET)
+#undef OMP_TARGET_CLAUSE_IF_TARGET
+#endif  // defined(OMP_TARGET_CLAUSE_IF_TARGET)
+#define OMP_TARGET_CLAUSE_IF_TARGET(condition) SOLOMON_INTERNAL_MISSING_CLAUSE
+
+///
+/// @brief finalize the OpenMP loop directives (nothing: the end directive of a loop construct is optional in OpenMP; in the OpenACC backend they close the compute construct in Fortran)
+///
+#define PRAGMA_OMP_END_TARGET_PARALLEL_DO
+#define PRAGMA_OMP_END_TARGET_PARALLEL_DO_SIMD
+#define PRAGMA_OMP_END_TARGET_PARALLEL_LOOP
+#define PRAGMA_OMP_END_TARGET_TEAMS_DISTRIBUTE
+#define PRAGMA_OMP_END_TARGET_TEAMS_DISTRIBUTE_SIMD
+#define PRAGMA_OMP_END_TARGET_TEAMS_LOOP
+#define PRAGMA_OMP_END_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO
+#define PRAGMA_OMP_END_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD
 
 #endif  // !defined(SOLOMON_OMP_TARGET_FALLBACK_HPP)

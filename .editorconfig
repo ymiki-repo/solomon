@@ -1,4 +1,4 @@
-# EditorConfig for CUDA example
+# EditorConfig for Solomon (the headers, the samples, and their scripts)
 
 # top-most EditorConfig file
 root = true
@@ -9,22 +9,37 @@ charset = utf-8
 end_of_line = lf
 insert_final_newline = true
 
-# configuration for C++ files
-[*.{cpp,hpp}]
+# configuration for C and C++ files
+[*.{c,h,cpp,hpp}]
 indent_style = space
 indent_size = 2
 
-# configuration for scripts
-[*.{sh,jl}]
+# configuration for shell scripts
+[*.sh]
 indent_style = tab
 tab_width = 4
+
+# configuration for Julia scripts
+[*.jl]
+indent_style = space
+indent_size = 4
+
+# shfmt options for shell scripts (run shfmt without flags so that it reads them)
+[*.sh]
+switch_case_indent = true
+space_redirects = true
 
 # configuration for markdown
 [*.md]
 indent_style = space
 indent_size = 2
 
+# configuration for Fortran files
+[*.{f90,F90}]
+indent_style = space
+indent_size = 2
+
 # configuration for Makefiles
-[Makefile]
+[{Makefile,*.mk}]
 indent_style = tab
 tab_width = 4

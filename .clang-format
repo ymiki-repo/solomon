@@ -33,7 +33,15 @@ StatementMacros:
   - SOLOMON_DECLARE_ON_DEVICE
   - SOLOMON_DECLARE_ON_DEVICE_LINKED
   - SOLOMON_DECLARE_OFFLOADED_END
+  # the serial region and the profiler range macros are standalone statements as well;
+  # without them, clang-format joins the macro with a following "{" (e.g., "SOLOMON_OFFLOAD_SERIAL() {")
+  - SOLOMON_OFFLOAD_SERIAL
+  - SOLOMON_END_OFFLOAD_SERIAL
+  - SOLOMON_PROFILE_RANGE_BEGIN
+  - SOLOMON_PROFILE_RANGE_END
+  - SOLOMON_PROFILE_MARK
+  # SOLOMON_IF_NOT_OFFLOADED(directive) stands for a directive line (as an attribute macro, it would be joined with the following statement)
+  - SOLOMON_IF_NOT_OFFLOADED
 # directive macros that precede a declaration
 AttributeMacros:
   - SOLOMON_DECLARE_OFFLOADED
-  - SOLOMON_IF_NOT_OFFLOADED

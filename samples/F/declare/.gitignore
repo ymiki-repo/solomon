@@ -1,0 +1,7 @@
+slurm-*.out
+*.o
+*.mod
+run
+spp/
+settings.txt
+sh/.lock

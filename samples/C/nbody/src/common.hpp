@@ -12,3 +12,4 @@
 #ifndef NTHREADS
 #define NTHREADS (512)
 #endif  // NTHREADS
+static_assert(NTHREADS > 0, "NTHREADS (NUM_THREADS in Makefile) must be positive");

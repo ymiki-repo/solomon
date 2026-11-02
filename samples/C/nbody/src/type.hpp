@@ -16,7 +16,6 @@ struct alignas(16) float4 {
   float w;
 };
 struct float3 {
- public:
   float x;
   float y;
   float z;

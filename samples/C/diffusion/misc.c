@@ -1,8 +1,6 @@
 /**
  * @file misc.c
- * @brief (File brief)
- *
- * (File explanation)
+ * @brief helpers of the diffusion sample: argument parsing, pointer swap, and timer
  *
  * @author Takashi Shimokawabe
  * @date 2010/12/09 Created
@@ -12,12 +10,26 @@
  */
 
 #include "misc.h"
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/time.h>
 
 static time_t sec_org = 0;
 static time_t usec_org = 0;
 
+
+int read_int(const char *arg, long min, long max, int *value)
+{
+    char *end;
+    errno = 0;
+    const long val = strtol(arg, &end, 10);
+    if ((end == arg) || (*end != '\0') || (errno == ERANGE) || (val < min) || (val > max)) {
+        return 1;
+    }
+    *value = (int)val;
+    return 0;
+}
 
 void swap(float **f, float **fn)
 {

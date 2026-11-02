@@ -10,11 +10,15 @@
 #if !defined(SOLOMON_ACC_CLAUSE_HPP)
 #define SOLOMON_ACC_CLAUSE_HPP
 
+#include "../util/cloak.hpp"       // SOLOMON_INTERNAL_CLOAK_IIF
+#include "../util/dedup_wait.hpp"  // SOLOMON_INTERNAL_WAIT_STOP_EMPTY
+#include "../util/is_empty.hpp"    // SOLOMON_INTERNAL_IS_EMPTY
+#include "../util/nest_map.hpp"    // SOLOMON_INTERNAL_TAG_NESTABLE_IN_MAP(_PRESENT)
 #include "../util/va_args.hpp"
 #include "clause_tag.hpp"
 
 ///
-/// @note Compute Construct Clauses in OpenACC API 2.7 Reference Guide (https://www.openacc.org/sites/default/files/inline-files/API%20Guide%202.7.pdf)
+/// @note clauses of the compute constructs (2.5) in The OpenACC Application Programming Interface 3.3 (https://www.openacc.org/sites/default/files/inline-images/Specification/OpenACC-3.3-final.pdf)
 ///
 
 ///
@@ -28,15 +32,18 @@
 /// @brief add OpenACC clause "self [(condition)]" or "self (list)" if applicable
 /// @details When the condition is not present or when the condition is nonzero or .TRUE., the compute region will execute on the local device; otherwise, the compute region will execute on the current device.
 /// @details Copies the data in list from the device to the local thread. (for update directive)
+/// @details Without arguments it is "self" for the compute constructs only (update needs a list: it is not a clause of update then).
 ///
-#define ACC_CLAUSE_SELF(...) self(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_UPDATE)
+#define ACC_CLAUSE_SELF(...) SOLOMON_INTERNAL_CLOAK_IIF(SOLOMON_INTERNAL_IS_EMPTY(__VA_ARGS__))(SOLOMON_INTERNAL_ACC_SELF_BARE, SOLOMON_INTERNAL_ACC_SELF_LIST)(__VA_ARGS__)
+#define SOLOMON_INTERNAL_ACC_SELF_BARE(...) self, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL)
+#define SOLOMON_INTERNAL_ACC_SELF_LIST(...) self(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_UPDATE, SOLOMON_INTERNAL_TAG_ACC_REQ_UPDATE)
 
 ///
 /// @brief add OpenACC clause "default (none | present)" if applicable
 /// @details none: Prevents the compiler from implicitly determining data attributes for any variable used or assigned in the construct.
 /// @details present: Implicitly assume any non-scalar data not specified in a data clause is present.
 ///
-#define ACC_CLAUSE_DEFAULT(mode) default(mode), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA)
+#define ACC_CLAUSE_DEFAULT(mode) default(mode), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_REQ_DATA)
 
 ///
 /// @brief add OpenACC clause "default (none)" if applicable
@@ -54,19 +61,23 @@
 /// @brief add OpenACC clause "device_type ([* | device_type_list])" if applicable
 /// @details May be followed by any of the clauses below. Clauses following device_type will apply only when compiling for the given device type(s). Clauses following device_type( * ) apply to all devices not named in another device_type clause. May appear more than once with different device types.
 ///
-#define ACC_CLAUSE_DEVICE_TYPE(...) device_type(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_LOOP, SOLOMON_INTERNAL_TAG_ACC_ROUTINE)
+#define ACC_CLAUSE_DEVICE_TYPE(...) device_type(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_UPDATE, SOLOMON_INTERNAL_TAG_ACC_LOOP, SOLOMON_INTERNAL_TAG_ACC_ROUTINE)
 
 ///
 /// @brief add OpenACC clause "async [(expression)]" if applicable
 /// @details The compute region executes asynchronously with the local thread on the corresponding async queue. With no argument, the compute region will execute on the default async queue.
+/// @note Without arguments it emits "async" (the same as async(acc_async_noval)).
 ///
-#define ACC_CLAUSE_ASYNC(...) async(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_ENTER_DATA, SOLOMON_INTERNAL_TAG_ACC_EXIT_DATA, SOLOMON_INTERNAL_TAG_ACC_UPDATE, SOLOMON_INTERNAL_TAG_ACC_WAIT)
+#define ACC_CLAUSE_ASYNC(...) SOLOMON_INTERNAL_CLOAK_IIF(SOLOMON_INTERNAL_IS_EMPTY(__VA_ARGS__))(async, async(__VA_ARGS__)), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_ENTER_DATA, SOLOMON_INTERNAL_TAG_ACC_EXIT_DATA, SOLOMON_INTERNAL_TAG_ACC_UPDATE, SOLOMON_INTERNAL_TAG_ACC_WAIT)
 
 ///
 /// @brief add OpenACC clause "wait [(expression_list)]" if applicable
 /// @details The compute region will not begin execution until all actions on the corresponding async queue(s) are complete. With no argument, the compute region will wait on all async queues.
+/// @note Without arguments it emits "wait" in every language mode (the emptiness test uses __VA_OPT__ where SOLOMON_INTERNAL_USE_VA_OPT is defined, and the portable test elsewhere).
+/// An empty element of the list (a stray comma, as in ACC_CLAUSE_WAIT(1, )) stops the build with a Solomon error, as OpenACC 3.3 (2.16.2, wait-argument) has no empty element.
 ///
-#define ACC_CLAUSE_WAIT(...) wait(__VA_ARGS__) SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_ENTER_DATA, SOLOMON_INTERNAL_TAG_ACC_EXIT_DATA, SOLOMON_INTERNAL_TAG_ACC_UPDATE)
+#define ACC_CLAUSE_WAIT(...) SOLOMON_INTERNAL_CLOAK_IIF(SOLOMON_INTERNAL_IS_EMPTY(__VA_ARGS__))(wait, SOLOMON_INTERNAL_ACC_WAIT_LIST(__VA_ARGS__)), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_ENTER_DATA, SOLOMON_INTERNAL_TAG_ACC_EXIT_DATA, SOLOMON_INTERNAL_TAG_ACC_UPDATE)
+#define SOLOMON_INTERNAL_ACC_WAIT_LIST(...) SOLOMON_INTERNAL_CLOAK_IIF(SOLOMON_INTERNAL_HAS_EMPTY_ELEMENT(__VA_ARGS__))(SOLOMON_INTERNAL_WAIT_STOP_EMPTY, wait(__VA_ARGS__))
 
 ///
 /// @brief add OpenACC clause "finalize" if applicable
@@ -111,74 +122,74 @@
 #define ACC_CLAUSE_FIRSTPRIVATE(...) firstprivate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_SERIAL)
 
 ///
-/// @note Data Clauses in OpenACC API 2.7 Reference Guide (https://www.openacc.org/sites/default/files/inline-files/API%20Guide%202.7.pdf)
+/// @note data clauses (2.7) in The OpenACC Application Programming Interface 3.3 (https://www.openacc.org/sites/default/files/inline-images/Specification/OpenACC-3.3-final.pdf)
 ///
 
 ///
 /// @brief add OpenACC clause "copy (list)" if applicable
 /// @details When entering the region, if the data in list is already present in the current device memory, the structured reference count is incremented and that copy is used. Otherwise, it allocates device memory and copies the values from local memory and sets the structured reference count to one. When exiting the region, the structured reference count is decremented. If both reference counts are zero, the data is copied from device memory to local memory and the device memory is deallocated.
 ///
-#define ACC_CLAUSE_COPY(...) copy(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE)
+#define ACC_CLAUSE_COPY(...) copy(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE, SOLOMON_INTERNAL_TAG_ACC_REQ_DATA)
 
 ///
 /// @brief add OpenACC clause "copyin ([readonly:] list)" if applicable
 /// @details When entering the region or at an enter data directive, if the data in list is already present in the current device memory, the appropriate reference count is incremented and that copy is used. Otherwise, it allocates device memory and copies the values from local memory and sets the appropriate reference count to one. When exiting the region the structured reference count is decremented. If both reference counts are zero, the device memory is deallocated. If the readonly modifier appears, the data must not be written within that region.
 ///
-#define ACC_CLAUSE_COPYIN(...) copyin(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_ENTER_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE)
+#define ACC_CLAUSE_COPYIN(...) copyin(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_ENTER_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE, SOLOMON_INTERNAL_TAG_ACC_REQ_DATA, SOLOMON_INTERNAL_TAG_ACC_REQ_ENTER)
 
 ///
-/// @brief add OpenACC clause "copyout (list)" if applicable
+/// @brief add OpenACC clause "copyout ([zero:] list)" if applicable
 /// @details When entering the region, if the data in list is already present in the current device memory, the structured reference count is incremented and that copy is used. Otherwise, it allocates device memory and sets the structured reference count to one. At an exit data directive with no finalize clause or when exiting the region, the appropriate reference count is decremented. At an exit data directive with a finalize clause, the dynamic reference count is set to zero. In any case, if both reference counts are zero, the data is copied from device memory to local memory and the device memory is deallocated.
 ///
-#define ACC_CLAUSE_COPYOUT(...) copyout(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_EXIT_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE)
+#define ACC_CLAUSE_COPYOUT(...) copyout(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_EXIT_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE, SOLOMON_INTERNAL_TAG_ACC_REQ_DATA, SOLOMON_INTERNAL_TAG_ACC_REQ_EXIT)
 
 ///
-/// @brief add OpenACC clause "create (list)" if applicable
+/// @brief add OpenACC clause "create ([zero:] list)" if applicable
 /// @details When entering the region or at an enter data directive, if the data in list is already present in the current device memory, the appropriate reference count is incremented and that copy is used. Otherwise, it allocates device memory and sets the appropriate reference count to one. When exiting the region, the structured reference count is decremented. If both reference counts are zero, the device memory is deallocated.
 ///
-#define ACC_CLAUSE_CREATE(...) create(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_ENTER_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE)
+#define ACC_CLAUSE_CREATE(...) create(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_ENTER_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE, SOLOMON_INTERNAL_TAG_ACC_REQ_DATA, SOLOMON_INTERNAL_TAG_ACC_REQ_ENTER)
 
 ///
 /// @brief add OpenACC clause "no_create (list)" if applicable
 /// @details When entering the region, if the data in list is already present in the current device memory, the structured reference count is incremented and that copy is used. Otherwise, no action is performed and any device code in the construct will use the local memory address for that data.
 ///
-#define ACC_CLAUSE_NO_CREATE(...) no_create(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA)
+#define ACC_CLAUSE_NO_CREATE(...) no_create(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_REQ_DATA)
 
 ///
 /// @brief add OpenACC clause "delete (list)" if applicable
 /// @details With no finalize clause, the dynamic reference count is decremented. With a finalize clause, the dynamic reference count is set to zero. In either case, if both reference counts are zero, the device memory is deallocated.
 ///
-#define ACC_CLAUSE_DELETE(...) delete (__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_EXIT_DATA)
+#define ACC_CLAUSE_DELETE(...) delete (__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_EXIT_DATA, SOLOMON_INTERNAL_TAG_ACC_REQ_EXIT)
 
 ///
 /// @brief add OpenACC clause "present (list)" if applicable
 /// @details When entering the region, the data must be present in the current device memory, and the structured reference count is incremented. When exiting the region, the structured reference count is decremented.
 ///
-#define ACC_CLAUSE_PRESENT(...) present(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE)
+#define ACC_CLAUSE_PRESENT(...) present(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE, SOLOMON_INTERNAL_TAG_ACC_REQ_DATA)
 
 ///
 /// @brief add OpenACC clause "deviceptr (list)" if applicable
 /// @details C and C++; the list entries must be pointer variables that contain device addresses, such as from acc_malloc.
 ///
-#define ACC_CLAUSE_DEVICEPTR(...) deviceptr(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE)
+#define ACC_CLAUSE_DEVICEPTR(...) deviceptr(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_DECLARE, SOLOMON_INTERNAL_TAG_ACC_REQ_DATA)
 
 ///
 /// @brief add OpenACC clause "attach (list)" if applicable
 /// @details When entering the region or at an enter data directive, if the pointers in list are already attached to their targets, the attachment count is incremented. Otherwise, it attaches the device pointers to their device targets and sets the attachment count to one. When exiting the region, the attachment count is decremented, and if the count reaches zero, the pointers will be detached.
 ///
-#define ACC_CLAUSE_ATTACH(...) attach(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_ENTER_DATA)
+#define ACC_CLAUSE_ATTACH(...) attach(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_KERNELS, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_DATA, SOLOMON_INTERNAL_TAG_ACC_ENTER_DATA, SOLOMON_INTERNAL_TAG_ACC_REQ_DATA, SOLOMON_INTERNAL_TAG_ACC_REQ_ENTER)
 
 ///
 /// @brief add OpenACC clause "detach (list)" if applicable
 /// @details With no finalize clause, the attachment count for the pointers in list are decremented. With a finalize clause, the attachment counts are set to zero. In either case, if the attachment count becomes zero, the pointers in list will be detached.
 ///
-#define ACC_CLAUSE_DETACH(...) detach(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_EXIT_DATA)
+#define ACC_CLAUSE_DETACH(...) detach(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_EXIT_DATA, SOLOMON_INTERNAL_TAG_ACC_REQ_EXIT)
 
 ///
 /// @brief add OpenACC clause "use_device (list)" if applicable
 /// @details Directs the compiler to use the device address of any entry in list, for instance, when passing a variable to a procedure.
 ///
-#define ACC_CLAUSE_USE_DEVICE(...) use_device(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_HOST_DATA)
+#define ACC_CLAUSE_USE_DEVICE(...) use_device(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_HOST_DATA, SOLOMON_INTERNAL_TAG_ACC_REQ_HOST_DATA)
 
 ///
 /// @brief add OpenACC clause "if_present" if applicable
@@ -257,14 +268,20 @@
 ///
 /// @brief add OpenACC clause "host (list)" if applicable
 /// @details Copies the data in list from the device to the local thread.
+/// @note The first tag marks a clause that may be nested in OMP_TARGET_CLAUSE_MAP(...) (solomon/util/nest_map.hpp).
 ///
-#define ACC_CLAUSE_HOST(...) host(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_UPDATE)
+#define ACC_CLAUSE_HOST(...) host(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_NESTABLE_IN_MAP, SOLOMON_INTERNAL_TAG_ACC_UPDATE, SOLOMON_INTERNAL_TAG_ACC_REQ_UPDATE)
+/// @brief "host (list)" for OMP_TARGET_CLAUSE_FROM_PRESENT(list) in the OpenACC backend (update: host; nested in OMP_TARGET_CLAUSE_MAP: present)
+#define SOLOMON_INTERNAL_ACC_HOST_PRESENT(...) host(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_NESTABLE_IN_MAP_PRESENT, SOLOMON_INTERNAL_TAG_ACC_UPDATE, SOLOMON_INTERNAL_TAG_ACC_REQ_UPDATE)
 
 ///
 /// @brief add OpenACC clause "device (list)" if applicable
 /// @details Copies the data in list from the local thread to the device.
+/// @note The first tag marks a clause that may be nested in OMP_TARGET_CLAUSE_MAP(...) (solomon/util/nest_map.hpp).
 ///
-#define ACC_CLAUSE_DEVICE(...) device(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_UPDATE)
+#define ACC_CLAUSE_DEVICE(...) device(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_NESTABLE_IN_MAP, SOLOMON_INTERNAL_TAG_ACC_UPDATE, SOLOMON_INTERNAL_TAG_ACC_REQ_UPDATE)
+/// @brief "device (list)" for OMP_TARGET_CLAUSE_TO_PRESENT(list) in the OpenACC backend (update: device; nested in OMP_TARGET_CLAUSE_MAP: present)
+#define SOLOMON_INTERNAL_ACC_DEVICE_PRESENT(...) device(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_NESTABLE_IN_MAP_PRESENT, SOLOMON_INTERNAL_TAG_ACC_UPDATE, SOLOMON_INTERNAL_TAG_ACC_REQ_UPDATE)
 
 ///
 /// @brief pass additional list if applicable

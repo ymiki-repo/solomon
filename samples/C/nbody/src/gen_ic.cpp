@@ -1,7 +1,7 @@
 ///
 /// @file gen_ic.cpp
 /// @author Yohei MIKI (Information Technology Center, The University of Tokyo)
-/// @brief generate initial-condition on GPU
+/// @brief generate initial-condition on host CPU
 ///
 /// @copyright Copyright (c) 2024 Yohei MIKI
 ///
@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 #include <boost/math/constants/constants.hpp>  // boost::math::constants
+#include <cmath>                               // std::sqrt, std::cbrt, std::cos, std::sin
 #include <random>                              // std::random_device
 #include <type_traits>                         // std::remove_reference_t
 
@@ -40,9 +41,9 @@ void set_uniform_sphere(const int num, position *pos, velocity *vel, const float
   std::uniform_real_distribution<decltype((*pos).x)> dist_uni(0.0F, 1.0F);
   std::normal_distribution<decltype((*vel).x)> dist_nrm(0.0F, 1.0F);
 
-  // distribute N-body particles
+  // distribute N-body particles (the padding beyond num, see allocate_Nbody_particles, stays massless)
+  const auto mass = Mtot / static_cast<float>(num);
   for (std::remove_const_t<decltype(num)> ii = 0; ii < num; ii++) {
-    const auto mass = (ii < num) ? (Mtot / static_cast<decltype(Mtot)>(num)) : 0.0F;  // set massless particle to remove if statements in gravity calculation
 
     const auto rr = rad * std::cbrt(dist_uni(engine));
     const auto prj = 2.0F * dist_uni(engine) - 1.0F;
@@ -71,7 +72,9 @@ void set_uniform_sphere(const int num, position *pos, velocity *vel, const float
   auto vx = 0.0;
   auto vy = 0.0;
   auto vz = 0.0;
+#ifdef _OPENMP
 #pragma omp parallel for reduction(+ : cx, cy, cz, vx, vy, vz)
+#endif  // _OPENMP
   for (std::remove_const_t<decltype(num)> ii = 0; ii < num; ii++) {
     // evaluate center-of-mass
     const auto pi = pos[ii];
@@ -93,7 +96,9 @@ void set_uniform_sphere(const int num, position *pos, velocity *vel, const float
   vx *= M_inv;
   vy *= M_inv;
   vz *= M_inv;
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif  // _OPENMP
   for (std::remove_const_t<decltype(num)> ii = 0; ii < num; ii++) {
     auto pi = pos[ii];
     pi.x -= cx;

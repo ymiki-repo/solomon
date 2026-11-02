@@ -46,7 +46,30 @@
 #undef SOLOMON_TAGGED_PROFILE_WITH_ITT
 #endif  // defined(SOLOMON_INTERNAL_PROFILE_DEVICE_PASS)
 
+// the header of the selected backend: when it cannot be found (checked with __has_include where available), stop with
+// one error that tells how to make it available, instead of a missing-header error followed by undeclared names
 #if defined(SOLOMON_TAGGED_PROFILE_WITH_NVTX)
+#define SOLOMON_INTERNAL_PROFILE_HEADER <nvtx3/nvToolsExt.h>
+#elif defined(SOLOMON_TAGGED_PROFILE_WITH_ROCTX)
+#define SOLOMON_INTERNAL_PROFILE_HEADER <roctracer/roctx.h>
+#elif defined(SOLOMON_TAGGED_PROFILE_WITH_ITT)
+#define SOLOMON_INTERNAL_PROFILE_HEADER <ittnotify.h>
+#endif  // defined(SOLOMON_TAGGED_PROFILE_WITH_NVTX)
+#if defined(SOLOMON_INTERNAL_PROFILE_HEADER)
+#if defined(__has_include)
+#if !__has_include(SOLOMON_INTERNAL_PROFILE_HEADER)
+#define SOLOMON_INTERNAL_PROFILE_HEADER_MISSING
+#endif  // !__has_include(SOLOMON_INTERNAL_PROFILE_HEADER)
+#endif  // defined(__has_include)
+#endif  // defined(SOLOMON_INTERNAL_PROFILE_HEADER)
+
+#if defined(SOLOMON_INTERNAL_PROFILE_HEADER_MISSING) && defined(SOLOMON_TAGGED_PROFILE_WITH_NVTX)
+#error "nvtx3/nvToolsExt.h not found: with the NVIDIA HPC SDK, compile with -acc=gpu, -mp=gpu, -cuda, or -cudalib=nvtx3; otherwise add the include directory of the CUDA toolkit (e.g., -I${CUDA_HOME}/include)"
+#elif defined(SOLOMON_INTERNAL_PROFILE_HEADER_MISSING) && defined(SOLOMON_TAGGED_PROFILE_WITH_ROCTX)
+#error "roctracer/roctx.h not found: add -I${ROCM_PATH}/include to the compilation flags (and -L${ROCM_PATH}/lib -lroctx64 when linking)"
+#elif defined(SOLOMON_INTERNAL_PROFILE_HEADER_MISSING) && defined(SOLOMON_TAGGED_PROFILE_WITH_ITT)
+#error "ittnotify.h not found: add -I${VTUNE_PROFILER_DIR}/sdk/include to the compilation flags (and -L${VTUNE_PROFILER_DIR}/sdk/lib64 -littnotify when linking)"
+#elif defined(SOLOMON_TAGGED_PROFILE_WITH_NVTX)
 // NVTX (NVIDIA Tools Extension); headers are found when the OpenACC/OpenMP offloading flags of the NVIDIA HPC SDK are enabled
 #include <nvtx3/nvToolsExt.h>
 static inline void solomon_internal_profile_push(const char *name) { (void)nvtxRangePushA(name); }
@@ -56,11 +79,6 @@ static inline void solomon_internal_profile_mark(const char *name) { nvtxMarkA(n
 #elif defined(SOLOMON_TAGGED_PROFILE_WITH_ROCTX)
 // rocTX (ROCm); add -I${ROCM_PATH}/include to the compilation flags and
 // -L${ROCM_PATH}/lib -lroctx64 to the link flags
-#if defined(__has_include)
-#if !__has_include(<roctracer/roctx.h>)
-#error "roctracer/roctx.h not found: add -I${ROCM_PATH}/include to the compilation flags (and -L${ROCM_PATH}/lib -lroctx64 when linking)"
-#endif
-#endif  // defined(__has_include)
 #include <roctracer/roctx.h>
 static inline void solomon_internal_profile_push(const char *name) { (void)roctxRangePushA(name); }
 static inline void solomon_internal_profile_pop(void) { (void)roctxRangePop(); }
@@ -70,14 +88,9 @@ static inline void solomon_internal_profile_mark(const char *name) { roctxMarkA(
 // ITT (Intel Instrumentation and Tracing Technology); the header and library ship with VTune:
 // add -I${VTUNE_PROFILER_DIR}/sdk/include to the compilation flags and
 // -L${VTUNE_PROFILER_DIR}/sdk/lib64 -littnotify to the link flags
-#if defined(__has_include)
-#if !__has_include(<ittnotify.h>)
-#error "ittnotify.h not found: add -I${VTUNE_PROFILER_DIR}/sdk/include to the compilation flags (and -L${VTUNE_PROFILER_DIR}/sdk/lib64 -littnotify when linking)"
-#endif
-#endif  // defined(__has_include)
 #include <ittnotify.h>
 static inline __itt_domain *solomon_internal_profile_domain(void) {
-  static __itt_domain *domain = (void *)0;
+  static __itt_domain *domain = 0;
   if (!domain) {
     domain = __itt_domain_create("solomon");
   }
@@ -143,16 +156,36 @@ static inline void solomon_internal_profile_mark(const char *name) { __itt_marke
 // and build the "FILE:LINE MACRO" tag per language (pass-through unless SOLOMON_TAGGED_PROFILE_AUTO is enabled)
 #if defined(SOLOMON_INTERNAL_PROFILE_ENABLED) && defined(SOLOMON_TAGGED_PROFILE_AUTO)
 #define SOLOMON_INTERNAL_TAG_RANGE(mname, directive) { SOLOMON_PROFILE_RANGE_BEGIN(SOLOMON_INTERNAL_PROFILE_TAG(mname)) directive SOLOMON_PROFILE_RANGE_END }
-#define SOLOMON_INTERNAL_TAG_MARK(mname) SOLOMON_PROFILE_MARK(SOLOMON_INTERNAL_PROFILE_TAG(mname))
-#define SOLOMON_INTERNAL_TAG_PUSH(mname) SOLOMON_PROFILE_RANGE_BEGIN(SOLOMON_INTERNAL_PROFILE_TAG(mname))
-#define SOLOMON_INTERNAL_TAG_POP SOLOMON_PROFILE_RANGE_END
+// the tag of a directive that is followed by a statement (a loop or a structured block) must not be a statement of
+// its own, so that the directive macro stays one statement (e.g., as the body of an if without braces): the call is
+// made in the initialization of a loop that runs its body (the directive and its statement) exactly once (only for
+// the range of SOLOMON_OFFLOAD_SERIAL, whose end must follow the statement: a continue / break inside that block
+// would end at this loop; marks use the if / else form below); the name
+// of the loop variable carries the line number, so that directive macros nested on different lines do not shadow it
+// (two SOLOMON_OFFLOAD_SERIAL nested on the same line give one -Wshadow warning; the behaviour is still correct)
+#define SOLOMON_INTERNAL_PROFILE_CAT_IMPL(a, b) a##b
+#define SOLOMON_INTERNAL_PROFILE_CAT(a, b) SOLOMON_INTERNAL_PROFILE_CAT_IMPL(a, b)
+#define SOLOMON_INTERNAL_PROFILE_ONCE_IMPL(v, start, end) for (int v = (start, 0); !v; end, v = 1)
+#define SOLOMON_INTERNAL_PROFILE_ONCE(start, end) SOLOMON_INTERNAL_PROFILE_ONCE_IMPL(SOLOMON_INTERNAL_PROFILE_CAT(solomon_internal_profile_once_, __LINE__), start, end)
+// a mark goes in the condition of an if whose else is the directive and its statement: unlike a loop, it does not
+// catch the user's continue / break (Q-044, D-091); gcc / clang may warn -Wdangling-else on a braceless if around it
+#define SOLOMON_INTERNAL_TAG_MARK(mname) if ((solomon_internal_profile_mark(SOLOMON_INTERNAL_PROFILE_TAG(mname)), 0)) {} else
+// the range of SOLOMON_OFFLOAD_SERIAL ends right after its structured block (SOLOMON_INTERNAL_TAG_POP is empty)
+#define SOLOMON_INTERNAL_TAG_PUSH(mname) SOLOMON_INTERNAL_PROFILE_ONCE(solomon_internal_profile_push(SOLOMON_INTERNAL_PROFILE_TAG(mname)), solomon_internal_profile_pop())
+#define SOLOMON_INTERNAL_TAG_POP
 #elif defined(SOLOMON_INTERNAL_PROFILE_ENABLED_FORTRAN) && defined(SOLOMON_TAGGED_PROFILE_AUTO)
 // Fortran cannot concatenate string literals in the preprocessor; pass file, line, and macro name separately.
 // the generated call statements are emitted through the _Pragma mechanism ("#pragma solomon_fprof call ...",
 // restored to plain call statements by the sed stage of spp.sh / fortran.mk) so that each statement is
-// guaranteed to land on its own line regardless of the cpp version in use
-#include "pragma.hpp"
-#define SOLOMON_INTERNAL_FPROF_CALL(...) PRAGMA(solomon_fprof __VA_ARGS__)
+// guaranteed to land on its own line regardless of the cpp version in use; the tags have their own pragma macro,
+// since the pragma macro of the directives expands to nothing in serial execution
+#if defined(PRINT_GENERATED_PRAGMA)
+#define SOLOMON_INTERNAL_FPROF_SHOW(...) _Pragma(SOLOMON_INTERNAL_PROFILE_STR(message("#pragma " SOLOMON_INTERNAL_PROFILE_STR(__VA_ARGS__))))
+#else  // defined(PRINT_GENERATED_PRAGMA)
+#define SOLOMON_INTERNAL_FPROF_SHOW(...)
+#endif  // defined(PRINT_GENERATED_PRAGMA)
+#define SOLOMON_INTERNAL_FPROF_PRAGMA(...) _Pragma(#__VA_ARGS__) SOLOMON_INTERNAL_FPROF_SHOW(__VA_ARGS__)
+#define SOLOMON_INTERNAL_FPROF_CALL(...) SOLOMON_INTERNAL_FPROF_PRAGMA(solomon_fprof __VA_ARGS__)
 #define SOLOMON_INTERNAL_TAG_RANGE(mname, directive) SOLOMON_INTERNAL_FPROF_CALL(call solomon_profile_range_begin_at(__FILE__, __LINE__, mname)) directive SOLOMON_INTERNAL_FPROF_CALL(call solomon_profile_range_end())
 #define SOLOMON_INTERNAL_TAG_MARK(mname) SOLOMON_INTERNAL_FPROF_CALL(call solomon_profile_mark_at(__FILE__, __LINE__, mname))
 #define SOLOMON_INTERNAL_TAG_PUSH(mname) SOLOMON_INTERNAL_FPROF_CALL(call solomon_profile_range_begin_at(__FILE__, __LINE__, mname))

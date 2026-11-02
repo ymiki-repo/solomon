@@ -11,19 +11,26 @@
 #if !defined(SOLOMON_UTIL_VA_ARGS_HPP)
 #define SOLOMON_UTIL_VA_ARGS_HPP
 
-#if __cplusplus >= 202002L
+// SOLOMON_INTERNAL_USE_VA_OPT: __VA_OPT__ is used under the conditions of va_opt.hpp (C23 / C++20 or later, a non-strict
+// mode, or clang-based compilers)
+#include "va_opt.hpp"
+#if defined(__cplusplus) && (__cplusplus >= 202002L)
 // __VA_OPT__ is C++20 feature (https://cpprefjp.github.io/lang/cpp20/va_opt.html)
 #define SOLOMON_APPEND_ARGS(...) __VA_OPT__(, ) __VA_ARGS__
-#else  //__cplusplus >= 202002L
-// fallback implementation: C++17 or lower do not have __VA_OPT__
+#elif defined(SOLOMON_INTERNAL_USE_VA_OPT)
+// clang-format off: the same spacing as the GNU extension below, so that the preprocessed output does not change in the GNU modes (permanent)
+#define SOLOMON_APPEND_ARGS(...) __VA_OPT__(,)__VA_ARGS__
+// clang-format on
+#else  // defined(SOLOMON_INTERNAL_USE_VA_OPT)
+// fallback implementation where SOLOMON_INTERNAL_USE_VA_OPT is not defined (gcc / g++ strict modes before C23 / C++20)
 // #if defined(__GNUC__)
 // use GCC extension
 #define SOLOMON_APPEND_ARGS(...) , ##__VA_ARGS__
 // #endif  // defined(__GNUC__)
-#endif  //__cplusplus >= 202002L
+#endif  // defined(SOLOMON_INTERNAL_USE_VA_OPT)
 
-#include "impl/num_args.hpp"// include SOLOMON_INTERNAL_NUM_ARGS(...) from auto-generated file
-#include "impl/retrieve_args.hpp"// include SOLOMON_INTERNAL_EXTRACT_ARGS_N(...) and SOLOMON_INTERNAL_RETRIEVE_ARGS_N(...) from auto-generated file
+#include "impl/num_args.hpp"       // include SOLOMON_INTERNAL_NUM_ARGS(...) from auto-generated file
+#include "impl/retrieve_args.hpp"  // include SOLOMON_INTERNAL_EXTRACT_ARGS_N(...) and SOLOMON_INTERNAL_RETRIEVE_ARGS_N(...) from auto-generated file
 
 #define SOLOMON_INTERNAL_ARGS_WITH_NUM(...) SOLOMON_INTERNAL_NUM_ARGS(__VA_ARGS__) SOLOMON_APPEND_ARGS(__VA_ARGS__)
 

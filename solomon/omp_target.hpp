@@ -10,7 +10,7 @@
 #if !defined(SOLOMON_OMP_TARGET_HPP)
 #define SOLOMON_OMP_TARGET_HPP
 
-#if defined(OFFLOAD_BY_OPENMP_TARGET) && (_OPENMP >= 201307)
+#if defined(OFFLOAD_BY_OPENMP_TARGET) && defined(_OPENMP) && (_OPENMP >= 201307)
 // set OpenMP target environments
 #include "omp.hpp"
 #include "omp/target/clause.hpp"
@@ -26,6 +26,6 @@
 
 // set utilities for OpenACC
 #include "acc/utils.hpp"
-#endif  // defined(OFFLOAD_BY_OPENMP_TARGET) && (_OPENMP >= 201307)
+#endif  // defined(OFFLOAD_BY_OPENMP_TARGET) && defined(_OPENMP) && (_OPENMP >= 201307)
 
 #endif  // !defined(SOLOMON_OMP_TARGET_HPP)

@@ -10,7 +10,10 @@
 #if !defined(SOLOMON_OMP_TARGET_CLAUSE_HPP)
 #define SOLOMON_OMP_TARGET_CLAUSE_HPP
 
+#include "../../util/cloak.hpp"     // SOLOMON_INTERNAL_CLOAK_IIF
+#include "../../util/is_empty.hpp"  // SOLOMON_INTERNAL_IS_EMPTY
 #include "../../util/va_args.hpp"
+#include "../../util/nest_map.hpp"  // SOLOMON_INTERNAL_NEST_MAP
 #include "../clause.hpp"
 
 ///
@@ -49,8 +52,9 @@
 /// @brief add OpenMP target clause "indirect [(invoked_by_fptr)]" if applicable
 ///
 /// @param[in] invoked_by_fptr Determines if the procedures in an enter clause may be invoked indirectly.
+/// @note Without arguments it emits "indirect" (the same as indirect(true)).
 ///
-#define OMP_TARGET_CLAUSE_INDIRECT(...) indirect(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET)
+#define OMP_TARGET_CLAUSE_INDIRECT(...) SOLOMON_INTERNAL_CLOAK_IIF(SOLOMON_INTERNAL_IS_EMPTY(__VA_ARGS__))(indirect, indirect(__VA_ARGS__)), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET)
 
 ///
 /// @brief add OpenMP target clause "link (list)" if applicable
@@ -99,6 +103,8 @@
 /// @param[in] num
 ///
 #define OMP_TARGET_CLAUSE_THREAD_LIMIT(num) OMP_CLAUSE_THREAD_LIMIT(num)
+// the target of ACC_CLAUSE_VECTOR_LENGTH(n): thread_limit (n) in OpenMP target (num_threads (n) in fallback mode: fallback.hpp)
+#define SOLOMON_INTERNAL_OMP_TARGET_THREADS_PER_TEAM(num) OMP_CLAUSE_THREAD_LIMIT(num)
 
 ///
 /// @brief add OpenMP target clause "nontemporal (list)" if applicable
@@ -145,12 +151,8 @@
 ///
 /// @brief add OpenMP target clause "dist_schedule (kind [, chunk_size])" if applicable
 ///
-/// @param[in] kind static, dynamic, guided, auto, or runtime
-/// @remarks static: Iterations are divided into chunks of size chunk_size and assigned to team threads in round-robin fashion in order of thread number.
-/// @remarks dynamic: Each thread executes a chunk of iterations then requests another chunk until none remain.
-/// @remarks guided: Same as dynamic, except chunk size is different for each chunk, with each successive chunk smaller than the last.
-/// @remarks auto: Compiler and/or runtime decides.
-/// @remarks runtime: Uses run-sched-var ICV.
+/// @param[in] kind static (the only kind of dist_schedule; OpenMP 5.2, 11.6.1)
+/// @remarks static: Iterations are divided into chunks of size chunk_size (approximately equal chunks, at most one per team, without chunk_size) and assigned to the teams of the league in round-robin fashion in order of team number.
 ///
 #define OMP_TARGET_CLAUSE_DIST_SCHEDULE(...) OMP_CLAUSE_DIST_SCHEDULE(__VA_ARGS__)
 
@@ -169,16 +171,16 @@
 ///
 /// @brief add OpenMP target clause "use_device_ptr (list)" if applicable
 ///
-/// @param[in] list A comma-separated list of file-scope, namespace-scope, or static block-scope variables that do not have incomplete types.
+/// @param[in] list A comma-separated list of pointer variables; in the structured block, each refers to the device address of its corresponding object in the device data environment.
 ///
-#define OMP_TARGET_CLAUSE_USE_DEVICE_PTR(...) use_device_ptr(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA)
+#define OMP_TARGET_CLAUSE_USE_DEVICE_PTR(...) use_device_ptr(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA, SOLOMON_INTERNAL_TAG_OMP_REQ_DATA_ENV)
 
 ///
 /// @brief add OpenMP target clause "use_device_addr (list)" if applicable
 ///
-/// @param[in] list A comma-separated list of file-scope, namespace-scope, or static block-scope variables that do not have incomplete types.
+/// @param[in] list A comma-separated list of variables; in the structured block, each refers to its corresponding object in the device data environment.
 ///
-#define OMP_TARGET_CLAUSE_USE_DEVICE_ADDR(...) use_device_addr(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA)
+#define OMP_TARGET_CLAUSE_USE_DEVICE_ADDR(...) use_device_addr(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA, SOLOMON_INTERNAL_TAG_OMP_REQ_DATA_ENV)
 
 ///
 /// @brief add OpenMP target clause "defaultmap (implicit_behavior [: variable_category])" if applicable
@@ -226,15 +228,29 @@
 /// @brief add OpenMP target clause "from ([motion_modifier[,] [motion_modifier[,] ...]:] locator_list)" if applicable
 ///
 /// @param[in] motion_modifier present, mapper (mapper_identifier), iterator (iterators_definition)
+/// @note Nested in OMP_TARGET_CLAUSE_MAP(...), it becomes "map (from: list)" (the first tag marks a nestable clause).
 ///
-#define OMP_TARGET_CLAUSE_FROM(...) from(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE)
+#define OMP_TARGET_CLAUSE_FROM(...) from(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_NESTABLE_IN_MAP, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_REQ_MOTION)
+
+///
+/// @brief add OpenMP target clause "from (present: locator_list)" if applicable
+/// @details Nested in OMP_TARGET_CLAUSE_MAP(...), it becomes "map (present, from: list)".
+///
+#define OMP_TARGET_CLAUSE_FROM_PRESENT(...) from(present : __VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_NESTABLE_IN_MAP_PRESENT, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_REQ_MOTION)
 
 ///
 /// @brief add OpenMP target clause "to ([motion_modifier[,] [motion_modifier[,] ...]:] locator_list)" if applicable
 ///
 /// @param[in] motion_modifier present, mapper (mapper_identifier), iterator (iterators_definition)
+/// @note Nested in OMP_TARGET_CLAUSE_MAP(...), it becomes "map (to: list)" (the first tag marks a nestable clause).
 ///
-#define OMP_TARGET_CLAUSE_TO(...) to(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE)
+#define OMP_TARGET_CLAUSE_TO(...) to(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_NESTABLE_IN_MAP, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_REQ_MOTION)
+
+///
+/// @brief add OpenMP target clause "to (present: locator_list)" if applicable
+/// @details Nested in OMP_TARGET_CLAUSE_MAP(...), it becomes "map (present, to: list)".
+///
+#define OMP_TARGET_CLAUSE_TO_PRESENT(...) to(present : __VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_NESTABLE_IN_MAP_PRESENT, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_REQ_MOTION)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -329,19 +345,19 @@
 
 ///
 /// @brief add OpenMP target clause "default (shared)" if applicable
-/// @details Default data-sharing attributes are disabled. All variables in a construct must be declared inside the construct or appear in a data-sharing attribute clause.
+/// @details The variables referenced in the construct whose data-sharing attributes are implicitly determined become shared.
 ///
 #define OMP_TARGET_CLAUSE_DEFAULT_SHARED OMP_CLAUSE_DEFAULT_SHARED
 
 ///
 /// @brief add OpenMP target clause "default (firstprivate)" if applicable
-/// @details Default data-sharing attributes are disabled. All variables in a construct must be declared inside the construct or appear in a data-sharing attribute clause.
+/// @details The variables referenced in the construct whose data-sharing attributes are implicitly determined become firstprivate.
 ///
 #define OMP_TARGET_CLAUSE_DEFAULT_FIRSTPRIVATE OMP_CLAUSE_DEFAULT_FIRSTPRIVATE
 
 ///
 /// @brief add OpenMP target clause "default (private)" if applicable
-/// @details Default data-sharing attributes are disabled. All variables in a construct must be declared inside the construct or appear in a data-sharing attribute clause.
+/// @details The variables referenced in the construct whose data-sharing attributes are implicitly determined become private.
 ///
 #define OMP_TARGET_CLAUSE_DEFAULT_PRIVATE OMP_CLAUSE_DEFAULT_PRIVATE
 
@@ -485,8 +501,64 @@
 ///
 /// @param[in] map_type alloc, to, from, tofrom, release, delete
 /// @param[in] map_modifier always, close, present, mapper(mapper-id), iterator(iterators-definition)
+/// @details Nested clauses OMP_TARGET_CLAUSE_TO(list) / OMP_TARGET_CLAUSE_FROM(list) (and the _PRESENT forms) become one
+/// "map (to: list)" / "map (from: list)" each; Solomon modifiers (OMP_TARGET_MAP_MODIFIER_*) written in front of them
+/// apply to every nested clause of the map ("map (present, to: list)"; present is written once even when a _PRESENT
+/// form is nested). A raw list after a nested clause, modifiers without a nested clause, and more modifiers than the
+/// limit stop the build with a Solomon error (solomon/util/nest_map.hpp).
 ///
-#define OMP_TARGET_CLAUSE_MAP(...) OMP_CLAUSE_MAP(__VA_ARGS__)
+#define OMP_TARGET_CLAUSE_MAP(...) SOLOMON_INTERNAL_NEST_MAP(SOLOMON_INTERNAL_NEST_OMP_, OMP_CLAUSE_MAP, __VA_ARGS__)
+
+// modifiers collected in front of the nested clauses: (s, m1, m2, ...,) with s = 0 (none), 1 (no present), 2 (present)
+#define SOLOMON_INTERNAL_NEST_OMP_MODINIT (0,)
+#define SOLOMON_INTERNAL_NEST_OMP_REST(x, ...) __VA_ARGS__
+#define SOLOMON_INTERNAL_NEST_OMP_MODADD(mods, ...) SOLOMON_INTERNAL_NEST_OMP_MODADD_(mods, __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_MODADD_(mods, k, m) (SOLOMON_INTERNAL_NEST_CAT(SOLOMON_INTERNAL_NEST_OMP_COMB_, SOLOMON_INTERNAL_NEST_CAT(SOLOMON_INTERNAL_NEST_E1 mods, k)), SOLOMON_INTERNAL_NEST_OMP_REST mods m,)
+#define SOLOMON_INTERNAL_NEST_OMP_COMB_01 1
+#define SOLOMON_INTERNAL_NEST_OMP_COMB_02 2
+#define SOLOMON_INTERNAL_NEST_OMP_COMB_11 1
+#define SOLOMON_INTERNAL_NEST_OMP_COMB_12 2
+#define SOLOMON_INTERNAL_NEST_OMP_COMB_21 2
+#define SOLOMON_INTERNAL_NEST_OMP_COMB_22 2
+// payload of a modifier: kind (1, or 2 for present) and the modifier
+#define SOLOMON_INTERNAL_NEST_OMP_SOLOMON_INTERNAL_NEST_MODIFIER(...) SOLOMON_INTERNAL_NEST_CAT(SOLOMON_INTERNAL_NEST_OMP_MODK_, __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_MODK_present 2, present
+#define SOLOMON_INTERNAL_NEST_OMP_MODK_always 1, always
+#define SOLOMON_INTERNAL_NEST_OMP_MODK_close 1, close
+#define SOLOMON_INTERNAL_NEST_OMP_MODK_mapper(...) 1, mapper(__VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_MODK_iterator(...) 1, iterator(__VA_ARGS__)
+// one nested clause with the collected modifiers: APPLY_<s><p> (p = 1 when the nested clause has its own present)
+#define SOLOMON_INTERNAL_NEST_OMP_APPLY(mods, ...) SOLOMON_INTERNAL_NEST_OMP_APPLY_I(mods, __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_APPLY_I(mods, p, ...) SOLOMON_INTERNAL_NEST_CAT(SOLOMON_INTERNAL_NEST_OMP_APPLY_, SOLOMON_INTERNAL_NEST_CAT(SOLOMON_INTERNAL_NEST_E1 mods, p))(mods, __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_APPLY_00(mods, ...) OMP_CLAUSE_MAP(__VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_APPLY_01(mods, ...) OMP_CLAUSE_MAP(present, __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_APPLY_10(mods, ...) OMP_CLAUSE_MAP(SOLOMON_INTERNAL_NEST_OMP_REST mods __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_APPLY_11(mods, ...) OMP_CLAUSE_MAP(SOLOMON_INTERNAL_NEST_OMP_REST mods present, __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_APPLY_20(mods, ...) OMP_CLAUSE_MAP(SOLOMON_INTERNAL_NEST_OMP_REST mods __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_APPLY_21(mods, ...) OMP_CLAUSE_MAP(SOLOMON_INTERNAL_NEST_OMP_REST mods __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_N_to(...) 0, to : __VA_ARGS__
+#define SOLOMON_INTERNAL_NEST_OMP_N_from(...) 0, from : __VA_ARGS__
+#define SOLOMON_INTERNAL_NEST_OMP_P_to(...) SOLOMON_INTERNAL_NEST_CAT(SOLOMON_INTERNAL_NEST_OMP_INS_to_, __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_P_from(...) SOLOMON_INTERNAL_NEST_CAT(SOLOMON_INTERNAL_NEST_OMP_INS_from_, __VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_INS_to_present 1, to
+#define SOLOMON_INTERNAL_NEST_OMP_INS_from_present 1, from
+// forms that stop (the rest of the map is dropped): an element of the map with the stop instead of map(...)
+#define SOLOMON_INTERNAL_NEST_OMP_STOP(stop, ...) stop, SOLOMON_INTERNAL_NEST_OMP_REST(__VA_ARGS__)
+#define SOLOMON_INTERNAL_NEST_OMP_NOCLAUSE(...) SOLOMON_INTERNAL_NEST_OMP_STOP(SOLOMON_INTERNAL_NEST_STOP_NOCLAUSE, OMP_CLAUSE_MAP(~))
+#define SOLOMON_INTERNAL_NEST_OMP_MIXED(...) SOLOMON_INTERNAL_NEST_OMP_STOP(SOLOMON_INTERNAL_NEST_STOP_MIXED, OMP_CLAUSE_MAP(~))
+#define SOLOMON_INTERNAL_NEST_OMP_RAWMIX(...) SOLOMON_INTERNAL_NEST_OMP_STOP(SOLOMON_INTERNAL_NEST_STOP_RAWMIX, OMP_CLAUSE_MAP(~))
+#define SOLOMON_INTERNAL_NEST_OMP_TOOMANY(...) SOLOMON_INTERNAL_NEST_OMP_STOP(SOLOMON_INTERNAL_NEST_STOP_TOOMANY, OMP_CLAUSE_MAP(~))
+
+///
+/// @brief map modifiers for OMP_TARGET_CLAUSE_MAP(modifier, ..., OMP_TARGET_CLAUSE_TO(list), ...)
+/// @details Written outside OMP_TARGET_CLAUSE_MAP(...), they stop the build with a Solomon error (solomon/util/nest_map.hpp).
+///
+#define SOLOMON_INTERNAL_OMP_MODIFIER(...) SOLOMON_INTERNAL_NEST_MODIFIER_ELEMENTS(__VA_ARGS__, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE)
+#define OMP_TARGET_MAP_MODIFIER_ALWAYS SOLOMON_INTERNAL_OMP_MODIFIER(always)
+#define OMP_TARGET_MAP_MODIFIER_CLOSE SOLOMON_INTERNAL_OMP_MODIFIER(close)
+#define OMP_TARGET_MAP_MODIFIER_PRESENT SOLOMON_INTERNAL_OMP_MODIFIER(present)
+#define OMP_TARGET_MAP_MODIFIER_MAPPER(...) SOLOMON_INTERNAL_OMP_MODIFIER(mapper(__VA_ARGS__))
+#define OMP_TARGET_MAP_MODIFIER_ITERATOR(...) SOLOMON_INTERNAL_OMP_MODIFIER(iterator(__VA_ARGS__))
 
 ///
 /// @brief add OpenMP target clause "map (alloc: list)" if applicable
@@ -527,7 +599,7 @@
 /// @brief add OpenMP target clause "order ([order_modifier:] concurrent)" if applicable
 /// @details Specifies an expected order of execution for the iterations of the associated loops of a loop-associated directive.
 ///
-/// @param[in] order_modifier reproducible, unconstrained
+/// @param[in] ... the order modifier with its colon, or nothing; the macro appends concurrent (e.g., ORDER(reproducible:) gives order (reproducible: concurrent), and ORDER() gives order (concurrent))
 ///
 #define OMP_TARGET_CLAUSE_ORDER(...) OMP_CLAUSE_ORDER(__VA_ARGS__)
 
@@ -558,11 +630,9 @@
 #define OMP_TARGET_CLAUSE_REDUCTION(...) OMP_CLAUSE_REDUCTION(__VA_ARGS__)
 
 ///
-/// @brief add OpenMP target clause "in_reduction ([reduction_modifier,] reduction_identifier: list)" if applicable
-/// @details Specifies a reduction-identifier and one or more list items.
-/// @remarks parallel masked taskloop, parallel masked taskloop simd cannot use nowait clause
+/// @brief add OpenMP target clause "in_reduction (reduction_identifier: list)" if applicable
+/// @details Specifies that the task participates in a reduction with the reduction-identifier over the list items.
 ///
-/// @param[in] reduction_modifier inscan, task, default
 /// @param[in] reduction_identifier +, *, &, |, ^, &&, ||
 ///
 #define OMP_TARGET_CLAUSE_IN_REDUCTION(...) OMP_CLAUSE_IN_REDUCTION(__VA_ARGS__)

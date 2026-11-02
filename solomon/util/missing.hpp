@@ -15,7 +15,7 @@
 ///
 /// @brief matching macro to be ignored
 ///
-#define COMPARE_SOLOMON_INTERNAL_TAG_MISSING(x) x
+#define SOLOMON_INTERNAL_COMPARE_SOLOMON_INTERNAL_TAG_MISSING(x) x
 
 ///
 /// @brief missing clause

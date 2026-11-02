@@ -10,32 +10,28 @@
 #if !defined(SOLOMON_PRAGMA_HPP)
 #define SOLOMON_PRAGMA_HPP
 
+// SOLOMON_INTERNAL_STRINGIFY(x) and SOLOMON_EMIT_WARNING(msg)
+#include "util/stringify.hpp"
+
+// the internal names below are not defined in serial execution (serial/fallback.hpp defines them empty);
+// the unprefixed v1.x names (PRAGMA, PRAGMA_STR, PRAGMA_STR1, SHOW_PRAGMA) are in short_names.hpp
 #if defined(PRINT_GENERATED_PRAGMA)
-#define PRAGMA_STR1(x) #x
-#define PRAGMA_STR(x) PRAGMA_STR1(x)
-
-#if defined(__clang__) || defined(__GNUC__) || defined(__NVCOMPILER)
-#define SOLOMON_EMIT_WARNING(msg) _Pragma(SOLOMON_STRINGIFY(GCC warning msg))
-#else//defined(__clang__) || defined(__GNUC__) || defined(__NVCOMPILER)
-#define SOLOMON_EMIT_WARNING(msg) _Pragma(SOLOMON_STRINGIFY(message msg))
-#endif//defined(__clang__) || defined(__GNUC__) || defined(__NVCOMPILER)
-
 ///
 /// @brief print generated pragma
 ///
-#define SHOW_PRAGMA(...) _Pragma(PRAGMA_STR(message("#pragma " PRAGMA_STR(__VA_ARGS__))))
+#define SOLOMON_INTERNAL_SHOW_PRAGMA(...) _Pragma(SOLOMON_INTERNAL_STRINGIFY(message("#pragma " SOLOMON_INTERNAL_STRINGIFY(__VA_ARGS__))))
 
 ///
 /// @brief input arguments into _Pragma
 ///
-#define PRAGMA(...)     \
-  _Pragma(#__VA_ARGS__) \
-      SHOW_PRAGMA(__VA_ARGS__)
+#define SOLOMON_INTERNAL_PRAGMA(...)        \
+  SOLOMON_INTERNAL_SHOW_PRAGMA(__VA_ARGS__) \
+  _Pragma(#__VA_ARGS__)
 #else  // defined(PRINT_GENERATED_PRAGMA)
 ///
 /// @brief input arguments into _Pragma
 ///
-#define PRAGMA(...) _Pragma(#__VA_ARGS__)
+#define SOLOMON_INTERNAL_PRAGMA(...) _Pragma(#__VA_ARGS__)
 #endif  // defined(PRINT_GENERATED_PRAGMA)
 
 #endif  // !defined(SOLOMON_PRAGMA_HPP)

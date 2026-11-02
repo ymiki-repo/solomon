@@ -26,6 +26,7 @@
 #else   // defined(_OPENMP)
 // serial execution: all directive macros expand to nothing
 #include "serial/fallback.hpp"
+#include "serial/runtime.hpp"
 
 #if !defined(USE_SOLOMON_RUNTIME)
 ///

@@ -24,33 +24,36 @@
 ///
 /// @return number of accelerator devices
 ///
-#if __cplusplus > 201103L
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
 static constexpr auto get_num_devices_for_offloading = []() { return omp_get_num_devices(); };
-#else  //__cplusplus > 201103L
+#else  // defined(__cplusplus) && (__cplusplus >= 201703L)
 #define get_num_devices_for_offloading() omp_get_num_devices()
-#endif  //__cplusplus > 201103L
+#endif  // defined(__cplusplus) && (__cplusplus >= 201703L)
 
 ///
 /// @brief set default accelerator device
 ///
 /// @param[in] id device ID
 ///
-#if __cplusplus > 201103L
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
 static constexpr auto set_default_device_for_offloading = [](const auto id) { omp_set_default_device(id); };
-#else  //__cplusplus > 201103L
+#elif !defined(SOLOMON_FORTRAN)
 #define set_default_device_for_offloading(id) omp_set_default_device(id)
-#endif  //__cplusplus > 201103L
+#else  // !defined(SOLOMON_FORTRAN)
+// Fortran: the default integer kind, since gfortran rejects other kinds (nvfortran and ifx accept them)
+#define set_default_device_for_offloading(id) omp_set_default_device(int(id))
+#endif  // defined(__cplusplus) && (__cplusplus >= 201703L)
 
 ///
 /// @brief get default accelerator device
 ///
 /// @return device ID
 ///
-#if __cplusplus > 201103L
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
 static constexpr auto get_default_device_for_offloading = []() { return omp_get_default_device(); };
-#else  //__cplusplus > 201103L
+#else  // defined(__cplusplus) && (__cplusplus >= 201703L)
 #define get_default_device_for_offloading() omp_get_default_device()
-#endif  //__cplusplus > 201103L
+#endif  // defined(__cplusplus) && (__cplusplus >= 201703L)
 
 // extension by NVIDIA HPC SDK
 #if defined(__NVCOMPILER)
@@ -59,30 +62,30 @@ static constexpr auto get_default_device_for_offloading = []() { return omp_get_
 ///
 /// @param[in] async identifier of stream or asynchronicity
 ///
-#if __cplusplus > 201103L
-static constexpr auto get_offloaded_stream_id = [](const auto async) { ompx_get_cuda_stream(get_default_device_for_offloading(), async); };
-#else  //__cplusplus > 201103L
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+static constexpr auto get_offloaded_stream_id = [](const auto async) { return ompx_get_cuda_stream(get_default_device_for_offloading(), async); };
+#else  // defined(__cplusplus) && (__cplusplus >= 201703L)
 #define get_offloaded_stream_id(async) ompx_get_cuda_stream(get_default_device_for_offloading(), async)
 // #define get_offloaded_stream_id(async) 0
-#endif  //__cplusplus > 201103L
+#endif  // defined(__cplusplus) && (__cplusplus >= 201703L)
 
 ///
 /// @brief get ID of asynchronous CUDA Stream
 ///
-#if __cplusplus > 201103L
-static constexpr auto get_offloaded_stream_id_async = []() { get_offloaded_stream_id(1); };
-#else  //__cplusplus > 201103L
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+static constexpr auto get_offloaded_stream_id_async = []() { return get_offloaded_stream_id(1); };
+#else  // defined(__cplusplus) && (__cplusplus >= 201703L)
 #define get_offloaded_stream_id_async() get_offloaded_stream_id(1)
-#endif  //__cplusplus > 201103L
+#endif  // defined(__cplusplus) && (__cplusplus >= 201703L)
 
 ///
 /// @brief get ID of synchronous CUDA Stream
 ///
-#if __cplusplus > 201103L
-static constexpr auto get_offloaded_stream_id_sync = []() { get_offloaded_stream_id(0); };
-#else  //__cplusplus > 201103L
+#if defined(__cplusplus) && (__cplusplus >= 201703L)
+static constexpr auto get_offloaded_stream_id_sync = []() { return get_offloaded_stream_id(0); };
+#else  // defined(__cplusplus) && (__cplusplus >= 201703L)
 #define get_offloaded_stream_id_sync() get_offloaded_stream_id(0)
-#endif  //__cplusplus > 201103L
+#endif  // defined(__cplusplus) && (__cplusplus >= 201703L)
 #endif  // defined(__NVCOMPILER)
 
 #endif  // !defined(SOLOMON_OMP_TARGET_RUNTIME_HPP)

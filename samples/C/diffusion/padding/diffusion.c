@@ -5,6 +5,8 @@
 
 #include <solomon.hpp>
 
+#include "diffusion.h"
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338328  // pi
 #endif                                        // M_PI
@@ -15,8 +17,7 @@
 #define IMIN(a, b) (((a) < (b)) ? (a) : (b))
 #define IMAX(a, b) (((a) > (b)) ? (a) : (b))
 
-double diffusion3d(int nx, int ny, int nz, float dx, float dy, float dz, float dt, float kappa,
-                   const float *restrict f, float *restrict fn, const int pad) {
+double diffusion3d(int nx, int ny, int nz, float dx, float dy, float dz, float dt, float kappa, const float *restrict f, float *restrict fn, const int pad) {
   const float ce = kappa * dt / (dx * dx);
   const float cw = ce;
   const float cn = kappa * dt / (dy * dy);

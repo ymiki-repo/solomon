@@ -10,6 +10,9 @@
 #if !defined(SOLOMON_OMP_CLAUSE_HPP)
 #define SOLOMON_OMP_CLAUSE_HPP
 
+#include "../util/cloak.hpp"      // SOLOMON_INTERNAL_CLOAK_IIF
+#include "../util/is_empty.hpp"   // SOLOMON_INTERNAL_IS_EMPTY
+#include "../util/stringify.hpp"  // SOLOMON_INTERNAL_PICKUP_STOP
 #include "../util/va_args.hpp"
 #include "clause_tag.hpp"
 
@@ -21,14 +24,14 @@
 ///
 /// @brief add OpenMP clause "exclusive (list)" if applicable
 ///
-/// @param[in] list A comma-separated list of file-scope, namespace-scope, or static block-scope variables that do not have incomplete types.
+/// @param[in] list A comma-separated list of the list items of the inscan reduction clause of the enclosing construct; their values before the current iteration are visible (exclusive scan).
 ///
 #define OMP_CLAUSE_EXCLUSIVE(...) exclusive(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SCAN)
 
 ///
 /// @brief add OpenMP clause "inclusive (list)" if applicable
 ///
-/// @param[in] list A comma-separated list of file-scope, namespace-scope, or static block-scope variables that do not have incomplete types.
+/// @param[in] list A comma-separated list of the list items of the inscan reduction clause of the enclosing construct; their values including the current iteration are visible (inclusive scan).
 ///
 #define OMP_CLAUSE_INCLUSIVE(...) inclusive(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SCAN)
 
@@ -87,7 +90,7 @@
 ///
 /// @brief add OpenMP clause "partial [(unroll_factor)]" if applicable
 ///
-#define OMP_CLAUSE_PARTIAL(...) partial(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_UNROLL)
+#define OMP_CLAUSE_PARTIAL(...) SOLOMON_INTERNAL_CLOAK_IIF(SOLOMON_INTERNAL_IS_EMPTY(__VA_ARGS__))(partial, partial(__VA_ARGS__)), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_UNROLL)
 
 ///
 /// @note clauses for Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -168,7 +171,7 @@
 ///
 /// @param[in] n The loops or how many loops to associate with a construct.
 ///
-#define OMP_CLAUSE_ORDERED(...) ordered(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR)
+#define OMP_CLAUSE_ORDERED(...) SOLOMON_INTERNAL_CLOAK_IIF(SOLOMON_INTERNAL_IS_EMPTY(__VA_ARGS__))(ordered, ordered(__VA_ARGS__)), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR)
 
 ///
 /// @brief add OpenMP clause "schedule ([modifier] [, modifier] kind [, chunk_size])" if applicable
@@ -189,12 +192,8 @@
 ///
 /// @brief add OpenMP clause "dist_schedule (kind [, chunk_size])" if applicable
 ///
-/// @param[in] kind static, dynamic, guided, auto, or runtime
-/// @remarks static: Iterations are divided into chunks of size chunk_size and assigned to team threads in round-robin fashion in order of thread number.
-/// @remarks dynamic: Each thread executes a chunk of iterations then requests another chunk until none remain.
-/// @remarks guided: Same as dynamic, except chunk size is different for each chunk, with each successive chunk smaller than the last.
-/// @remarks auto: Compiler and/or runtime decides.
-/// @remarks runtime: Uses run-sched-var ICV.
+/// @param[in] kind static (the only kind of dist_schedule; OpenMP 5.2, 11.6.1)
+/// @remarks static: Iterations are divided into chunks of size chunk_size (approximately equal chunks, at most one per team, without chunk_size) and assigned to the teams of the league in round-robin fashion in order of team number.
 ///
 #define OMP_CLAUSE_DIST_SCHEDULE(...) dist_schedule(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE)
 
@@ -251,7 +250,7 @@
 #define OMP_CLAUSE_UNTIED untied, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
-/// @brief add OpenMP clause "grainsize ([strict:] grain_size" if applicable
+/// @brief add OpenMP clause "grainsize ([strict:] grain_size)" if applicable
 /// @details Causes the number of logical loop iterations assigned to each created task to be greater than or equal to the minimum of the value of the grain-size expression and the number of logical loop iterations, but less than twice the value of the grain-size expression. strict forces use of exact grain size, except for last iteration.
 ///
 #define OMP_CLAUSE_GRAINSIZE(...) grainsize(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
@@ -263,7 +262,7 @@
 #define OMP_CLAUSE_NOGROUP nogroup, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
-/// @brief add OpenMP clause "num_tasks ([strict:] num_tasks" if applicable
+/// @brief add OpenMP clause "num_tasks ([strict:] num_tasks)" if applicable
 /// @details Create as many tasks as the minimum of the num_tasks expression and the number of logical loop iterations. strict forces exactly num_tasks tasks to be created.
 ///
 #define OMP_CLAUSE_NUM_TASKS(...) num_tasks(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
@@ -302,12 +301,12 @@
 ///
 /// @brief add OpenMP clause "destroy (depend object)" if applicable
 ///
-#define OMP_CLAUSE_DESTROY(...) destroy(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ)
+#define OMP_CLAUSE_DESTROY(...) SOLOMON_INTERNAL_CLOAK_IIF(SOLOMON_INTERNAL_IS_EMPTY(__VA_ARGS__))(destroy, destroy(__VA_ARGS__)), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ, SOLOMON_INTERNAL_TAG_OMP_INTEROP)
 
 ///
 /// @brief pass additional list if applicable
 ///
-#define OMP_PASS_LIST(...) (__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET, SOLOMON_INTERNAL_TAG_OMP_FLUSH, SOLOMON_INTERNAL_TAG_OMP_DEPOBJ)
+#define OMP_PASS_LIST(...) (__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_CRITICAL, SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET, SOLOMON_INTERNAL_TAG_OMP_FLUSH, SOLOMON_INTERNAL_TAG_OMP_DEPOBJ)
 
 ///
 /// @brief add OpenMP memory-order-clause "seq_cst" if applicable
@@ -334,14 +333,13 @@
 ///
 #define OMP_CLAUSE_RELAXED relaxed, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FLUSH, SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
 
-// FIXME: collision with OMP_CLAUSE_UPDATE AS_OMP_ATOMIC_CLAUSE(update)
-// ///
-// /// @brief add OpenMP clause "update (task_dependence_type)" if applicable
-// /// @details Sets the dependence type of an OpenMP depend object to task_dependence_type.
-// ///
-// /// @param[in] task_dependence_type in, out, inout, inoutset, mutexinoutset
-// ///
-// #define OMP_CLAUSE_UPDATE(...) update(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ)
+///
+/// @brief add OpenMP clause "update (task_dependence_type)" of depobj if applicable
+/// @details Sets the dependence type of an OpenMP depend object to task_dependence_type. Named apart from OMP_CLAUSE_UPDATE, which is the atomic clause "update".
+///
+/// @param[in] task_dependence_type in, out, inout, inoutset, mutexinoutset
+///
+#define OMP_CLAUSE_DEPOBJ_UPDATE(...) update(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ)
 
 ///
 /// @brief add OpenMP atomic-clause "read" if applicable
@@ -355,8 +353,9 @@
 
 ///
 /// @brief add OpenMP atomic-clause "update" if applicable
+/// @note also emitted on depobj, where update needs an argument (OMP_CLAUSE_DEPOBJ_UPDATE(...)): the compilers then stop instead of the update being dropped silently
 ///
-#define OMP_CLAUSE_UPDATE update, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_UPDATE update, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC, SOLOMON_INTERNAL_TAG_OMP_DEPOBJ)
 
 ///
 /// @brief add OpenMP extended-atomic-clause "capture" if applicable
@@ -387,7 +386,7 @@
 ///
 /// @brief add OpenMP extended-atomic-clause "hint (hint_expression)" if applicable
 ///
-#define OMP_CLAUSE_HINT(expression) hint(expression), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC)
+#define OMP_CLAUSE_HINT(expression) hint(expression), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ATOMIC, SOLOMON_INTERNAL_TAG_OMP_CRITICAL)
 
 ///
 /// @brief add OpenMP clause "threads" if applicable
@@ -396,13 +395,23 @@
 
 ///
 /// @brief add OpenMP clause "simd" if applicable
+/// @details taken by the loop directives without simd in their names (the pseudo tag SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE: it joins the name, as in for simd);
+/// the ones with simd in their names do not take it again
 ///
 #if defined(__NVCOMPILER)
-// extension in NVIDIA HPC SDK: accepts _Pragma("omp target teams loop simd")
-#define OMP_CLAUSE_SIMD simd, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ORDERED, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TARGET)
+// extension in NVIDIA HPC SDK: accepts _Pragma("omp target teams loop simd"); simd is added to the other target directives as well (U-32)
+#define OMP_CLAUSE_SIMD simd, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ORDERED, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE, SOLOMON_INTERNAL_TAG_OMP_TARGET)
 #else  // defined(__NVCOMPILER)
-#define OMP_CLAUSE_SIMD simd, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ORDERED, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_SIMD simd, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_ORDERED, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE)
 #endif  // #if defined(__NVCOMPILER)
+
+///
+/// @brief a clause that only simd takes, given in the Solomon notation (SOLOMON_CLAUSE_SIMDLEN(...) and the like)
+/// @details taken where simd can be: the directives whose names have simd, and the loop directives without simd in their names,
+/// to which SOLOMON_CLAUSE_INDEPENDENT (OMP_CLAUSE_SIMD) adds simd (the pseudo tag SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE);
+/// not the extension of NVIDIA HPC SDK (U-32), which rejects any clause after target teams loop simd
+///
+#define SOLOMON_INTERNAL_OMP_SIMD_ONLY_CLAUSE(...) __VA_ARGS__, SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE)
 
 ///
 /// @brief add OpenMP clause "doacross (dependence_type: [vector])" if applicable
@@ -421,25 +430,25 @@
 
 ///
 /// @brief add OpenMP clause "default (shared | firstprivate | private | none)" if applicable
-/// @details Default data-sharing attributes are disabled. All variables in a construct must be declared inside the construct or appear in a data-sharing attribute clause.
+/// @details Sets the default data-sharing attribute of the variables referenced in the construct; with none, every such variable must be declared inside the construct or appear in a data-sharing attribute clause.
 ///
 #define OMP_CLAUSE_DEFAULT(attr) default(attr), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @brief add OpenMP clause "default (shared)" if applicable
-/// @details Default data-sharing attributes are disabled. All variables in a construct must be declared inside the construct or appear in a data-sharing attribute clause.
+/// @details The variables referenced in the construct whose data-sharing attributes are implicitly determined become shared.
 ///
 #define OMP_CLAUSE_DEFAULT_SHARED OMP_CLAUSE_DEFAULT(shared)
 
 ///
 /// @brief add OpenMP clause "default (firstprivate)" if applicable
-/// @details Default data-sharing attributes are disabled. All variables in a construct must be declared inside the construct or appear in a data-sharing attribute clause.
+/// @details The variables referenced in the construct whose data-sharing attributes are implicitly determined become firstprivate.
 ///
 #define OMP_CLAUSE_DEFAULT_FIRSTPRIVATE OMP_CLAUSE_DEFAULT(firstprivate)
 
 ///
 /// @brief add OpenMP clause "default (private)" if applicable
-/// @details Default data-sharing attributes are disabled. All variables in a construct must be declared inside the construct or appear in a data-sharing attribute clause.
+/// @details The variables referenced in the construct whose data-sharing attributes are implicitly determined become private.
 ///
 #define OMP_CLAUSE_DEFAULT_PRIVATE OMP_CLAUSE_DEFAULT(private)
 
@@ -459,13 +468,13 @@
 /// @brief add OpenMP clause "private (list)" if applicable
 /// @details Creates a new variable for each item in list that is private to each thread or explicit task. The private variable is not given an initial value.
 ///
-#define OMP_CLAUSE_PRIVATE(...) private(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTION, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_SINGLE, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_PRIVATE(...) private(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTIONS, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_SINGLE, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @brief add OpenMP clause "firstprivate (list)" if applicable
 /// @details Declares list items to be private to each thread or explicit task and assigns them the value the original variable has at the time the construct is encountered.
 ///
-#define OMP_CLAUSE_FIRSTPRIVATE(...) firstprivate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTION, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_FIRSTPRIVATE(...) firstprivate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTIONS, SOLOMON_INTERNAL_TAG_OMP_SINGLE, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @brief add OpenMP clause "lastprivate ([lastprivate_modifier:] list)" if applicable
@@ -474,7 +483,7 @@
 /// @param[in] lastprivate_modifier conditional
 /// @remarks conditional: Uses the value from the thread that executed the highest index iteration number.
 ///
-#define OMP_CLAUSE_LASTPRIVATE(...) lastprivate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_SECTION, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
+#define OMP_CLAUSE_LASTPRIVATE(...) lastprivate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_SECTIONS, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP)
 
 ///
 /// @brief add OpenMP clause "linear (linear_list [: linear_step])" or "linear (linear_list [: linear_modifier [, linear_modifier]])" if applicable
@@ -489,7 +498,7 @@
 /// @remarks uval: The value is linear, may not be modified
 /// @remarks The ref and uval modifiers may only be specified for a linear clause on the declare simd directive, and only for arguments that are passed by reference.
 ///
-#define OMP_CLAUSE_LINEAR(...) linear(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_SIMD, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_SIMD)
+#define OMP_CLAUSE_LINEAR(...) linear(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DECLARE_SIMD, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_SIMD)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -503,7 +512,7 @@
 /// @param[in] allocator an expression of "type omp_allocator_handle_t"
 /// @param[in] alignment a constant positive integer power of 2
 ///
-#define OMP_CLAUSE_ALLOCATE(...) allocate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTION, SOLOMON_INTERNAL_TAG_OMP_SINGLE, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKGROUP, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_ALLOCATE(...) allocate(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTIONS, SOLOMON_INTERNAL_TAG_OMP_SINGLE, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKGROUP, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -535,7 +544,7 @@
 /// @remarks inoutset: If the storage location of at least one of the list items matches the storage location of a list item appearing in a depend clause with an in, out, inout, or mutexinoutset dependence-type on a construct from which a sibling task was previously generated, then the generated task will be a dependent task of that sibling task.
 /// @remarks depobj: The task dependences are derived from the depend clause specified in the depobj constructs that initialized dependences represented by the depend objects specified in the depend clause as if the depend clauses of the depobj constructs were specified in the current construct.
 ///
-#define OMP_CLAUSE_DEPEND(...) depend(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ, SOLOMON_INTERNAL_TAG_OMP_DISPATCH, SOLOMON_INTERNAL_TAG_OMP_INTEROP, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKWAIT)
+#define OMP_CLAUSE_DEPEND(...) depend(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ, SOLOMON_INTERNAL_TAG_OMP_DISPATCH, SOLOMON_INTERNAL_TAG_OMP_INTEROP, SOLOMON_INTERNAL_TAG_OMP_ORDERED, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKWAIT)
 
 ///
 /// @brief add OpenMP clause "depend (in: locator_list)" if applicable
@@ -551,8 +560,31 @@
 /// @brief add OpenMP clause "if ([directive_name_modifier:] omp_logical_expression)" if applicable
 /// @details The effect of the if clause depends on the construct to which it is applied. For combined or composite constructs, it only applies to the semantics of the construct named in the directive-name-modifier if one is specified. If no modifier is specified for a combined or composite construct then the if clause applies to all constructs to which an if clause can apply.
 ///
+// teams takes if from OpenMP 6.0 (_OPENMP = 202411; 6.0 section 12.2, not in 5.2 section 10.2). In Fortran the clause is
+// emitted in every version, and whether teams takes it is left to the compiler (ifx 2026.1 accepts and implements it before
+// 6.0, gfortran 13 rejects it: D-099 (3), Q-057). In C/C++ before 6.0 the clause does not go to the teams directives without another construct that takes if (PRAGMA_OMP_TEAMS, _TEAMS_DISTRIBUTE, _TEAMS_LOOP:
+// the pseudo tag SOLOMON_INTERNAL_TAG_OMP_TEAMS_IF; PRAGMA_OMP_TARGET_TEAMS in fallback mode: _TEAMS_IF_FALLBACK, KI-33);
+// SOLOMON_INTERNAL_OMP_TEAMS_IF_BEFORE_60 takes its place there (D-099 (3), Q-056):
+//   - a warning, where a nested _Pragma("GCC warning ...") works (the clang-based compilers and gcc (C)); the clause is dropped;
+//   - a Solomon error with g++, where the warning cannot be emitted (g++ 13 -E crashes now and then with it, and "message" is
+//     rejected inside the omp pragma); in fallback mode the clause of PRAGMA_OMP_TARGET_TEAMS is dropped without a stop (KI-33);
+//   - nothing with NVIDIA HPC SDK (nvc / nvc++ reject a nested _Pragma, and have no host teams).
+#if (defined(_OPENMP) && (_OPENMP >= 202411)) || defined(SOLOMON_FORTRAN)
 #define OMP_CLAUSE_IF(...) \
   if (__VA_ARGS__) , SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_CANCEL, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
+#else  // (defined(_OPENMP) && (_OPENMP >= 202411)) || defined(SOLOMON_FORTRAN)
+#define OMP_CLAUSE_IF(...) \
+  if (__VA_ARGS__) , SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_CANCEL, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_UPDATE, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP) SOLOMON_INTERNAL_OMP_TEAMS_IF_BEFORE_60
+#if !defined(SOLOMON_FORTRAN) && !defined(__NVCOMPILER) && (defined(__clang__) || (defined(__GNUC__) && !defined(__cplusplus)))
+#define SOLOMON_INTERNAL_OMP_TEAMS_IF_BEFORE_60 , _Pragma("GCC warning \"Solomon: the if clause on teams needs OpenMP 6.0 (_OPENMP >= 202411) and is dropped from this directive; the teams region is not reduced to one team when the condition is false\""), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS_IF, SOLOMON_INTERNAL_TAG_OMP_TEAMS_IF_FALLBACK)
+#elif defined(__GNUC__) && defined(__cplusplus) && !defined(__clang__) && !defined(__NVCOMPILER)
+// clang-format off: the text of the message is kept as written (permanent)
+#define SOLOMON_INTERNAL_OMP_TEAMS_IF_BEFORE_60 , SOLOMON_INTERNAL_PICKUP_STOP(SOLOMON_ERROR_TEAMS_TAKES_IF_ONLY_FROM_OPENMP_6_0, Solomon: teams of OpenMP 5.2 or earlier takes no if clause (it is a clause of OpenMP 6.0); remove OMP_CLAUSE_IF from this directive or use a compiler of OpenMP 6.0), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS_IF)
+// clang-format on
+#else  // NVIDIA HPC SDK (C/C++)
+#define SOLOMON_INTERNAL_OMP_TEAMS_IF_BEFORE_60
+#endif  // the warning, the stop, or nothing
+#endif  // (defined(_OPENMP) && (_OPENMP >= 202411)) || defined(SOLOMON_FORTRAN)
 
 ///
 /// @note Clauses in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -566,10 +598,10 @@
 /// @param[in] map_type alloc, to, from, tofrom, release, delete
 /// @param[in] map_modifier always, close, present, mapper(mapper-id), iterator(iterators-definition)
 ///
-#define OMP_CLAUSE_MAP(...) map(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_DECLARE_MAPPER)
+#define OMP_CLAUSE_MAP(...) map(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TARGET_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_ENTER_DATA, SOLOMON_INTERNAL_TAG_OMP_TARGET_EXIT_DATA, SOLOMON_INTERNAL_TAG_OMP_DECLARE_MAPPER, SOLOMON_INTERNAL_TAG_OMP_REQ_DATA_ENV, SOLOMON_INTERNAL_TAG_OMP_REQ_MAP)
 
 ///
-/// @brief add OpenMP clause "map (tofrom: alloc)" if applicable
+/// @brief add OpenMP clause "map (alloc: list)" if applicable
 ///
 #define OMP_CLAUSE_MAP_ALLOC(...) OMP_CLAUSE_MAP(alloc : __VA_ARGS__)
 
@@ -607,7 +639,7 @@
 /// @brief add OpenMP clause "order ([order_modifier:] concurrent)" if applicable
 /// @details Specifies an expected order of execution for the iterations of the associated loops of a loop-associated directive.
 ///
-/// @param[in] order_modifier reproducible, unconstrained
+/// @param[in] ... the order modifier with its colon, or nothing; the macro appends concurrent (e.g., ORDER(reproducible:) gives order (reproducible: concurrent), and ORDER() gives order (concurrent))
 ///
 #define OMP_CLAUSE_ORDER(...) order(__VA_ARGS__ concurrent), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_SIMD)
 
@@ -635,14 +667,12 @@
 /// @param[in] reduction_modifier inscan, task, default
 /// @param[in] reduction_identifier +, *, &, |, ^, &&, ||
 ///
-#define OMP_CLAUSE_REDUCTION(...) reduction(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTION, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
+#define OMP_CLAUSE_REDUCTION(...) reduction(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTIONS, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
 
 ///
-/// @brief add OpenMP clause "in_reduction ([reduction_modifier,] reduction_identifier: list)" if applicable
-/// @details Specifies a reduction-identifier and one or more list items.
-/// @remarks parallel masked taskloop, parallel masked taskloop simd cannot use nowait clause
+/// @brief add OpenMP clause "in_reduction (reduction_identifier: list)" if applicable
+/// @details Specifies that the task participates in a reduction with the reduction-identifier over the list items.
 ///
-/// @param[in] reduction_modifier inscan, task, default
 /// @param[in] reduction_identifier +, *, &, |, ^, &&, ||
 ///
 #define OMP_CLAUSE_IN_REDUCTION(...) in_reduction(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_IN_REDUCTION)

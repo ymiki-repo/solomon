@@ -477,7 +477,7 @@ function main()
             for target in [(fig=compare_fast_med, ax=compare_fast_med.ax[gpu_id, begin])]
                 if has_openacc
                     plot_lp(target.fig, target.ax, N_fast_acc_par, perf_fast_med_acc_par ./ perf_max_best, point_id=2, line_id=2, color_id=2, label="acc (parallel)")
-                    plot_lp(target.fig, target.ax, N_fast_acc_ker, perf_fast_med_acc_ker ./ perf_max_best, point_id=5, line_id=4, color_id=2, label="acc (kernels)")
+                    plot_lp(target.fig, target.ax, N_fast_acc_ker, perf_fast_med_acc_ker ./ perf_max_best, point_id=4, line_id=3, color_id=2, label="acc (kernels)")
                 end
                 plot_lp(target.fig, target.ax, N_fast_omp_dist, perf_fast_med_omp_dist ./ perf_max_best, point_id=0, line_id=2, color_id=1, label="omp (distribute)")
                 plot_lp(target.fig, target.ax, N_fast_omp_loop, perf_fast_med_omp_loop ./ perf_max_best, point_id=1, line_id=3, color_id=1, label="omp (loop)")

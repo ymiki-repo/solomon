@@ -13,3 +13,16 @@ h100sxm/
 gh200/
 mi210/
 pvc/
+sh/.lock
+padding/sh/.lock
+settings.txt
+# executables of sh/common/sweep.sh left by an interrupted run
+run_*
+# job outputs of PBS (Miyabi-G: <job name>.o<job ID>, <job name>.e<job ID>)
+verify.[oe][0-9]*
+iterate.[oe][0-9]*
+# work directories of sh/common/*.sh left by an interrupted run
+/verify/
+/iterate/
+/padding/verify/
+/padding/iterate/

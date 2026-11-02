@@ -1,7 +1,7 @@
 ///
 /// @file solomon/short_names.hpp
 /// @author Yohei MIKI (The University of Tokyo)
-/// @brief unprefixed spellings of the user-facing macros for v1.x compatibility
+/// @brief unprefixed spellings of the user-facing macros for v1.x compatibility, including the spellings that existed only in the pre-release version of v2.0.0 (the fortran branch; "pre-release only" in misc/migrate/MIGRATION.md)
 ///
 /// @note enabled only when SOLOMON_WITH_SHORT_NAMES is defined (default OFF); new code should use the SOLOMON_-prefixed macros
 ///
@@ -62,7 +62,7 @@
 /// @brief deprecated alias of NUM_BLOCKS
 /// @deprecated NUM_GRIDS(n) was renamed to NUM_BLOCKS(n) in v2.0.0
 ///
-#define NUM_GRIDS(n) SOLOMON_CLAUSE_NUM_GRIDS(n)
+#define NUM_GRIDS(n) SOLOMON_CLAUSE_NUM_BLOCKS(n)
 #if defined(__clang__) && (__clang_major__ >= 14)
 #pragma clang deprecated(NUM_GRIDS, "NUM_GRIDS(n) was renamed to NUM_BLOCKS(n) in v2.0.0")
 #endif  // defined(__clang__) && (__clang_major__ >= 14)
@@ -71,12 +71,45 @@
 /// @brief deprecated alias of AS_BLOCK
 /// @deprecated AS_GRID was renamed to AS_BLOCK in v2.0.0
 ///
-#define AS_GRID SOLOMON_CLAUSE_GRID
+#define AS_GRID SOLOMON_CLAUSE_BLOCK
 #if defined(__clang__) && (__clang_major__ >= 14)
 #pragma clang deprecated(AS_GRID, "AS_GRID was renamed to AS_BLOCK in v2.0.0")
 #endif  // defined(__clang__) && (__clang_major__ >= 14)
 
 // semi-public utility
 #define APPEND_ARGS(...) SOLOMON_APPEND_ARGS(__VA_ARGS__)
+
+// v1.x helpers to build pragmas (internal SOLOMON_INTERNAL_* names since v2.0.0); defined with the v1.x bodies,
+// not as aliases, so that the arguments are stringified as written
+#if defined(PRINT_GENERATED_PRAGMA)
+#define PRAGMA_STR1(x) #x
+#define PRAGMA_STR(x) PRAGMA_STR1(x)
+#endif  // defined(PRINT_GENERATED_PRAGMA)
+#if defined(SOLOMON_SERIAL_FALLBACK_HPP)
+// serial execution: no pragma is emitted (as SOLOMON_INTERNAL_PRAGMA)
+#if defined(PRINT_GENERATED_PRAGMA)
+#define SHOW_PRAGMA(...)
+#endif  // defined(PRINT_GENERATED_PRAGMA)
+#define PRAGMA(...)
+#else  // defined(SOLOMON_SERIAL_FALLBACK_HPP)
+#if defined(PRINT_GENERATED_PRAGMA)
+///
+/// @brief print generated pragma
+///
+#define SHOW_PRAGMA(...) _Pragma(PRAGMA_STR(message("#pragma " PRAGMA_STR(__VA_ARGS__))))
+
+///
+/// @brief input arguments into _Pragma
+///
+#define PRAGMA(...)        \
+  SHOW_PRAGMA(__VA_ARGS__) \
+  _Pragma(#__VA_ARGS__)
+#else  // defined(PRINT_GENERATED_PRAGMA)
+///
+/// @brief input arguments into _Pragma
+///
+#define PRAGMA(...) _Pragma(#__VA_ARGS__)
+#endif  // defined(PRINT_GENERATED_PRAGMA)
+#endif  // defined(SOLOMON_SERIAL_FALLBACK_HPP)
 
 #endif  // !defined(SOLOMON_SHORT_NAMES_HPP)

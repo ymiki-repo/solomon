@@ -85,9 +85,12 @@
 
 ///
 /// @brief _Pragma("acc data present (list)")
+/// @details Fortran with OpenMP target: "!$omp target data map(alloc: list) if(.false.)", a region that does nothing (the host is the target device) and pairs with PRAGMA_ACC_END_DATA ("!$omp end target data"); empty in C/C++
 ///
 #if defined(OFFLOAD_BY_OPENACC)
 #define PRAGMA_ACC_DATA_PRESENT(...) PRAGMA_ACC_DATA(ACC_CLAUSE_PRESENT(__VA_ARGS__))
+#elif defined(OFFLOAD_BY_OPENMP_TARGET) && defined(SOLOMON_FORTRAN)
+#define PRAGMA_ACC_DATA_PRESENT(...) PRAGMA_OMP_TARGET_DATA(OMP_TARGET_CLAUSE_MAP_ALLOC(__VA_ARGS__), OMP_TARGET_CLAUSE_IF(.false.))
 #else  // defined(OFFLOAD_BY_OPENACC)
 #define PRAGMA_ACC_DATA_PRESENT(...)
 #endif  // defined(OFFLOAD_BY_OPENACC)

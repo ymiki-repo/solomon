@@ -1,7 +1,7 @@
 ///
 /// @file nbody_omp.cpp
 /// @author Yohei MIKI (Information Technology Center, The University of Tokyo)
-/// @brief benchmark of direct N-body simulation (w/o orbit integration) (implementation in OpenMP style)
+/// @brief direct N-body simulation (orbit integration, or benchmark of the gravity calculation with BENCHMARK_MODE) (implementation in OpenMP style)
 ///
 /// @copyright Copyright (c) 2024 Yohei MIKI
 ///
@@ -19,6 +19,7 @@
 #include "allocate.hpp"
 #include "benchmark.hpp"
 #include "common.hpp"
+#include "filename.hpp"
 #include "gen_ic.hpp"
 #include "gravity.hpp"
 #include "type.hpp"
@@ -78,14 +79,14 @@ write_snapshot(const int num, position *pos, velocity *vel, velocity *vel_tmp, a
 
   // write snapshot
   char filename[64];
-  sprintf(filename, "dat/%s_snp%03d.dat", file, snp_id);
+  set_filename(filename, sizeof(filename), "dat/%s_snp%03d.dat", file, snp_id);
   FILE *fp;
   fp = fopen(filename, "w");
   if (fp == NULL) {
     fprintf(stderr, "ERROR: failed to open \"%s\"\n", filename);
     exit(1);
   }
-  fprintf(fp, "#x y z vx vy vz ax ay ax");
+  fprintf(fp, "#x y z vx vy vz ax ay az");
 #ifdef CALCULATE_POTENTIAL
   fprintf(fp, " pot");
 #endif  // CALCULATE_POTENTIAL
@@ -96,7 +97,7 @@ write_snapshot(const int num, position *pos, velocity *vel, velocity *vel_tmp, a
             vel_tmp[ii].x, vel_tmp[ii].y, vel_tmp[ii].z,
             acc[ii].x, acc[ii].y, acc[ii].z);
 #ifdef CALCULATE_POTENTIAL
-    fprintf(fp, "%e", acc[ii].w);
+    fprintf(fp, " %e", acc[ii].w);
 #endif  // CALCULATE_POTENTIAL
     fprintf(fp, "\n");
   }
@@ -122,7 +123,7 @@ write_snapshot(const int num, position *pos, velocity *vel, velocity *vel_tmp, a
   const auto Virial = Ekin / (-Epot);
 
   // write time evolution of energy
-  sprintf(filename, "dat/%s_energy.dat", file);
+  set_filename(filename, sizeof(filename), "dat/%s_energy.dat", file);
   fp = fopen(filename, (snp_id > 0) ? "a" : "w");
   if (fp == NULL) {
     fprintf(stderr, "ERROR: failed to open \"%s\"\n", filename);
@@ -142,7 +143,7 @@ write_snapshot(const int num, position *pos, velocity *vel, velocity *vel_tmp, a
 int main(void) {
 #ifndef BENCHMARK_MODE
   static char file[16];
-  sprintf(file, "collapse");
+  set_filename(file, sizeof(file), "collapse");
   const auto num = 1031;        // number of N-body particles, 1031 is the minimum prime number greater than 1024
   const auto eps = 1.5625e-2F;  // Plummer softening
   const auto Mtot = 1.0F;       // total mass
@@ -172,26 +173,25 @@ int main(void) {
 
   // generate initial-condition
 #ifdef CALCULATE_POTENTIAL
-  double Etot0, Etot;
+  double Etot0 = 0.0, Etot = 0.0;
 #endif  // CALCULATE_POTENTIAL
   if (step == 0) {
     set_uniform_sphere(num, pos, vel, Mtot, rad, virial, newton);
     // memcpy from host to device
     PRAGMA_OMP_TARGET_UPDATE_TO(pos [0:num], vel [0:num])
     calc_acc(num, pos, acc, num, pos, eps);
-    trim_acc(num, acc, newton
 #ifdef CALCULATE_POTENTIAL
-             ,
-             pos, epsinv
+    trim_acc(num, acc, newton, pos, epsinv);
+#else   // CALCULATE_POTENTIAL
+    trim_acc(num, acc, newton);
 #endif  // CALCULATE_POTENTIAL
-    );
+    // half-step integration for velocity (write_snapshot integrates it back to the velocity at t = 0)
+    kick(num, vel, acc, std::ldexp(dt, -1));
     // write snapshot
 #ifdef CALCULATE_POTENTIAL
     Etot0 =
 #endif  // CALCULATE_POTENTIAL
         write_snapshot(num, pos, vel, vel_tmp, acc, file, present, time, dt);
-    // half-step integration for velocity
-    kick(num, vel, acc, std::ldexp(dt, -1));
   }
 
   while (present < snp_fin) {
@@ -204,12 +204,11 @@ int main(void) {
     // orbit integration (2nd-order leapfrog scheme)
     drift(num, pos, vel, dt);
     calc_acc(num, pos, acc, num, pos, eps);
-    trim_acc(num, acc, newton
 #ifdef CALCULATE_POTENTIAL
-             ,
-             pos, epsinv
+    trim_acc(num, acc, newton, pos, epsinv);
+#else   // CALCULATE_POTENTIAL
+    trim_acc(num, acc, newton);
 #endif  // CALCULATE_POTENTIAL
-    );
     kick(num, vel, acc, dt);
 
     // write snapshot
@@ -225,7 +224,7 @@ int main(void) {
   }
 #ifdef CALCULATE_POTENTIAL
   static char filename[64];
-  sprintf(filename, "log/%s_error.dat", file);
+  set_filename(filename, sizeof(filename), "log/%s_error.dat", file);
   FILE *fp;
   fp = fopen(filename, "a");
   if (fp == NULL) {
@@ -245,7 +244,7 @@ int main(void) {
   const float virial = 0.2F;
   // measure performance
   static char filename[64];
-  sprintf(filename, "log/nbody_omp_benchmark_%s%d.csv", COMPILER, MODEL_ID);
+  set_filename(filename, sizeof(filename), "log/nbody_omp_benchmark_%s%d.csv", COMPILER, MODEL_ID);
   FILE *fp;
   if (access(filename, F_OK) == 0) {
     fp = fopen(filename, "a");
@@ -297,7 +296,7 @@ int main(void) {
 
     // record measured performance
     const auto elapsed = std::fma(1.0e-9, static_cast<double>(end.tv_nsec - ini.tv_nsec), end.tv_sec - ini.tv_sec) / static_cast<double>(iter);
-    const auto Npairs = static_cast<decltype(elapsed)>(num) * static_cast<decltype(elapsed)>(num);
+    const auto Npairs = static_cast<double>(num) * static_cast<double>(num);
     fprintf(fp, "%d", MODEL_ID);
     fprintf(fp, ",%d", NTHREADS);
     fprintf(fp, ",%d,%e,%e,%e\n", num, elapsed, Npairs / elapsed, 1.0e-12 * FLOPS_COUNT * Npairs / elapsed);

@@ -18,7 +18,6 @@ contains
     real(sp), intent(out) :: fn(nx,ny,nz)
     real(sp) :: ce,cw,cn,cs,ct,cb,cc
     integer :: i,j,k,ip,im,jp,jm,kp,km
-    integer :: w,e,n,s,b,t
     real(dp) :: diffusion3d
 
     ce = kappa*dt/(dx*dx)
@@ -31,23 +30,23 @@ contains
     cc = 1.0 - (ce + cw + cn + cs + ct + cb)
 
     SOLOMON_OFFLOAD(SOLOMON_CLAUSE_INDEPENDENT, SOLOMON_CLAUSE_COLLAPSE(3), ACC_CLAUSE_PRESENT(f, fn), \
-            SOLOMON_CLAUSE_PRIVATE(i,j,k,ip,im,jp,jm,kp,km,w,e,n,s,b,t))
+            SOLOMON_CLAUSE_PRIVATE(i,j,k,ip,im,jp,jm,kp,km))
     do k=1, nz
-       do j=1, ny
-          do i=1, nx
-             ip = MERGE(i+1,i,i+1<=nx)
-             im = MERGE(i-1,i,i-1>= 1)
-             jp = MERGE(j+1,j,j+1<=ny)
-             jm = MERGE(j-1,j,j-1>= 1)
-             kp = MERGE(k+1,k,k+1<=nz)
-             km = MERGE(k-1,k,k-1>= 1)
+      do j=1, ny
+        do i=1, nx
+          ip = MERGE(i+1,i,i+1<=nx)
+          im = MERGE(i-1,i,i-1>= 1)
+          jp = MERGE(j+1,j,j+1<=ny)
+          jm = MERGE(j-1,j,j-1>= 1)
+          kp = MERGE(k+1,k,k+1<=nz)
+          km = MERGE(k-1,k,k-1>= 1)
 
-             fn(i,j,k) = cc * f(i,j,k) &
-                  + ce * f(ip,j,k) + cw * f(im,j,k) &
-                  + cn * f(i,jp,k) + cs * f(i,jm,k) &
-                  + ct * f(i,j,kp) + cb * f(i,j,km)
-          end do ! i
-       end do ! j
+          fn(i,j,k) = cc * f(i,j,k) &
+              + ce * f(ip,j,k) + cw * f(im,j,k) &
+              + cn * f(i,jp,k) + cs * f(i,jm,k) &
+              + ct * f(i,j,kp) + cb * f(i,j,km)
+        end do ! i
+      end do ! j
     end do ! k
     SOLOMON_END_OFFLOAD
 
@@ -67,18 +66,18 @@ contains
     kz = kx
 
     do k=1, nz
-       do j = 1, ny
-          do i = 1, nx
-             x = dx*(real(i-1,sp) + 0.5_sp)
-             y = dy*(real(j-1,sp) + 0.5_sp)
-             z = dz*(real(k-1,sp) + 0.5_sp)
+      do j = 1, ny
+        do i = 1, nx
+          x = dx*(real(i-1,sp) + 0.5_sp)
+          y = dy*(real(j-1,sp) + 0.5_sp)
+          z = dz*(real(k-1,sp) + 0.5_sp)
 
-             f(i,j,k) = 0.125_sp &
-                  * (1.0_sp - cos(kx*x)) &
-                  * (1.0_sp - cos(ky*y)) &
-                  * (1.0_sp - cos(kz*z))
-          end do ! i
-       end do ! j
+          f(i,j,k) = 0.125_sp &
+              * (1.0_sp - cos(kx*x)) &
+              * (1.0_sp - cos(ky*y)) &
+              * (1.0_sp - cos(kz*z))
+        end do ! i
+      end do ! j
     end do ! k
   end subroutine init
 
@@ -104,20 +103,20 @@ contains
     ferr = 0.0_dp
 
     do k=1, nz
-       do j=1, ny
-          do i=1, nx
-             x = dx*(real(i-1,sp) + 0.5_sp)
-             y = dy*(real(j-1,sp) + 0.5_sp)
-             z = dz*(real(k-1,sp) + 0.5_sp)
+      do j=1, ny
+        do i=1, nx
+          x = dx*(real(i-1,sp) + 0.5_sp)
+          y = dy*(real(j-1,sp) + 0.5_sp)
+          z = dz*(real(k-1,sp) + 0.5_sp)
 
-             f0 = 0.125_sp &
-                  * (1.0_sp - ax*cos(kx*x)) &
-                  * (1.0_sp - ay*cos(ky*y)) &
-                  * (1.0_sp - az*cos(kz*z))
+          f0 = 0.125_sp &
+              * (1.0_sp - ax*cos(kx*x)) &
+              * (1.0_sp - ay*cos(ky*y)) &
+              * (1.0_sp - az*cos(kz*z))
 
-             ferr = ferr + real(f(i,j,k) - f0,dp)**2
-          end do ! i
-       end do ! j
+          ferr = ferr + real(f(i,j,k) - f0,dp)**2
+        end do ! i
+      end do ! j
     end do ! k
 
     accuracy = sqrt(ferr/real(nx*ny*nz,dp))

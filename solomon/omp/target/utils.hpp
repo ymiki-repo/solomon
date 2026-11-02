@@ -18,15 +18,15 @@
 ///
 /// @brief offload the specified loop as default mode
 ///
-#if !defined(OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE) && (_OPENMP >= 201811)
+#if !defined(OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE) && (defined(_OPENMP) && (_OPENMP >= 201811))
 #define PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(...) PRAGMA_OMP_TARGET_TEAMS_LOOP(__VA_ARGS__)
-#else  //! defined(OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE) && (_OPENMP >= 201811)
+#else  //! defined(OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE) && (defined(_OPENMP) && (_OPENMP >= 201811))
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(...) PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_FOR(__VA_ARGS__)
 #else  // !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_TARGET_OFFLOADING_DEFAULT(...) PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO(__VA_ARGS__)
 #endif  // !defined(SOLOMON_FORTRAN)
-#endif  //! defined(OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE) && (_OPENMP >= 201811)
+#endif  //! defined(OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE) && (defined(_OPENMP) && (_OPENMP >= 201811))
 
 ///
 /// @brief _Pragma("omp target data use_device_ptr (list)")

@@ -34,7 +34,9 @@ void allocate_Nbody_particles(position **pos, velocity **vel, velocity **vel_tmp
   constexpr std::remove_reference_t<decltype(**pos)> pos_zero = {0.0, 0.0, 0.0, 0.0};
   constexpr std::remove_reference_t<decltype(**vel)> vel_zero = {0.0, 0.0, 0.0};
   constexpr std::remove_reference_t<decltype(**acc)> acc_zero = {0.0, 0.0, 0.0, 0.0};
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif  // _OPENMP
   for (std::remove_const_t<decltype(size)> ii = 0; ii < size; ii++) {
     (*pos)[ii] = pos_zero;
     (*vel)[ii] = vel_zero;

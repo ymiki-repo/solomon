@@ -91,6 +91,5 @@
     "typeinfo": "cpp",
     "valarray": "cpp",
     "variant": "cpp"
-  },
-  "julia.environmentPath": "/home/ymiki/calc/gpu-nbody"
+  }
 }

@@ -11,3 +11,12 @@ mercury/
 milan2/
 spr2/
 nbody_stats.csv
+sh/.lock
+# job outputs of PBS (Miyabi-G: <job name>.o<job ID>, <job name>.e<job ID>)
+verify.[oe][0-9]*
+survey.[oe][0-9]*
+scaling.[oe][0-9]*
+# work directories of sh/common/*.sh left by an interrupted run
+/verify/
+/survey/
+/scaling/

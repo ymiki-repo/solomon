@@ -1,7 +1,7 @@
 ///
 /// @file gravity.cpp
 /// @author Yohei MIKI (Information Technology Center, The University of Tokyo)
-/// @brief calculating gravitational interation (implementation in generic style)
+/// @brief calculating gravitational interaction (implementation in generic style)
 ///
 /// @copyright Copyright (c) 2024 Yohei MIKI
 ///

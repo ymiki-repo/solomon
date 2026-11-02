@@ -10,14 +10,15 @@
 #if !defined(SOLOMON_OMP_DIRECTIVE_HPP)
 #define SOLOMON_OMP_DIRECTIVE_HPP
 
-#include "../pragma.hpp"       // PRAGMA
-#include "../util/pickup.hpp"  // SOLOMON_INTERNAL_PICKUP_CLAUSES
+#include "../pragma.hpp"       // SOLOMON_INTERNAL_PRAGMA
+#include "../util/pickup.hpp"  // SOLOMON_INTERNAL_APPEND_CLAUSES
+#include "../util/va_opt.hpp"  // SOLOMON_INTERNAL_USE_VA_OPT
 #include "clause.hpp"
 
 ///
 /// @brief add arguments into _Pragma("omp __VA_ARGS__")
 ///
-#define PRAGMA_OMP(...) PRAGMA(omp __VA_ARGS__)
+#define PRAGMA_OMP(...) SOLOMON_INTERNAL_PRAGMA(omp __VA_ARGS__)
 
 ///
 /// @note Directives and Constructs in OpenMP 5.2 API Syntax Reference Guide (https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf)
@@ -43,7 +44,7 @@
 #define PRAGMA_OMP_SCAN(...) PRAGMA_OMP(scan SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SCAN), __VA_ARGS__))
 
 ///
-/// @note skip skip _Pragma("omp declare mapper")
+/// @note skip _Pragma("omp declare mapper")
 ///
 
 ///
@@ -135,7 +136,7 @@
 /// @brief _Pragma("omp teams [clause [[,] clause] ... ]")
 /// @details Creates a league of initial teams where the initial thread of each team executes the region.
 ///
-#define PRAGMA_OMP_TEAMS(...) PRAGMA_OMP(teams SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS), __VA_ARGS__))
+#define PRAGMA_OMP_TEAMS(...) PRAGMA_OMP(teams SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_TEAMS_IF), __VA_ARGS__))
 ///
 /// @brief finalize the omp teams region
 ///
@@ -200,7 +201,7 @@
 /// @brief _Pragma("omp sections [clause [[,] clause] ... ]")
 /// @details A non-iterative worksharing construct that contains a set of structured blocks that are to be distributed among and executed by the threads in a team
 ///
-#define PRAGMA_OMP_SECTIONS(...) PRAGMA_OMP(sections SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SECTIONS), __VA_ARGS__))
+#define PRAGMA_OMP_SECTIONS(...) PRAGMA_OMP(sections SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_SECTIONS, SOLOMON_INTERNAL_TAG_OMP_NOWAIT), __VA_ARGS__))
 ///
 /// @brief finalize the omp sections region
 ///
@@ -212,7 +213,7 @@
 
 ///
 /// @brief _Pragma("omp section")
-/// @details A non-iterative worksharing construct that contains a set of structured blocks that are to be distributed among and executed by the threads in a team
+/// @details Separates the structured block of a sections construct into sections, each of which is executed by one thread of the team
 ///
 #define PRAGMA_OMP_SECTION PRAGMA_OMP(section)
 
@@ -221,7 +222,7 @@
 /// @brief _Pragma("omp for [clause [[,] clause] ... ]")
 /// @details Specifies that the iterations of associated loops will be executed in parallel by threads in the team.
 ///
-#define PRAGMA_OMP_FOR(...) PRAGMA_OMP(for SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR), __VA_ARGS__))
+#define PRAGMA_OMP_FOR(...) PRAGMA_OMP(for SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_NOWAIT, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 ///
 /// @brief _Pragma("omp for [clause [[,] clause] ... ]")
 /// @details Specifies that the iterations of associated loops will be executed in parallel by threads in the team.
@@ -232,7 +233,7 @@
 /// @brief _Pragma("omp do [clause [[,] clause] ... ]")
 /// @details Specifies that the iterations of associated loops will be executed in parallel by threads in the team.
 ///
-#define PRAGMA_OMP_DO(...) PRAGMA_OMP(do SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR), __VA_ARGS__))
+#define PRAGMA_OMP_DO(...) PRAGMA_OMP(do SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_NOWAIT, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 ///
 /// @brief _Pragma("omp do [clause [[,] clause] ... ]")
 /// @details Specifies that the iterations of associated loops will be executed in parallel by threads in the team.
@@ -244,7 +245,7 @@
 /// @brief _Pragma("omp distribute [clause [[,] clause] ... ]")
 /// @details Specifies loops which are executed by the initial teams.
 ///
-#define PRAGMA_OMP_DISTRIBUTE(...) PRAGMA_OMP(distribute SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE), __VA_ARGS__))
+#define PRAGMA_OMP_DISTRIBUTE(...) PRAGMA_OMP(distribute SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 
 ///
 /// @brief _Pragma("omp loop [clause [[,] clause] ... ]")
@@ -267,7 +268,7 @@
 /// @brief _Pragma("omp taskloop [clause [[,] clause] ... ]")
 /// @details Specifies that the iterations of one or more associated loops will be executed in parallel using OpenMP tasks.
 ///
-#define PRAGMA_OMP_TASKLOOP(...) PRAGMA_OMP(taskloop SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKLOOP), __VA_ARGS__))
+#define PRAGMA_OMP_TASKLOOP(...) PRAGMA_OMP(taskloop SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_IN_REDUCTION, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 
 ///
 /// @brief _Pragma("omp taskyield")
@@ -294,16 +295,26 @@
 /// @brief _Pragma("omp critical [(name) [[,] hint (hint_expression)]]")
 /// @details Restricts execution of the associated structured block to a single thread at a time.
 ///
+/// The name is passed as OMP_PASS_LIST(name) together with OMP_CLAUSE_HINT(hint_expression); the name comes first in the output wherever it is written.
+///
 /// @param[in] hint_expression omp_sync_hint_uncontended, omp_sync_hint_contended, omp_sync_hint_speculative, omp_sync_hint_nonspeculative
 ///
-#define PRAGMA_OMP_CRITICAL(...) PRAGMA_OMP(critical SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_CRITICAL), __VA_ARGS__))
+#define PRAGMA_OMP_CRITICAL(...) PRAGMA_OMP(critical SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_CRITICAL), __VA_ARGS__))
 ///
-/// @brief finalize the omp critical region
+/// @brief finalize the omp critical region (without a name)
 ///
 #if !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_CRITICAL
 #else  // !defined(SOLOMON_FORTRAN)
 #define PRAGMA_OMP_END_CRITICAL PRAGMA_OMP(end critical)
+#endif  // !defined(SOLOMON_FORTRAN)
+///
+/// @brief finalize the omp critical region opened with a name (Fortran: "end critical(name)" with the same name)
+///
+#if !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_CRITICAL_WITH_NAME(name)
+#else  // !defined(SOLOMON_FORTRAN)
+#define PRAGMA_OMP_END_CRITICAL_WITH_NAME(name) PRAGMA_OMP(end critical(name))
 #endif  // !defined(SOLOMON_FORTRAN)
 
 ///
@@ -325,16 +336,27 @@
 #define PRAGMA_OMP_TASKWAIT(...) PRAGMA_OMP(taskwait SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKWAIT), __VA_ARGS__))
 
 ///
-/// @brief _Pragma("omp flush [memory_order_clause] [(list)]")
+/// @brief _Pragma("omp flush [(list)]")
 /// @details Makes a thread’s temporary view of memory consistent with memory, and enforces an order on the memory operations of the variables.
+/// Without arguments it emits "omp flush"; the arguments are the list of variables ("omp flush (__VA_ARGS__)"), a memory-order clause cannot be passed.
+/// @note An empty argument emits "omp flush" in every language mode (gcc / g++ in a strict mode such as -std=c99 or -std=c++17 included).
 ///
-#define PRAGMA_OMP_FLUSH(...) PRAGMA_OMP(flush SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FLUSH), OMP_PASS_LIST(__VA_ARGS__)))
+// a Solomon clause macro as the first argument (its second element is a tag count) stops the build; anything else is the list
+#define SOLOMON_INTERNAL_OMP_FLUSH_CLAUSE(...) SOLOMON_INTERNAL_PICKUP_STOP(SOLOMON_ERROR_CLAUSE_IN_FLUSH_LIST, Solomon: PRAGMA_OMP_FLUSH takes a list of variables; a memory-order clause cannot be passed)
+#define SOLOMON_INTERNAL_OMP_FLUSH_LIST(...) SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FLUSH), OMP_PASS_LIST(__VA_ARGS__))
+#define SOLOMON_INTERNAL_OMP_FLUSH_ARGS(...) SOLOMON_INTERNAL_CLOAK_IIF(SOLOMON_INTERNAL_PICKUP_IS_WELL_FORMED(__VA_ARGS__))(SOLOMON_INTERNAL_OMP_FLUSH_CLAUSE, SOLOMON_INTERNAL_OMP_FLUSH_LIST)(__VA_ARGS__)
+#if defined(SOLOMON_INTERNAL_USE_VA_OPT)
+#define PRAGMA_OMP_FLUSH(...) PRAGMA_OMP(flush __VA_OPT__(SOLOMON_INTERNAL_OMP_FLUSH_ARGS(__VA_ARGS__)))
+#else  // defined(SOLOMON_INTERNAL_USE_VA_OPT)
+#define PRAGMA_OMP_FLUSH(...) PRAGMA_OMP(flush SOLOMON_INTERNAL_CLOAK_IF(SOLOMON_INTERNAL_CLOAK_NOT(SOLOMON_INTERNAL_IS_EMPTY(__VA_ARGS__)))(SOLOMON_INTERNAL_OMP_FLUSH_ARGS(__VA_ARGS__), ))
+#endif  // defined(SOLOMON_INTERNAL_USE_VA_OPT)
 
 ///
 /// @brief _Pragma("omp depobj (depend_object) clause")
 /// @details Stand-alone directive that initializes, updates, or destroys an OpenMP depend object.
+/// The depend object is passed first as OMP_PASS_LIST(depend_object), then the clause (e.g. OMP_CLAUSE_DEPEND(in: a), OMP_CLAUSE_DESTROY()).
 ///
-#define PRAGMA_OMP_DEPOBJ(...) PRAGMA_OMP(depobj SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ), OMP_PASS_LIST(__VA_ARGS__)))
+#define PRAGMA_OMP_DEPOBJ(...) PRAGMA_OMP(depobj SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DEPOBJ), __VA_ARGS__))
 
 ///
 /// @brief _Pragma("omp atomic [clause [[,] clause] ... ]")
@@ -412,7 +434,7 @@
 /// @details Specify a loop that can be executed in parallel by multiple threads that are members of multiple teams.
 /// @note clause: Any clause used for distribute or parallel for.
 ///
-#define PRAGMA_OMP_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_OMP(distribute parallel for SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR), __VA_ARGS__))
+#define PRAGMA_OMP_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_OMP(distribute parallel for SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 ///
 /// @brief _Pragma("omp distribute parallel for [clause [[,] clause] ... ]")
 /// @details Specify a loop that can be executed in parallel by multiple threads that are members of multiple teams.
@@ -425,7 +447,7 @@
 /// @details Specify a loop that can be executed in parallel by multiple threads that are members of multiple teams.
 /// @note clause: Any clause used for distribute or parallel do.
 ///
-#define PRAGMA_OMP_DISTRIBUTE_PARALLEL_DO(...) PRAGMA_OMP(distribute parallel do SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR), __VA_ARGS__))
+#define PRAGMA_OMP_DISTRIBUTE_PARALLEL_DO(...) PRAGMA_OMP(distribute parallel do SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 ///
 /// @brief _Pragma("omp distribute parallel do [clause [[,] clause] ... ]")
 /// @details Specify a loop that can be executed in parallel by multiple threads that are members of multiple teams.
@@ -467,7 +489,7 @@
 /// @details Specifies that a loop can be executed concurrently using SIMD instructions, and that those iterations will also be executed in parallel using OpenMP tasks.
 /// @note clause: Any clause used for simd or taskloop.
 ///
-#define PRAGMA_OMP_TASKLOOP_SIMD(...) PRAGMA_OMP(taskloop simd SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_SIMD), __VA_ARGS__))
+#define PRAGMA_OMP_TASKLOOP_SIMD(...) PRAGMA_OMP(taskloop simd SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_IN_REDUCTION, SOLOMON_INTERNAL_TAG_OMP_SIMD), __VA_ARGS__))
 
 #if !defined(SOLOMON_FORTRAN)
 ///
@@ -475,7 +497,7 @@
 /// @details Specifies a parallel construct containing a worksharing-loop construct with a canonical loop nest and no other statements.
 /// @note clause: Any clause used for parallel or for except the nowait clause.
 ///
-#define PRAGMA_OMP_PARALLEL_FOR(...) PRAGMA_OMP(parallel for SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR), __VA_ARGS__))
+#define PRAGMA_OMP_PARALLEL_FOR(...) PRAGMA_OMP(parallel for SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 ///
 /// @brief _Pragma("omp parallel for [clause [[,] clause] ... ]")
 /// @details Specifies a parallel construct containing a worksharing-loop construct with a canonical loop nest and no other statements.
@@ -488,7 +510,7 @@
 /// @details Specifies a parallel construct containing a worksharing-loop construct with a canonical loop nest and no other statements.
 /// @note clause: Any clause used for parallel or do except the nowait clause.
 ///
-#define PRAGMA_OMP_PARALLEL_DO(...) PRAGMA_OMP(parallel do SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR), __VA_ARGS__))
+#define PRAGMA_OMP_PARALLEL_DO(...) PRAGMA_OMP(parallel do SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 ///
 /// @brief _Pragma("omp parallel do [clause [[,] clause] ... ]")
 /// @details Specifies a parallel construct containing a worksharing-loop construct with a canonical loop nest and no other statements.
@@ -552,21 +574,21 @@
 /// @details Shortcut for specifying a masked construct containing a taskloop construct and no other statements.
 /// @note clause: Any clause used for taskloop or masked.
 ///
-#define PRAGMA_OMP_MASKED_TASKLOOP(...) PRAGMA_OMP(masked taskloop SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_MASKED, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_IN_REDUCTION), __VA_ARGS__))
+#define PRAGMA_OMP_MASKED_TASKLOOP(...) PRAGMA_OMP(masked taskloop SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_MASKED, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_IN_REDUCTION, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 
 ///
 /// @brief _Pragma("omp masked taskloop simd [clause [[,] clause] ... ]")
 /// @details Shortcut for specifying a masked construct containing a taskloop simd construct and no other statements.
 /// @note clause: Any clause used for masked or taskloop simd.
 ///
-#define PRAGMA_OMP_MASKED_TASKLOOP_SIMD(...) PRAGMA_OMP(masked taskloop simd SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_MASKED, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_SIMD), __VA_ARGS__))
+#define PRAGMA_OMP_MASKED_TASKLOOP_SIMD(...) PRAGMA_OMP(masked taskloop simd SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_MASKED, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_IN_REDUCTION, SOLOMON_INTERNAL_TAG_OMP_SIMD), __VA_ARGS__))
 
 ///
 /// @brief _Pragma("omp parallel masked taskloop [clause [[,] clause] ... ]")
 /// @details Shortcut for specifying a parallel construct containing a masked taskloop construct and no other statements.
 /// @note clause: Any clause used for parallel or masked taskloop except the in_reduction clause.
 ///
-#define PRAGMA_OMP_PARALLEL_MASKED_TASKLOOP(...) PRAGMA_OMP(parallel masked taskloop SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_MASKED, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP), __VA_ARGS__))
+#define PRAGMA_OMP_PARALLEL_MASKED_TASKLOOP(...) PRAGMA_OMP(parallel masked taskloop SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_MASKED, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 
 ///
 /// @brief _Pragma("omp parallel masked taskloop simd [clause [[,] clause] ... ]")
@@ -580,7 +602,7 @@
 /// @details Shortcut for specifying a teams construct containing a distribute construct and no other statements.
 /// @note clause: Any clause used for teams or distribute.
 ///
-#define PRAGMA_OMP_TEAMS_DISTRIBUTE(...) PRAGMA_OMP(teams distribute SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE), __VA_ARGS__))
+#define PRAGMA_OMP_TEAMS_DISTRIBUTE(...) PRAGMA_OMP(teams distribute SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE, SOLOMON_INTERNAL_TAG_OMP_TEAMS_IF), __VA_ARGS__))
 
 ///
 /// @brief _Pragma("omp teams distribute simd [clause [[,] clause] ... ]")
@@ -595,7 +617,7 @@
 /// @details Shortcut for specifying a teams construct containing a distribute parallel worksharing-loop construct and no other statements.
 /// @note clause: Any clause used for teams or distribute parallel for.
 ///
-#define PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_OMP(teams distribute parallel for SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR), __VA_ARGS__))
+#define PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_FOR(...) PRAGMA_OMP(teams distribute parallel for SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 ///
 /// @brief _Pragma("omp teams distribute parallel for [clause [[,] clause] ... ]")
 /// @details Shortcut for specifying a teams construct containing a distribute parallel worksharing-loop construct and no other statements.
@@ -608,7 +630,7 @@
 /// @details Shortcut for specifying a teams construct containing a distribute parallel worksharing-loop construct and no other statements.
 /// @note clause: Any clause used for teams or distribute parallel do.
 ///
-#define PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_DO(...) PRAGMA_OMP(teams distribute parallel do SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR), __VA_ARGS__))
+#define PRAGMA_OMP_TEAMS_DISTRIBUTE_PARALLEL_DO(...) PRAGMA_OMP(teams distribute parallel do SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_COPYIN, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_SIMD_CLAUSE), __VA_ARGS__))
 ///
 /// @brief _Pragma("omp teams distribute parallel do [clause [[,] clause] ... ]")
 /// @details Shortcut for specifying a teams construct containing a distribute parallel worksharing-loop construct and no other statements.
@@ -650,6 +672,6 @@
 /// @details Shortcut for specifying a teams construct containing a loop construct and no other statements.
 /// @note clause: Any clause used for teams or loop.
 ///
-#define PRAGMA_OMP_TEAMS_LOOP(...) PRAGMA_OMP(teams loop SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_LOOP), __VA_ARGS__))
+#define PRAGMA_OMP_TEAMS_LOOP(...) PRAGMA_OMP(teams loop SOLOMON_INTERNAL_APPEND_CLAUSES(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TEAMS, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS_IF), __VA_ARGS__))
 
 #endif  // !defined(SOLOMON_OMP_DIRECTIVE_HPP)

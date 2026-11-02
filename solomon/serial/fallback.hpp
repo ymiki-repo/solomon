@@ -44,6 +44,7 @@
 #define PRAGMA_OMP_ATOMIC(...)
 #define PRAGMA_OMP_BEGIN_DECLARE_TARGET(...)
 #define PRAGMA_OMP_CRITICAL(...)
+#define PRAGMA_OMP_END_CRITICAL_WITH_NAME(name)
 #define PRAGMA_OMP_DECLARE_SIMD(...)
 #define PRAGMA_OMP_DECLARE_TARGET(...)
 #define PRAGMA_OMP_DEPOBJ(...)
@@ -127,8 +128,6 @@
 #define PRAGMA_OMP_TILE(...)
 #define PRAGMA_OMP_UNROLL(...)
 #define PRAGMA_OMP_WORKSHARE(...)
-#define PRAGMA_STR(...)
-#define PRAGMA_STR1(...)
 
 // directive macros without arguments (expand to nothing in serial execution)
 #define PRAGMA_ACC_ATOMIC_CAPTURE
@@ -167,5 +166,27 @@
 #define PRAGMA_OMP_TARGET_ATOMIC_UPDATE
 #define PRAGMA_OMP_TARGET_ATOMIC_WRITE
 #define PRAGMA_OMP_TASKYIELD
+
+// helpers to build directives (expand to nothing in serial execution; the arguments are dropped)
+#define SOLOMON_INTERNAL_PRAGMA(...)
+#define SOLOMON_APPEND_ARGS(...)
+#if defined(PRINT_GENERATED_PRAGMA)
+#define SOLOMON_INTERNAL_SHOW_PRAGMA(...)
+#endif  // defined(PRINT_GENERATED_PRAGMA)
+
+// stringification and SOLOMON_EMIT_WARNING(msg) keep their meaning in serial execution
+#include "../util/stringify.hpp"
+
+///
+/// @brief finalize the OpenMP loop directives (nothing: the end directive of a loop construct is optional in OpenMP; in the OpenACC backend they close the compute construct in Fortran)
+///
+#define PRAGMA_OMP_END_TARGET_PARALLEL_DO
+#define PRAGMA_OMP_END_TARGET_PARALLEL_DO_SIMD
+#define PRAGMA_OMP_END_TARGET_PARALLEL_LOOP
+#define PRAGMA_OMP_END_TARGET_TEAMS_DISTRIBUTE
+#define PRAGMA_OMP_END_TARGET_TEAMS_DISTRIBUTE_SIMD
+#define PRAGMA_OMP_END_TARGET_TEAMS_LOOP
+#define PRAGMA_OMP_END_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO
+#define PRAGMA_OMP_END_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD
 
 #endif  // !defined(SOLOMON_SERIAL_FALLBACK_HPP)

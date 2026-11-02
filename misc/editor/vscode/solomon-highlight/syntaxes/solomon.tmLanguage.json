@@ -1,6 +1,6 @@
 {
     "scopeName": "solomon.injection",
-    "injectionSelector": "L:source.c, L:source.cpp, L:source.fortran.free, L:source.fortran.fixed",
+    "injectionSelector": "L:source.c -comment -string, L:source.cpp -comment -string, L:source.fortran.free -comment -string, L:source.fortran.fixed -comment -string",
     "patterns": [
         {
             "name": "keyword.control.directive.solomon",
@@ -8,7 +8,7 @@
         },
         {
             "name": "keyword.control.directive.solomon",
-            "match": "\\bOMP_PASS_LIST\\b"
+            "match": "\\b(?:ACC|OMP)_PASS_LIST\\b"
         }
     ]
 }

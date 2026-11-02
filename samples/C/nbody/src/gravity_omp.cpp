@@ -1,7 +1,7 @@
 ///
 /// @file gravity_omp.cpp
 /// @author Yohei MIKI (Information Technology Center, The University of Tokyo)
-/// @brief calculating gravitational interation (implementation in OpenMP style)
+/// @brief calculating gravitational interaction (implementation in OpenMP style)
 ///
 /// @copyright Copyright (c) 2024 Yohei MIKI
 ///

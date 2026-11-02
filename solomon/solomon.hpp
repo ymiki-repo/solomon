@@ -41,15 +41,30 @@
 // OpenACC is not activated, disable OpenACC as offloading backend
 #undef OFFLOAD_BY_OPENACC
 #endif  // defined(OFFLOAD_BY_OPENACC) && !defined(_OPENACC)
-#if defined(OFFLOAD_BY_OPENMP_TARGET) && !(_OPENMP >= 201307)
+#if defined(OFFLOAD_BY_OPENMP_TARGET) && !(defined(_OPENMP) && (_OPENMP >= 201307))
 // OpenMP 4.0+ is not activated, disable OpenMP target directives as offloading backend
 #undef OFFLOAD_BY_OPENMP_TARGET
-#endif  // defined(OFFLOAD_BY_OPENMP_TARGET) && !(_OPENMP >= 201307)
+#endif  // defined(OFFLOAD_BY_OPENMP_TARGET) && !(defined(_OPENMP) && (_OPENMP >= 201307))
 
 // select only one backend for offloading
 #if defined(OFFLOAD_BY_OPENACC) && defined(OFFLOAD_BY_OPENMP_TARGET)
 #undef OFFLOAD_BY_OPENMP_TARGET
 #endif  // defined(OFFLOAD_BY_OPENACC) && defined(OFFLOAD_BY_OPENMP_TARGET)
+
+// the SOLOMON_-prefixed spellings of the backend macros, and of their sub-options (_PARALLEL / _DISTRIBUTE), are left
+// defined only for the backend in use (the unprefixed sub-options are kept as given, as in v1.x)
+#if defined(SOLOMON_OFFLOAD_BY_OPENACC) && !defined(OFFLOAD_BY_OPENACC)
+#undef SOLOMON_OFFLOAD_BY_OPENACC
+#endif  // defined(SOLOMON_OFFLOAD_BY_OPENACC) && !defined(OFFLOAD_BY_OPENACC)
+#if defined(SOLOMON_OFFLOAD_BY_OPENMP_TARGET) && !defined(OFFLOAD_BY_OPENMP_TARGET)
+#undef SOLOMON_OFFLOAD_BY_OPENMP_TARGET
+#endif  // defined(SOLOMON_OFFLOAD_BY_OPENMP_TARGET) && !defined(OFFLOAD_BY_OPENMP_TARGET)
+#if defined(SOLOMON_OFFLOAD_BY_OPENACC_PARALLEL) && !defined(OFFLOAD_BY_OPENACC)
+#undef SOLOMON_OFFLOAD_BY_OPENACC_PARALLEL
+#endif  // defined(SOLOMON_OFFLOAD_BY_OPENACC_PARALLEL) && !defined(OFFLOAD_BY_OPENACC)
+#if defined(SOLOMON_OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE) && !defined(OFFLOAD_BY_OPENMP_TARGET)
+#undef SOLOMON_OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE
+#endif  // defined(SOLOMON_OFFLOAD_BY_OPENMP_TARGET_DISTRIBUTE) && !defined(OFFLOAD_BY_OPENMP_TARGET)
 
 ///
 /// @brief "arg" appears only in the fallback mode (when GPU offloading is disabled)
@@ -164,6 +179,42 @@
 #define SOLOMON_CLAUSE_INDEPENDENT ACC_CLAUSE_INDEPENDENT
 
 ///
+/// @brief clauses that only simd takes (OpenMP: simdlen, safelen, aligned, nontemporal, if (simd : condition)); they go where SOLOMON_CLAUSE_INDEPENDENT adds simd
+/// @details In the OpenMP backends, each becomes the OpenMP clause on the directives that get simd (SOLOMON_OFFLOAD(...) except the teams loop form,
+///          SOLOMON_OFFLOAD_OUTER_LOOP(...), SOLOMON_PARALLELIZE_INNER_LOOP(...)); pass SOLOMON_CLAUSE_INDEPENDENT together, or the compiler stops on a directive without simd.
+///          In OpenACC they are ignored (OpenACC has no counterpart: vector_length is the number of vector lanes, set by SOLOMON_CLAUSE_NUM_THREADS(n)).
+///          NVIDIA HPC SDK (C/C++) rejects nontemporal and if (simd : ...), and aligned on the target directives; nvfortran rejects nontemporal.
+///          Solomon drops them on purpose with those compilers (they are hints: the results do not change).
+///
+#if defined(OFFLOAD_BY_OPENACC)
+#define SOLOMON_CLAUSE_SIMDLEN(length) SOLOMON_INTERNAL_MISSING_CLAUSE
+#define SOLOMON_CLAUSE_SAFELEN(length) SOLOMON_INTERNAL_MISSING_CLAUSE
+#define SOLOMON_CLAUSE_ALIGNED(...) SOLOMON_INTERNAL_MISSING_CLAUSE
+#define SOLOMON_CLAUSE_NONTEMPORAL(...) SOLOMON_INTERNAL_MISSING_CLAUSE
+#define SOLOMON_CLAUSE_IF_SIMD(condition) SOLOMON_INTERNAL_MISSING_CLAUSE
+#else  // defined(OFFLOAD_BY_OPENACC)
+#define SOLOMON_CLAUSE_SIMDLEN(length) SOLOMON_INTERNAL_OMP_SIMD_ONLY_CLAUSE(simdlen(length))
+#define SOLOMON_CLAUSE_SAFELEN(length) SOLOMON_INTERNAL_OMP_SIMD_ONLY_CLAUSE(safelen(length))
+#if defined(__NVCOMPILER) && !defined(SOLOMON_FORTRAN)
+#if defined(OFFLOAD_BY_OPENMP_TARGET)
+#define SOLOMON_CLAUSE_ALIGNED(...) SOLOMON_INTERNAL_MISSING_CLAUSE
+#else  // defined(OFFLOAD_BY_OPENMP_TARGET)
+#define SOLOMON_CLAUSE_ALIGNED(...) SOLOMON_INTERNAL_OMP_SIMD_ONLY_CLAUSE(aligned(__VA_ARGS__))
+#endif  // defined(OFFLOAD_BY_OPENMP_TARGET)
+#define SOLOMON_CLAUSE_NONTEMPORAL(...) SOLOMON_INTERNAL_MISSING_CLAUSE
+#define SOLOMON_CLAUSE_IF_SIMD(condition) SOLOMON_INTERNAL_MISSING_CLAUSE
+#else  // defined(__NVCOMPILER) && !defined(SOLOMON_FORTRAN)
+#define SOLOMON_CLAUSE_ALIGNED(...) SOLOMON_INTERNAL_OMP_SIMD_ONLY_CLAUSE(aligned(__VA_ARGS__))
+#if defined(SOLOMON_FORTRAN) && (defined(__NVCOMPILER) || defined(__SOLOMON_NVCOMPILER__))
+#define SOLOMON_CLAUSE_NONTEMPORAL(...) SOLOMON_INTERNAL_MISSING_CLAUSE
+#else  // defined(SOLOMON_FORTRAN) && (defined(__NVCOMPILER) || defined(__SOLOMON_NVCOMPILER__))
+#define SOLOMON_CLAUSE_NONTEMPORAL(...) SOLOMON_INTERNAL_OMP_SIMD_ONLY_CLAUSE(nontemporal(__VA_ARGS__))
+#endif  // defined(SOLOMON_FORTRAN) && (defined(__NVCOMPILER) || defined(__SOLOMON_NVCOMPILER__))
+#define SOLOMON_CLAUSE_IF_SIMD(condition) SOLOMON_INTERNAL_OMP_SIMD_ONLY_CLAUSE(if (simd : condition))
+#endif  // defined(__NVCOMPILER) && !defined(SOLOMON_FORTRAN)
+#endif  // defined(OFFLOAD_BY_OPENACC)
+
+///
 /// @brief omit vectorization
 ///
 #define SOLOMON_CLAUSE_SEQUENTIAL ACC_CLAUSE_SEQ
@@ -188,12 +239,12 @@
 #endif  // defined(__clang__) && (__clang_major__ >= 14)
 
 ///
-/// @brief suggest parallelization hierarchy: thread(CUDA)/vector(OpenACC)/thread(OpenMP target)
+/// @brief suggest parallelization hierarchy in OpenACC: thread(CUDA)/vector(OpenACC); ignored in OpenMP target (use SOLOMON_PARALLELIZE_INNER_LOOP or SOLOMON_CLAUSE_NUM_THREADS)
 ///
 #define SOLOMON_CLAUSE_THREAD ACC_CLAUSE_VECTOR
 
 ///
-/// @brief suggest parallelization hierarchy: block(CUDA)/gang(OpenACC)/teams(OpenMP target)
+/// @brief suggest parallelization hierarchy in OpenACC: block(CUDA)/gang(OpenACC); ignored in OpenMP target (use SOLOMON_OFFLOAD_OUTER_LOOP or SOLOMON_CLAUSE_NUM_BLOCKS)
 ///
 #define SOLOMON_CLAUSE_BLOCK ACC_CLAUSE_GANG
 
@@ -218,7 +269,7 @@
 
 ///
 /// @brief specify the target procedures by name (OpenACC: routine(name), OpenMP target: declare target(list))
-/// @note pass as the first argument of SOLOMON_DECLARE_OFFLOADED(...) (v2.0.0 or later)
+/// @note pass as an argument of SOLOMON_DECLARE_OFFLOADED(...) (v2.0.0 or later); the name list comes right after the directive name wherever it is written
 ///
 #define SOLOMON_CLAUSE_TARGETS(...) (__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_ROUTINE, SOLOMON_INTERNAL_TAG_OMP_DECLARE_TARGET)
 
@@ -266,7 +317,19 @@
 #if defined(OFFLOAD_BY_OPENACC)
 #define SOLOMON_CLAUSE_ASYNC_QUEUE(id) ACC_CLAUSE_ASYNC(id)
 #else  // defined(OFFLOAD_BY_OPENACC)
-#define SOLOMON_CLAUSE_ASYNC_QUEUE(id)
+#define SOLOMON_CLAUSE_ASYNC_QUEUE(id) SOLOMON_INTERNAL_MISSING_CLAUSE
+#endif  // defined(OFFLOAD_BY_OPENACC)
+
+///
+/// @brief wait for the specified queue(s) before launching kernels (v2.0.0 or later)
+/// @details In OpenACC, SOLOMON_CLAUSE_WAIT_QUEUE(id, ...) is converted to wait(id, ...): the construct does not begin until the work on the queue(s) is complete.
+///          In OpenMP target directives, explicit queue IDs are not supported; therefore, SOLOMON_CLAUSE_WAIT_QUEUE(...) is ignored (put SOLOMON_SYNCHRONIZE() before the construct to wait for everything).
+///          Pass one queue ID or more; to wait for all queues, put SOLOMON_SYNCHRONIZE() before the construct.
+///
+#if defined(OFFLOAD_BY_OPENACC)
+#define SOLOMON_CLAUSE_WAIT_QUEUE(...) ACC_CLAUSE_WAIT(__VA_ARGS__)
+#else  // defined(OFFLOAD_BY_OPENACC)
+#define SOLOMON_CLAUSE_WAIT_QUEUE(...) SOLOMON_INTERNAL_MISSING_CLAUSE
 #endif  // defined(OFFLOAD_BY_OPENACC)
 
 ///
