@@ -4,9 +4,9 @@ SRCDIR	:= src
 SOLOMON_DIR	?= ../../../solomon
 # SOLOMON_DIR is checked unless the only goal is clean
 ifneq ($(filter-out clean,$(or $(MAKECMDGOALS),all)),)
-SPECIAL_CHARS	:= ' " \ ( ) ; & | < > `
+SPECIAL_CHARS	:= ' " \ ( ) ; & | < > : [ ] * ? `
 ifneq ($(word 2,$(SOLOMON_DIR))$(strip $(foreach c,$(SPECIAL_CHARS),$(findstring $(c),$(SOLOMON_DIR)))),)
-$(error SOLOMON_DIR='$(SOLOMON_DIR)' holds a space, a quote, or one of \ ( ) ; & | < > and the backquote, which the compile commands cannot take: move Solomon to a path without them)
+$(error SOLOMON_DIR='$(SOLOMON_DIR)' holds a space, a quote, or one of \ ( ) ; & | < > : [ ] * ? and the backquote, which the compile commands and the rules of make cannot take: move Solomon to a path without them)
 endif
 ifeq ($(wildcard $(SOLOMON_DIR)/solomon.hpp),)
 $(error $(SOLOMON_DIR)/solomon.hpp is not found: set SOLOMON_DIR to the directory solomon/ of Solomon, e.g. make SOLOMON_DIR=/path/to/solomon)
@@ -164,6 +164,8 @@ endif
 INC	:= -I$(SOLOMON_DIR)
 INC	+= -isystem=$(BOOST_INC)
 # LIB	+= -L$(BOOST_LIB) #-lboost_filesystem
+LDFLAGS	:=
+LDLIBS	:=
 
 # debug mode
 ifeq ($(DEBUG_MODE), 1)
@@ -196,7 +198,7 @@ OBJ_OMP	:= $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRC_OMP) $(SRC_LIB)))
 DEP	:= $(sort $(OBJ:.o=.d) $(OBJ_ACC:.o=.d) $(OBJ_OMP:.o=.d))
 # build settings of the last build: the objects and the executables are rebuilt when the settings (make variables) change
 STAMP	:= $(OBJDIR)/settings.txt
-SETTINGS	:= $(CXX) $(STD) $(FLAG) $(ARGS) $(PARAM) $(INC) $(LINK_ARGS) $(LIB)
+SETTINGS	:= $(CXX) $(STD) $(FLAG) $(ARGS) $(PARAM) $(INC) $(TARGET_ARCH) $(LINK_ARGS) $(LIB) $(LDFLAGS) $(LDLIBS)
 
 # executable
 EXE	:= $(BINDIR)/nbody_pragma
@@ -210,15 +212,15 @@ omp:	$(OMP)
 
 # rules
 $(EXE):	$(OBJ) $(STAMP) | $(RUNDIR)
-	$(CXX) $(STD) $(FLAG) $(ARGS) -o $@ $(OBJ) $(LINK_ARGS) $(LIB)
+	$(CXX) $(STD) $(FLAG) $(ARGS) $(TARGET_ARCH) -o $@ $(OBJ) $(LINK_ARGS) $(LIB) $(LDFLAGS) $(LDLIBS)
 $(ACC):	$(OBJ_ACC) $(STAMP) | $(RUNDIR)
-	$(CXX) $(STD) $(FLAG) $(ARGS) -o $@ $(OBJ_ACC) $(LINK_ARGS) $(LIB)
+	$(CXX) $(STD) $(FLAG) $(ARGS) $(TARGET_ARCH) -o $@ $(OBJ_ACC) $(LINK_ARGS) $(LIB) $(LDFLAGS) $(LDLIBS)
 $(OMP):	$(OBJ_OMP) $(STAMP) | $(RUNDIR)
-	$(CXX) $(STD) $(FLAG) $(ARGS) -o $@ $(OBJ_OMP) $(LINK_ARGS) $(LIB)
+	$(CXX) $(STD) $(FLAG) $(ARGS) $(TARGET_ARCH) -o $@ $(OBJ_OMP) $(LINK_ARGS) $(LIB) $(LDFLAGS) $(LDLIBS)
 
 $(OBJDIR)/%.o:	%.cpp $(STAMP) Makefile | $(OBJDIR)
-	$(CXX) $(STD) $(FLAG) $(ARGS) $(PARAM) $(INC) -o $@ -c $<
-	$(CXX) $(STD) $(ARGS) $(PARAM) $(INC) -MM -MP -MT $@ -MF $(@:.o=.d) $<
+	$(CXX) $(STD) $(FLAG) $(ARGS) $(PARAM) $(INC) $(TARGET_ARCH) -o $@ -c $<
+	$(CXX) $(STD) $(ARGS) $(PARAM) $(INC) $(TARGET_ARCH) -MM -MP -MT $@ -MF $(@:.o=.d) $<
 
 $(STAMP):	FORCE | $(OBJDIR)
 	@printf '%s\n' '$(subst ','\'',$(SETTINGS))' | cmp -s - $@ || printf '%s\n' '$(subst ','\'',$(SETTINGS))' > $@
@@ -232,4 +234,7 @@ $(OBJDIR) $(RUNDIR):
 clean:
 	rm -rf $(EXE) $(ACC) $(OMP) $(OBJDIR)/*.o $(OBJDIR)/*.d $(STAMP)
 
+# the dependency files are not read when the only goal is clean (a broken one would stop make clean)
+ifneq ($(filter-out clean,$(or $(MAKECMDGOALS),all)),)
 -include $(DEP)
+endif

@@ -23,7 +23,7 @@
 #include "acc/utils.hpp"
 #include "convert/acc2omp/clause.hpp"
 #include "convert/acc2omp/directive.hpp"
-#else   // defined(_OPENMP)
+#else  // defined(_OPENMP)
 // serial execution: all directive macros expand to nothing
 #include "serial/fallback.hpp"
 #include "serial/runtime.hpp"

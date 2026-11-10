@@ -23,18 +23,22 @@
 ##     @SOURCE_EXTS@
 ##     by default only the sources that #include solomon.hpp (<solomon.hpp>, "solomon.hpp", or a path
 ##     ending in solomon.hpp such as <solomon/solomon.hpp>); the others are skipped with a note (see --all)
-##   * build files (e.g., Makefile, *.mk, *.inc): only when given as arguments
+##   * build files (e.g., Makefile, *.mk, *.inc) and any other file whose extension is not in the list above
+##     (e.g., *.inl, *.cuh): only when given as arguments, and with the rule for build files below
 ##   * the replacement is word-based and idempotent: running it again, or on v2.0.0 code, changes nothing;
 ##     names in comments and string literals are replaced as well, so please review the diff
 ##
 ## What is left unchanged:
 ##   * the configuration macros OFFLOAD_BY_* and -DOFFLOAD_BY_* (they keep working in v2.0.0; in sources,
 ##     defined(OFFLOAD_BY_*) tells the backend actually in use, so renaming it would change the meaning)
-##   * raw directive lines: #pragma with its continuation lines, Fortran !$omp / !$acc in any letter case,
-##     and c$omp / *$omp / c$acc / *$acc in column 1
+##   * raw directive lines: #pragma with its continuation lines (a line ending in \, also with spaces or tabs
+##     after the \, as gcc reads it), Fortran !$omp / !$acc in any letter case, and c$omp / *$omp / c$acc /
+##     *$acc in column 1; a note lists such lines that hold v1.x names (review them by hand); in Fortran
+##     directives, ATOMIC, COLLAPSE, NUM_THREADS, REDUCTION and APPEND_ARGS are taken as the OpenMP / OpenACC
+##     words of the same names and not listed
 ##   * in build files, the lines with make / shell variables or assignments: $( ${ $NAME := ::= ?= += !=,
-##     NAME = at the start of a line, export / unexport / override / undefine / ifdef / ifndef / unset
-##     (review such lines by hand)
+##     NAME = at the start of a line, export / unexport / override / undefine / ifdef / ifndef / unset;
+##     a note lists such lines that hold v1.x names (review them by hand)
 ##   * Solomon itself: a directory holding Solomon's solomon.hpp is skipped, with a note
 ##   * symbolic links to directories and to sources (give the real path instead) and the paths matched by
 ##     --exclude, with a note
@@ -65,8 +69,8 @@ PROG=${0##*/}
 # extensions of the sources, searched for in directories (case-sensitive)
 SOURCE_EXTS="c h cc cpp cxx hh hpp hxx C CC CPP f for f77 f90 f95 f03 f08 fpp F FOR F77 F90 F95 F03 F08 FPP"
 
-# a line that includes Solomon (grep -E)
-INCLUDE_SOLOMON='^[[:space:]]*#[[:space:]]*include[[:space:]]*[<"]([^>"]*/)?solomon\.hpp[>"]'
+# a line that includes Solomon (grep -E in the C locale); a UTF-8 byte order mark in front of it is allowed
+INCLUDE_SOLOMON='^('$'\xef\xbb\xbf'')?[[:space:]]*#[[:space:]]*include[[:space:]]*[<"]([^>"]*/)?solomon\.hpp[>"]'
 
 # seconds to wait for another run that is converting the same file
 LOCK_WAIT=30
@@ -123,23 +127,36 @@ COPY_D2H_AFTER_EXEC SOLOMON_CLAUSE_COPY_D2H_AFTER_EXEC
 APPEND_ARGS SOLOMON_APPEND_ARGS
 '
 
-# lines printed unchanged: #pragma (and its continuation lines: a line ending in \, with or without the CR of a
-# CRLF line end), Fortran !$omp / !$acc, and c$ / *$ in column 1
+# lines printed unchanged: #pragma (also after a UTF-8 byte order mark on the first line; and its continuation lines: a
+# line ending in \, also with spaces, tabs, form feeds or vertical tabs after it as gcc reads it, with or without the CR
+# of a CRLF line end), Fortran !$omp / !$acc, and c$ / *$ in column 1; @PRAGMA@ and @FORTRAN@ are the commands run on
+# such a line before it is passed (see build_script)
 DIRECTIVE_RULES='
-/^[[:space:]]*#[[:space:]]*pragma\b/{
+/^\('$'\xef\xbb\xbf''\)\{0,1\}[[:space:]]*#[[:space:]]*pragma\b/{
 :solomon_pragma
-/\\\r\{0,1\}$/{
+@PRAGMA@
+/\\[[:blank:]\f\v]*\r\{0,1\}$/{
 n
 b solomon_pragma
 }
 b
 }
-/^[[:space:]]*![$]\([oO][mM][pP]\|[aA][cC][cC]\)/b
-/^[cC*][$]\([oO][mM][pP]\|[aA][cC][cC]\)/b
+/^[[:space:]]*![$]\([oO][mM][pP]\|[aA][cC][cC]\)/{
+@FORTRAN@
+b
+}
+/^[cC*][$]\([oO][mM][pP]\|[aA][cC][cC]\)/{
+@FORTRAN@
+b
+}
 '
 
+# v1.x names that are also OpenMP / OpenACC clauses or directives; Fortran is case-insensitive, so in a Fortran
+# directive (!$OMP ATOMIC, !$ACC LOOP COLLAPSE(2)) they are taken as those and not reported
+DIRECTIVE_WORDS='ATOMIC\|COLLAPSE\|NUM_THREADS\|REDUCTION\|APPEND_ARGS'
+
 # lines printed unchanged in build files: make / shell variables and assignments
-VARIABLE_RULE='/[$][({A-Za-z_]\|[:?+!]=\|\b\(export\|unexport\|override\|undefine\|ifdef\|ifndef\|unset\)\b\|^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=/b'
+VARIABLE_LINE='/[$][({A-Za-z_]\|[:?+!]=\|\b\(export\|unexport\|override\|undefine\|ifdef\|ifndef\|unset\)\b\|^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=/'
 
 # print the help: the lines starting with ## at the top of this file
 usage() {
@@ -210,39 +227,55 @@ fi
 
 # ---- sed scripts and the check of sed
 
-# $1: src (a file with one of SOURCE_EXTS) or other (a build file: keeps the lines with variables)
+# $1: src (a file with one of SOURCE_EXTS), other (a build file: keeps the lines with variables), kept (for sed -n:
+# prints the numbers of the lines of a build file that are kept by the rule above but hold v1.x names) or directive
+# (for sed -n: prints the numbers of the raw directive lines that hold v1.x names)
 build_script() {
-	local old new
-	printf '%s\n' "$DIRECTIVE_RULES"
-	if [ "$1" = other ]; then
-		printf '%s\n' "$VARIABLE_RULE"
-	fi
+	local old new names="" rules=$DIRECTIVE_RULES pragma="" fortran=""
 	while read -r old new; do
 		[ -n "$old" ] || continue
-		printf 's/\\b%s\\b/%s/g\n' "$old" "$new"
+		names="$names${names:+\\|}$old"
 	done <<< "$MAP"
+	if [ "$1" = directive ]; then
+		pragma="/\\b\\($names\\)\\b/="
+		fortran="s/\\b\\($DIRECTIVE_WORDS\\)\\b//g"$'\n'"$pragma"
+	fi
+	rules=${rules//@PRAGMA@/$pragma}
+	printf '%s\n' "${rules//@FORTRAN@/$fortran}"
+	case $1 in
+		src | other)
+			[ "$1" = src ] || printf '%sb\n' "$VARIABLE_LINE"
+			while read -r old new; do
+				[ -z "$old" ] || printf 's/\\b%s\\b/%s/g\n' "$old" "$new"
+			done <<< "$MAP"
+			;;
+		kept) printf '%s{\n/\\b\\(%s\\)\\b/=\n}\n' "$VARIABLE_LINE" "$names" ;;
+	esac
 }
 SCRIPT_SRC=$(build_script src)
 SCRIPT_OTHER=$(build_script other)
+SCRIPT_KEPT=$(build_script kept)
+SCRIPT_DIRECTIVE=$(build_script directive)
 
 # prints the first of sed / gsed that is GNU sed and gives the expected output for the scripts above
 # shellcheck disable=SC2016 # the probe texts hold make / shell variables literally on purpose (permanent)
 find_sed() {
-	local cand out_src out_other probe_crlf probe_in probe_src probe_other
-	# the last two lines have CRLF line ends (a continuation line of #pragma must be kept there as well)
-	probe_crlf=$'#pragma omp atomic \\\r\nATOMIC\r'
+	local cand out_src out_other out_kept out_directive probe_cont probe_in probe_src probe_other
+	# continuation lines of #pragma after a \ followed by blanks, and after a \ with a CRLF line end (the last two
+	# lines); they must be kept as well
+	probe_cont=$'#pragma omp atomic \\ \t\f\nATOMIC\n#pragma omp atomic \\\r\nATOMIC\r'
 	probe_in='OFFLOAD(AS_INDEPENDENT, NUM_THREADS(4)) END_OFFLOAD_X
 #pragma omp atomic \
 ATOMIC
 !$OMP ATOMIC
 x := $(NUM_THREADS) ${AS_BLOCK} $COLLAPSE
-NUM_THREADS ?= 4'$'\n'"$probe_crlf"
+NUM_THREADS ?= 4'$'\n'"$probe_cont"
 	probe_src='SOLOMON_OFFLOAD(SOLOMON_CLAUSE_INDEPENDENT, SOLOMON_CLAUSE_NUM_THREADS(4)) END_OFFLOAD_X
 #pragma omp atomic \
 ATOMIC
 !$OMP ATOMIC
 x := $(SOLOMON_CLAUSE_NUM_THREADS) ${SOLOMON_CLAUSE_BLOCK} $SOLOMON_CLAUSE_COLLAPSE
-SOLOMON_CLAUSE_NUM_THREADS ?= 4'$'\n'"$probe_crlf"
+SOLOMON_CLAUSE_NUM_THREADS ?= 4'$'\n'"$probe_cont"
 	# in the files that are not sources, only the first line changes
 	probe_other="${probe_src%%$'\n'*}"$'\n'"${probe_in#*$'\n'}"
 
@@ -251,7 +284,12 @@ SOLOMON_CLAUSE_NUM_THREADS ?= 4'$'\n'"$probe_crlf"
 		"$cand" --version 2> /dev/null | grep -a -q -e '^[^ ]* (GNU sed) ' -e '^GNU sed version ' || continue
 		out_src=$(printf '%s\n' "$probe_in" | LC_ALL=C "$cand" -e "$SCRIPT_SRC" 2> /dev/null)
 		out_other=$(printf '%s\n' "$probe_in" | LC_ALL=C "$cand" -e "$SCRIPT_OTHER" 2> /dev/null)
-		if [ "$out_src" = "$probe_src" ] && [ "$out_other" = "$probe_other" ]; then
+		# the kept lines of a build file that hold v1.x names: the lines with $(NUM_THREADS) and NUM_THREADS ?=
+		out_kept=$(printf '%s\n' "$probe_in" | LC_ALL=C "$cand" -n -e "$SCRIPT_KEPT" 2> /dev/null)
+		# the raw directive lines that hold v1.x names: the continuation lines ATOMIC of #pragma (not !$OMP ATOMIC)
+		out_directive=$(printf '%s\n' "$probe_in" | LC_ALL=C "$cand" -n -e "$SCRIPT_DIRECTIVE" 2> /dev/null)
+		if [ "$out_src" = "$probe_src" ] && [ "$out_other" = "$probe_other" ] && [ "$out_kept" = $'5\n6' ] &&
+			[ "$out_directive" = $'3\n8\n10' ]; then
 			printf '%s\n' "$cand"
 			return 0
 		fi
@@ -351,8 +389,9 @@ is_excluded() {
 NSKIP_INCLUDE=0
 # add a file to convert; a source that does not include Solomon is skipped unless --all
 add_file() {
-	# an unreadable file is kept, so that the conversion reports it
-	if [ "$2" = src ] && [ "$ALL" -eq 0 ] && [ -r "$1" ] && ! grep -a -q -E "$INCLUDE_SOLOMON" "$1"; then
+	# an unreadable file is kept, so that the conversion reports it; grep runs in a subshell in the C locale, which
+	# keeps bash from restoring the locale of the caller (a warning when that locale is missing)
+	if [ "$2" = src ] && [ "$ALL" -eq 0 ] && [ -r "$1" ] && ! (LC_ALL=C grep -a -q -E "$INCLUDE_SOLOMON" "$1"); then
 		NSKIP_INCLUDE=$((NSKIP_INCLUDE + 1))
 		if ! compare "$1" "$SCRIPT_SRC"; then
 			note "skipped (no #include of solomon.hpp, but it has v1.x names; --all converts it): $1"
@@ -464,6 +503,8 @@ for arg in "${ARGS[@]}"; do
 		fi
 	elif [ -e "$arg" ]; then
 		error "not a regular file or a directory: $arg"
+	elif [ "${arg%/*}" != "$arg" ] && [ -d "${arg%/*}" ] && [ ! -x "${arg%/*}" ]; then
+		error "cannot reach (no search permission on ${arg%/*}): $arg"
 	else
 		error "no such file or directory: $arg"
 	fi
@@ -490,6 +531,20 @@ block_notes() {
 	if grep -a -q -w -e AS_GRID -e NUM_GRIDS "$1"; then
 		note "note: $2: AS_GRID / NUM_GRIDS also appear; in the same clause list as AS_BLOCK / NUM_BLOCKS they now give the same clause twice (e.g., num_gangs(128) num_gangs(4))"
 	fi
+}
+
+# print notes on the lines that hold v1.x names but are left unchanged: raw directive lines and, in a build file, the
+# lines with variables or assignments
+# $1: the file, $2: its kind (src or other)
+kept_notes() {
+	local lines
+	# sed runs in a subshell in the C locale (see add_file)
+	lines=$( (LC_ALL=C "$SED" -n -e "$SCRIPT_DIRECTIVE" < "$1") 2> /dev/null) || lines=""
+	[ -z "$lines" ] || note "note: $1: v1.x names are left unchanged in raw directive lines (#pragma, !\$omp, !\$acc); review them by hand (line(s) ${lines//$'\n'/, })"
+	[ "$2" = other ] || return 0
+	lines=$( (LC_ALL=C "$SED" -n -e "$SCRIPT_KEPT" < "$1") 2> /dev/null) || return 0
+	[ -n "$lines" ] || return 0
+	note "note: $1: v1.x names are left unchanged in the lines with make / shell variables or assignments; review them by hand (line(s) ${lines//$'\n'/, })"
 }
 
 dir_of() {
@@ -641,6 +696,7 @@ if [ "$APPLY" -eq 0 ]; then
 		elif [ "${st[1]}" -ne 0 ]; then
 			error "diff failed on $f"
 		fi
+		kept_notes "$f" "${KINDS[$i]}"
 	done
 	summary "would change"
 	[ "$NERR" -eq 0 ] || exit 2
@@ -669,6 +725,7 @@ if [ "$NERR" -ne 0 ]; then
 	exit 2
 fi
 for i in "${!FILES[@]}"; do
+	kept_notes "${FILES[$i]}" "${KINDS[$i]}"
 	if apply_one "${FILES[$i]}" "$(script_of "${KINDS[$i]}")"; then
 		NCHANGED=$((NCHANGED + 1))
 	fi

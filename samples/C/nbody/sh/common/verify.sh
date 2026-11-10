@@ -57,17 +57,18 @@ for MODEL_ID in "${MODEL_ID_LIST[@]}"; do
 				guard_fail "run (exit $?): ${COMMAND[*]}"
 			fi
 			mkdir -p "${DUMP}/model${MODEL_ID}/${TAG}"
-			mv --backup=numbered log dat fig "${DUMP}/model${MODEL_ID}/${TAG}"
+			mv --backup=numbered log dat fig "${DUMP}/model${MODEL_ID}/${TAG}/" ||
+				guard_fail "move: log/, dat/, and fig/ of model ${MODEL_ID}, ${TAG} into ${DUMP}/model${MODEL_ID}/${TAG}/"
 		elif [ "$BUILT" = 1 ]; then
 			guard_fail "build: model ${MODEL_ID}: make made no ${BIN}"
 		fi
 	done
 	mkdir -p "${DUMP}/model${MODEL_ID}"
-	mv --backup=numbered bin "${DUMP}/model${MODEL_ID}"
+	mv --backup=numbered bin "${DUMP}/model${MODEL_ID}/" || guard_fail "move: bin/ of model ${MODEL_ID} into ${DUMP}/model${MODEL_ID}/"
 done
 
 HOST=$(guard_host)
 DEST=${HOST}_${TARGET}_${ARCH}
 mkdir -p "${DEST}"
-mv --backup=numbered "${DUMP}" "${DEST}"
+mv --backup=numbered "${DUMP}" "${DEST}/" || guard_fail "move: ${DUMP}/ into ${DEST}/ (the results stay in ${PWD}/${DUMP}/)"
 guard_finish

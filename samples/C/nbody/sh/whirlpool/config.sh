@@ -33,3 +33,7 @@ BOOST_MODULE=boost
 DETECT_NUMA=1
 # NUMA node of an Intel GPU (not detected; empty: the first node of `numactl --show`)
 INTEL_NUMA_NODE=0
+
+# upper bound of the time of one run of survey.sh (a duration of timeout(1), e.g. 40s or 2m): a longer run counts as a
+# failure; a run at N = 2M takes about 40 s at 3 TFlop/s, so raise it for a slower GPU
+RUN_TIMEOUT=40s

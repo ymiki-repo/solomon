@@ -12,8 +12,8 @@
 
 #include "../../util/cloak.hpp"     // SOLOMON_INTERNAL_CLOAK_IIF
 #include "../../util/is_empty.hpp"  // SOLOMON_INTERNAL_IS_EMPTY
-#include "../../util/va_args.hpp"
 #include "../../util/nest_map.hpp"  // SOLOMON_INTERNAL_NEST_MAP
+#include "../../util/va_args.hpp"
 #include "../clause.hpp"
 
 ///
@@ -510,10 +510,14 @@
 #define OMP_TARGET_CLAUSE_MAP(...) SOLOMON_INTERNAL_NEST_MAP(SOLOMON_INTERNAL_NEST_OMP_, OMP_CLAUSE_MAP, __VA_ARGS__)
 
 // modifiers collected in front of the nested clauses: (s, m1, m2, ...,) with s = 0 (none), 1 (no present), 2 (present)
+// clang-format off: the empty last element of the tuple is kept as written (permanent)
 #define SOLOMON_INTERNAL_NEST_OMP_MODINIT (0,)
+// clang-format on
 #define SOLOMON_INTERNAL_NEST_OMP_REST(x, ...) __VA_ARGS__
 #define SOLOMON_INTERNAL_NEST_OMP_MODADD(mods, ...) SOLOMON_INTERNAL_NEST_OMP_MODADD_(mods, __VA_ARGS__)
+// clang-format off: the empty last element of the tuple is kept as written (permanent)
 #define SOLOMON_INTERNAL_NEST_OMP_MODADD_(mods, k, m) (SOLOMON_INTERNAL_NEST_CAT(SOLOMON_INTERNAL_NEST_OMP_COMB_, SOLOMON_INTERNAL_NEST_CAT(SOLOMON_INTERNAL_NEST_E1 mods, k)), SOLOMON_INTERNAL_NEST_OMP_REST mods m,)
+// clang-format on
 #define SOLOMON_INTERNAL_NEST_OMP_COMB_01 1
 #define SOLOMON_INTERNAL_NEST_OMP_COMB_02 2
 #define SOLOMON_INTERNAL_NEST_OMP_COMB_11 1

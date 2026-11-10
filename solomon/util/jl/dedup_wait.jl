@@ -127,14 +127,14 @@ function generate(io::IO, N_max::Int)
     println(io, "///       - Run: cd solomon/util && julia jl/dedup_wait.jl --max N")
     println(io, "///")
     println(io)
-    println(io, "#endif // !defined(SOLOMON_UTIL_IMPL_DEDUP_WAIT_HPP)")
+    println(io, "#endif  // !defined(SOLOMON_UTIL_IMPL_DEDUP_WAIT_HPP)")
 end
 
 function main()
     argv = parse_cmd()
     N_max = argv["max"]
 
-    output = joinpath(@__DIR__, "..", "impl", "dedup_wait.hpp")
+    output = joinpath(dirname(realpath(@__FILE__)), "..", "impl", "dedup_wait.hpp")
     output_dir = dirname(output)
     if !isdir(output_dir)
         mkpath(output_dir)

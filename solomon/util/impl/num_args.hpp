@@ -32,4 +32,4 @@
 ///              (where N >= your required count)
 ///
 
-#endif // !defined(SOLOMON_UTIL_IMPL_NUM_ARGS_HPP)
+#endif  // !defined(SOLOMON_UTIL_IMPL_NUM_ARGS_HPP)

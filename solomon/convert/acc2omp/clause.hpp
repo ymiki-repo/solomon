@@ -42,7 +42,9 @@
 // clang-format off: the text of the message is kept as written (permanent)
 #define SOLOMON_INTERNAL_ACC2OMP_SELF_LISTN(...) OMP_TARGET_CLAUSE_FROM(__VA_ARGS__), SOLOMON_INTERNAL_PICKUP_STOP(SOLOMON_ERROR_SELF_WITH_LIST_ON_COMPUTE_CONSTRUCT, Solomon: ACC_CLAUSE_SELF with two or more arguments is a list for the update directive; a compute construct takes one condition), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET)
 // clang-format on
+// clang-format off: clang-format would put a space before the comma that ends the clause (permanent)
 #define SOLOMON_INTERNAL_ACC2OMP_SELF_BARE(...) if (target : SOLOMON_INTERNAL_ACC2OMP_SELF_COND()), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET)
+// clang-format on
 #define SOLOMON_INTERNAL_ACC2OMP_SELF_LIST(...) OMP_TARGET_CLAUSE_FROM(__VA_ARGS__), if (target : SOLOMON_INTERNAL_ACC2OMP_SELF_COND(__VA_ARGS__)), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_TARGET)
 
 ///

@@ -171,7 +171,7 @@ function generate(io::IO, N_max::Int, N_lev::Int)
     # println(io, "// #define SOLOMON_INTERNAL_APPEND_CLAUSES(...) SOLOMON_INTERNAL_CHECK_CLAUSE_", N_max, "(__VA_ARGS__)")
 
     println(io)
-    println(io, "#endif // !defined(SOLOMON_UTIL_IMPL_SORT_CLAUSE_HPP)")
+    println(io, "#endif  // !defined(SOLOMON_UTIL_IMPL_SORT_CLAUSE_HPP)")
 end
 
 function main()
@@ -180,7 +180,7 @@ function main()
     N_max = argv["max"]
     N_lev = argv["level"]
 
-    output = joinpath(@__DIR__, "..", "impl", "sort_clause.hpp")
+    output = joinpath(dirname(realpath(@__FILE__)), "..", "impl", "sort_clause.hpp")
     output_dir = dirname(output)
     if !isdir(output_dir)
         mkpath(output_dir)

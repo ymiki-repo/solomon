@@ -2,3 +2,4 @@
 Checks: "*,-cppcoreguidelines-owning-memory,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-llvmlibc-*,-llvm-header-guard,-*-non-private-member-variables-in-classes,-*-array*-decay,-fuchsia-default-*,-fuchsia-multiple-inheritance,-fuchsia-trailing-return,-fuchsia-overloaded-operator,-google-readability-todo,-readability-identifier-length,-readability-convert-member-functions-to-static,-altera-unroll-loops,-altera-id-dependent-backward-branch,-clang-diagnostic-c++17-extensions"
 # ,-*-special-member-functions
 # ExtraArgs: -std=c++17
+# (not set here: the C sources would take it too; for the C++17 sources of samples/C/nbody, use compile_commands.json or add "-- -std=c++17" to the clang-tidy command)

@@ -57,7 +57,7 @@ guard_command() {
 # guard_module <name> <command>: load the module named by the setting <name>, then run <command> --version;
 # stop if either fails
 guard_module() {
-	module load "${!1}" || guard_die "module load ${!1} failed: check $1 in ${CONFIG:-sh/<system>/config.sh}"
+	module load "${!1}" || guard_die "module load ${!1} failed: check $1 (and MODULE_USE, if set) in ${CONFIG:-sh/<system>/config.sh}"
 	"$2" --version || guard_die "$2 --version failed after module load ${!1}"
 }
 
@@ -78,7 +78,8 @@ guard_lock() {
 		guard_warn "flock not found: running without the lock (do not run two job scripts in this directory at the same time)"
 		return 0
 	fi
-	if ! { exec {GUARD_LOCK_FD}>> sh/.lock; } 2> /dev/null; then
+	# tried in a subshell first: a failed redirection of exec ends a POSIX-mode bash (sh) without a message
+	if ! (: >> sh/.lock) 2> /dev/null || ! { exec {GUARD_LOCK_FD}>> sh/.lock; } 2> /dev/null; then
 		guard_warn "cannot open sh/.lock: running without the lock (do not run two job scripts in this directory at the same time)"
 		return 0
 	fi

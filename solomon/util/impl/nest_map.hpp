@@ -184,4 +184,4 @@
 ///          To raise them, regenerate check_clause.jl, sort_clause.jl, dedup_wait.jl, and nest_map.jl with the same --max (README)
 ///
 
-#endif // !defined(SOLOMON_UTIL_IMPL_NEST_MAP_HPP)
+#endif  // !defined(SOLOMON_UTIL_IMPL_NEST_MAP_HPP)

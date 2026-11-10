@@ -113,7 +113,9 @@
 /// @brief add OpenACC clause "private (list)" if applicable
 /// @details A copy of each variable in list is allocated for each gang.
 ///
+// clang-format off: clang-format reads private as the C++ access specifier and splits the clause (permanent)
 #define ACC_CLAUSE_PRIVATE(...) private(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_ACC_PARALLEL, SOLOMON_INTERNAL_TAG_ACC_SERIAL, SOLOMON_INTERNAL_TAG_ACC_LOOP)
+// clang-format on
 
 ///
 /// @brief add OpenACC clause "firstprivate (list)" if applicable

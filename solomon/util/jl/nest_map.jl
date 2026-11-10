@@ -75,7 +75,7 @@ function generate(io::IO, N_max::Int, M_max::Int)
     println(io, "///          To raise them, regenerate check_clause.jl, sort_clause.jl, dedup_wait.jl, and nest_map.jl with the same --max (README)")
     println(io, "///")
     println(io)
-    println(io, "#endif // !defined(SOLOMON_UTIL_IMPL_NEST_MAP_HPP)")
+    println(io, "#endif  // !defined(SOLOMON_UTIL_IMPL_NEST_MAP_HPP)")
 end
 
 function main()
@@ -83,7 +83,7 @@ function main()
     N_max = argv["max"]
     M_max = argv["mods"]
 
-    output = joinpath(@__DIR__, "..", "impl", "nest_map.hpp")
+    output = joinpath(dirname(realpath(@__FILE__)), "..", "impl", "nest_map.hpp")
     output_dir = dirname(output)
     if !isdir(output_dir)
         mkpath(output_dir)

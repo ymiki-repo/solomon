@@ -15,7 +15,7 @@
 ///
 /// @brief version of Solomon
 ///
-#define SOLOMON_VERSION 2.0.0
+#define SOLOMON_VERSION 2.0.1
 
 // accept SOLOMON_-prefixed spellings of the configuration macros (v2.0.0 or later); the unprefixed spellings also keep working
 #if defined(SOLOMON_OFFLOAD_BY_OPENACC) && !defined(OFFLOAD_BY_OPENACC)

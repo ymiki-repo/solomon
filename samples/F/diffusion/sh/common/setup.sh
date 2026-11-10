@@ -116,6 +116,7 @@ fi
 # GPU selection and NUMA node of the GPU; the recipes of this sample bind only memory (numactl --localalloc),
 # so NUMA_NODE is detected but not used
 if [ "$DETECT_NUMA" = 1 ]; then
+	guard_command numactl
 	NUMA_NODE=
 	if [ "$VENDER" = amd ]; then
 		# a job scheduler that assigns the GPU sets ROCR_VISIBLE_DEVICES: keep it, and use its (first) GPU
@@ -125,7 +126,10 @@ if [ "$DETECT_NUMA" = 1 ]; then
 		else
 			export ROCR_VISIBLE_DEVICES=$GPU_ID
 		fi
-		NUMA_NODE=$(LANG=C rocm-smi -d "$GPU_ID" --showtoponuma | sed -n 's/^GPU\['"$GPU_ID"'\]\t*//p' | sed -n 's/: (Topology) Numa Node: *//p')
+		# without rocm-smi, the node is taken from numactl --show below
+		if command -v rocm-smi > /dev/null 2>&1; then
+			NUMA_NODE=$(LANG=C rocm-smi -d "$GPU_ID" --showtoponuma | sed -n 's/^GPU\['"$GPU_ID"'\]\t*//p' | sed -n 's/: (Topology) Numa Node: *//p')
+		fi
 	fi
 	if [ "$VENDER" = nvidia ]; then
 		# a job scheduler that assigns the GPU sets CUDA_VISIBLE_DEVICES: keep it, and use its (first) GPU
@@ -136,7 +140,11 @@ if [ "$DETECT_NUMA" = 1 ]; then
 			export CUDA_VISIBLE_DEVICES=$GPU_ID
 		fi
 		# nvidia-smi prints the PCI domain in 8 hex digits, sysfs in 4 or more (00000000:21:00.0 is 0000:21:00.0)
-		BUS_ID=$(nvidia-smi --format=csv,noheader --query-gpu=gpu_bus_id -i "$GPU_ID" | tr '[:upper:]' '[:lower:]')
+		# without nvidia-smi, the node is taken from numactl --show below
+		BUS_ID=
+		if command -v nvidia-smi > /dev/null 2>&1; then
+			BUS_ID=$(nvidia-smi --format=csv,noheader --query-gpu=gpu_bus_id -i "$GPU_ID" | tr '[:upper:]' '[:lower:]')
+		fi
 		if [[ $BUS_ID =~ ^([0-9a-f]+):([0-9a-f]+:[0-9a-f]+\.[0-9a-f]+)$ ]]; then
 			BUS_ID=$(printf '%04x:%s' "$((16#${BASH_REMATCH[1]}))" "${BASH_REMATCH[2]}")
 			NUMA_NODE=$(cat "/sys/bus/pci/devices/$BUS_ID/numa_node")

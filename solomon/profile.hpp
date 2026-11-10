@@ -72,33 +72,33 @@
 #elif defined(SOLOMON_TAGGED_PROFILE_WITH_NVTX)
 // NVTX (NVIDIA Tools Extension); headers are found when the OpenACC/OpenMP offloading flags of the NVIDIA HPC SDK are enabled
 #include <nvtx3/nvToolsExt.h>
-static inline void solomon_internal_profile_push(const char *name) { (void)nvtxRangePushA(name); }
+static inline void solomon_internal_profile_push(const char* name) { (void)nvtxRangePushA(name); }
 static inline void solomon_internal_profile_pop(void) { (void)nvtxRangePop(); }
-static inline void solomon_internal_profile_mark(const char *name) { nvtxMarkA(name); }
+static inline void solomon_internal_profile_mark(const char* name) { nvtxMarkA(name); }
 #define SOLOMON_INTERNAL_PROFILE_ENABLED
 #elif defined(SOLOMON_TAGGED_PROFILE_WITH_ROCTX)
 // rocTX (ROCm); add -I${ROCM_PATH}/include to the compilation flags and
 // -L${ROCM_PATH}/lib -lroctx64 to the link flags
 #include <roctracer/roctx.h>
-static inline void solomon_internal_profile_push(const char *name) { (void)roctxRangePushA(name); }
+static inline void solomon_internal_profile_push(const char* name) { (void)roctxRangePushA(name); }
 static inline void solomon_internal_profile_pop(void) { (void)roctxRangePop(); }
-static inline void solomon_internal_profile_mark(const char *name) { roctxMarkA(name); }
+static inline void solomon_internal_profile_mark(const char* name) { roctxMarkA(name); }
 #define SOLOMON_INTERNAL_PROFILE_ENABLED
 #elif defined(SOLOMON_TAGGED_PROFILE_WITH_ITT)
 // ITT (Intel Instrumentation and Tracing Technology); the header and library ship with VTune:
 // add -I${VTUNE_PROFILER_DIR}/sdk/include to the compilation flags and
 // -L${VTUNE_PROFILER_DIR}/sdk/lib64 -littnotify to the link flags
 #include <ittnotify.h>
-static inline __itt_domain *solomon_internal_profile_domain(void) {
-  static __itt_domain *domain = 0;
+static inline __itt_domain* solomon_internal_profile_domain(void) {
+  static __itt_domain* domain = 0;
   if (!domain) {
     domain = __itt_domain_create("solomon");
   }
   return domain;
 }
-static inline void solomon_internal_profile_push(const char *name) { __itt_task_begin(solomon_internal_profile_domain(), __itt_null, __itt_null, __itt_string_handle_create(name)); }
+static inline void solomon_internal_profile_push(const char* name) { __itt_task_begin(solomon_internal_profile_domain(), __itt_null, __itt_null, __itt_string_handle_create(name)); }
 static inline void solomon_internal_profile_pop(void) { __itt_task_end(solomon_internal_profile_domain()); }
-static inline void solomon_internal_profile_mark(const char *name) { __itt_marker(solomon_internal_profile_domain(), __itt_null, __itt_string_handle_create(name), __itt_scope_task); }
+static inline void solomon_internal_profile_mark(const char* name) { __itt_marker(solomon_internal_profile_domain(), __itt_null, __itt_string_handle_create(name), __itt_scope_task); }
 #define SOLOMON_INTERNAL_PROFILE_ENABLED
 #else  // no backend
 #if !defined(SOLOMON_INTERNAL_PROFILE_DEVICE_PASS)
@@ -155,7 +155,9 @@ static inline void solomon_internal_profile_mark(const char *name) { __itt_marke
 // hooks used by the directive macros in solomon.hpp; they receive the bare macro name
 // and build the "FILE:LINE MACRO" tag per language (pass-through unless SOLOMON_TAGGED_PROFILE_AUTO is enabled)
 #if defined(SOLOMON_INTERNAL_PROFILE_ENABLED) && defined(SOLOMON_TAGGED_PROFILE_AUTO)
+// clang-format off: the one-line form shows the statement the tag adds (clang-format would split the braces) (permanent)
 #define SOLOMON_INTERNAL_TAG_RANGE(mname, directive) { SOLOMON_PROFILE_RANGE_BEGIN(SOLOMON_INTERNAL_PROFILE_TAG(mname)) directive SOLOMON_PROFILE_RANGE_END }
+// clang-format on
 // the tag of a directive that is followed by a statement (a loop or a structured block) must not be a statement of
 // its own, so that the directive macro stays one statement (e.g., as the body of an if without braces): the call is
 // made in the initialization of a loop that runs its body (the directive and its statement) exactly once (only for
@@ -169,7 +171,9 @@ static inline void solomon_internal_profile_mark(const char *name) { __itt_marke
 #define SOLOMON_INTERNAL_PROFILE_ONCE(start, end) SOLOMON_INTERNAL_PROFILE_ONCE_IMPL(SOLOMON_INTERNAL_PROFILE_CAT(solomon_internal_profile_once_, __LINE__), start, end)
 // a mark goes in the condition of an if whose else is the directive and its statement: unlike a loop, it does not
 // catch the user's continue / break (Q-044, D-091); gcc / clang may warn -Wdangling-else on a braceless if around it
+// clang-format off: the one-line form shows the statement the tag adds (clang-format would split the braces) (permanent)
 #define SOLOMON_INTERNAL_TAG_MARK(mname) if ((solomon_internal_profile_mark(SOLOMON_INTERNAL_PROFILE_TAG(mname)), 0)) {} else
+// clang-format on
 // the range of SOLOMON_OFFLOAD_SERIAL ends right after its structured block (SOLOMON_INTERNAL_TAG_POP is empty)
 #define SOLOMON_INTERNAL_TAG_PUSH(mname) SOLOMON_INTERNAL_PROFILE_ONCE(solomon_internal_profile_push(SOLOMON_INTERNAL_PROFILE_TAG(mname)), solomon_internal_profile_pop())
 #define SOLOMON_INTERNAL_TAG_POP

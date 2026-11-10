@@ -26,3 +26,5 @@ iterate.[oe][0-9]*
 /iterate/
 /padding/verify/
 /padding/iterate/
+# environment of jl/ written by julia jl/package.jl
+jl/Manifest.toml

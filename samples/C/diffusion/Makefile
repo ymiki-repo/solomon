@@ -3,9 +3,9 @@
 SOLOMON_DIR	?= ../../../solomon
 # SOLOMON_DIR is checked unless the only goal is clean
 ifneq ($(filter-out clean,$(or $(MAKECMDGOALS),all)),)
-SPECIAL_CHARS	:= ' " \ ( ) ; & | < > `
+SPECIAL_CHARS	:= ' " \ ( ) ; & | < > : [ ] * ? `
 ifneq ($(word 2,$(SOLOMON_DIR))$(strip $(foreach c,$(SPECIAL_CHARS),$(findstring $(c),$(SOLOMON_DIR)))),)
-$(error SOLOMON_DIR='$(SOLOMON_DIR)' holds a space, a quote, or one of \ ( ) ; & | < > and the backquote, which the compile commands cannot take: move Solomon to a path without them)
+$(error SOLOMON_DIR='$(SOLOMON_DIR)' holds a space, a quote, or one of \ ( ) ; & | < > : [ ] * ? and the backquote, which the compile commands and the rules of make cannot take: move Solomon to a path without them)
 endif
 ifeq ($(wildcard $(SOLOMON_DIR)/solomon.hpp),)
 $(error $(SOLOMON_DIR)/solomon.hpp is not found: set SOLOMON_DIR to the directory solomon/ of Solomon, e.g. make SOLOMON_DIR=/path/to/solomon)
@@ -175,7 +175,9 @@ else
 	endif
 endif
 LDFLAGS	:=
-LDLIBS	:= -lm
+LDLIBS	:=
+# libraries that the sample itself needs, linked after LDLIBS: they stay when LDLIBS is given on the command line
+SAMPLE_LIBS	:= -lm
 # the compiler name in the CSV file name (no directory, no option)
 PARAM	+= -DCOMPILER="\"$(notdir $(firstword $(CC)))\"" -DMODEL_ID="($(MODEL_ID))"
 
@@ -186,7 +188,7 @@ DEPENDENCIES	:= $(OBJS:.o=.d)
 TARGET	:= run
 # build settings of the last build: the objects and the executables are rebuilt when the settings (make variables) change
 STAMP	:= settings.txt
-SETTINGS	:= $(CC) $(CFLAGS) $(PARAM) $(INC) $(TARGET_ARCH) $(LINK_ARGS) $(LDFLAGS) $(LDLIBS)
+SETTINGS	:= $(CC) $(CFLAGS) $(PARAM) $(INC) $(TARGET_ARCH) $(LINK_ARGS) $(LDFLAGS) $(LDLIBS) $(SAMPLE_LIBS)
 MAKEFILE_DEPS	:= $(MAKEFILE_LIST)
 
 
@@ -194,7 +196,7 @@ MAKEFILE_DEPS	:= $(MAKEFILE_LIST)
 all : $(TARGET)
 
 $(TARGET) : $(OBJS) $(STAMP)
-	$(CC) $(CFLAGS) $(TARGET_ARCH) $(OBJS) -o $@ $(LINK_ARGS) $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CFLAGS) $(TARGET_ARCH) $(OBJS) -o $@ $(LINK_ARGS) $(LDFLAGS) $(LDLIBS) $(SAMPLE_LIBS)
 
 %.o : %.c $(STAMP) $(MAKEFILE_DEPS)
 	$(CC) $(CFLAGS) $(PARAM) $(INC) $(TARGET_ARCH) -c $<
@@ -210,4 +212,7 @@ clean :
 	$(RM) $(STAMP)
 	$(RM) *~
 
+# the dependency files are not read when the only goal is clean (a broken one would stop make clean)
+ifneq ($(filter-out clean,$(or $(MAKECMDGOALS),all)),)
 -include $(DEPENDENCIES)
+endif

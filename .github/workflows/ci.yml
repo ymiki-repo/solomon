@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: MIT
+#
+# GPU-free checks of Solomon on a GitHub-hosted runner: the samples are built with the host compilers
+# (serial and host OpenMP) and their expansions are checked, the shell scripts pass shellcheck, and the
+# migration script passes a dry-run smoke test. The same checks run by hand with `bash misc/ci/run_tests.sh`.
+# Offloading to GPUs is not tested here (no GPU on the runner).
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+# It only reads the repository.
+permissions:
+  contents: read
+
+jobs:
+  host:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install the host compilers and tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc g++ gfortran clang libomp-dev libboost-dev make shellcheck
+
+      - name: Show the versions
+        run: |
+          gcc --version | head -n 1
+          gfortran --version | head -n 1
+          clang --version | head -n 1
+          shellcheck --version | sed -n 2p
+
+      - name: Run the tests
+        run: bash misc/ci/run_tests.sh --no-skip

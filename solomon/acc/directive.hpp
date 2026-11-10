@@ -10,11 +10,11 @@
 #if !defined(SOLOMON_ACC_DIRECTIVE_HPP)
 #define SOLOMON_ACC_DIRECTIVE_HPP
 
-#include "../pragma.hpp"       // SOLOMON_INTERNAL_PRAGMA
-#include "../util/pickup.hpp"  // SOLOMON_INTERNAL_APPEND_CLAUSES
-#include "../util/va_opt.hpp"  // SOLOMON_INTERNAL_USE_VA_OPT
-#include "../util/cloak.hpp"   // SOLOMON_INTERNAL_CLOAK_IIF
+#include "../pragma.hpp"         // SOLOMON_INTERNAL_PRAGMA
+#include "../util/cloak.hpp"     // SOLOMON_INTERNAL_CLOAK_IIF
 #include "../util/is_empty.hpp"  // SOLOMON_INTERNAL_IS_EMPTY
+#include "../util/pickup.hpp"    // SOLOMON_INTERNAL_APPEND_CLAUSES
+#include "../util/va_opt.hpp"    // SOLOMON_INTERNAL_USE_VA_OPT
 #include "clause.hpp"
 
 ///

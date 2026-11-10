@@ -1,5 +1,7 @@
 # Solomon: Simple Off-LOading Macros Orchestrating multiple Notations
 
+[![ci](https://github.com/ymiki-repo/solomon/actions/workflows/ci.yml/badge.svg)](https://github.com/ymiki-repo/solomon/actions/workflows/ci.yml)
+
 | | English | 日本語 |
 | ---- | ---- | ---- |
 | C/C++ | [README](README.md) | [このファイル](README_jp.md) |
@@ -8,7 +10,7 @@
 ## 概要
 
 * GPU向け指示文（OpenACC, OpenMP target）統合マクロ
-* 現在のバージョン: v2.0.0（`solomon/solomon.hpp` 内の `SOLOMON_VERSION` として定義）
+* 現在のバージョン: v2.0.1（`solomon/solomon.hpp` 内の `SOLOMON_VERSION` として定義）
 * 詳細については [Miki & Hanawa (2024, IEEE Access, vol. 12, pp. 181644-181665)](https://doi.org/10.1109/ACCESS.2024.3509380) を参照してください
 * 使用した際には [Miki & Hanawa (2024, IEEE Access, vol. 12, pp. 181644-181665)](https://doi.org/10.1109/ACCESS.2024.3509380) を引用してください
 * Released under the MIT license, see LICENSE.txt
@@ -21,6 +23,7 @@
   * [背景](#背景)
   * [開発方針と特徴](#開発方針と特徴)
 * [変更履歴（Changelog）](#変更履歴changelog)
+  * [v2.0.1（2026-11-10）](#v2012026-11-10)
   * [v2.0.0（2026-11-04）](#v2002026-11-04)
 * [使い方](#使い方)
   * [Solomon を用いたコードの開発方法](#solomon-を用いたコードの開発方法)
@@ -66,6 +69,20 @@
   * ユーザーサイドでマクロを付け足すことも簡単です
 
 ## 変更履歴（Changelog）
+
+### v2.0.1（2026-11-10）
+
+`solomon/` のマクロの展開は v2.0.0 と同じです（ヘッダは `solomon.hpp` の `SOLOMON_VERSION` を除いて clang-format で書式を整えただけです）．このリリースはサンプル，同梱の道具，文書，リポジトリの検査を変えます．
+
+* **継続的インテグレーション**: GitHub Actions で，サンプルをホストのコンパイラ（GCC と gfortran．C/C++ のサンプルは Clang でも．逐次とホストの OpenMP）でビルドして展開結果を確かめ，シェルスクリプトに shellcheck を掛け，移行スクリプトを dry-run で試します．GPU は使いません．結果は各 README の冒頭のバッジに出ます．同じ検査は `bash misc/ci/run_tests.sh` で手元でも実行できます（bash 4.4 以降と GNU make）
+* **サンプルの Makefile の `SOLOMON_DIR`**: `:` や glob の文字（`[ ] * ?`）を含むパスでは，`make` がメッセージを出して止まるようになりました（C のサンプルでは，`:` を含むパスで 2 回目の `make` と `make clean` が失敗していました）．C のサンプルの `make clean` は依存ファイルを読まなくなりました
+* **Intel コンパイラでの Fortran のサンプル**: 事前コンパイルのオプション `-Xs "-device ..."` を，C のサンプルと同じくリンクのときだけ渡します
+* **サンプルのジョブスクリプト**: nbody の性能調査は 1 回の実行の上限 `RUN_TIMEOUT` を `config.sh` から読み（既定 `40s`），各実行の前に待たなくなりました．`rocm-smi` / `nvidia-smi` が無いときは `numactl --show` が示す NUMA ノードを使い，diffusion は `DETECT_NUMA=1` のとき先に `numactl` の有無を確かめます．`module load` に失敗したときは `MODULE_USE` も確かめるよう促します．`RUN_TIMEOUT=0` は受け付けません（正の上限が要ります）．結果の移動に失敗するとジョブは失敗します．bash の POSIX モード（bash である `sh` など）で実行したジョブスクリプトがロックファイル `sh/.lock` に書けないときは，何も出さずに終わらずにそれを知らせます
+* **サンプルの Makefile**: すべてのサンプルの Makefile が，GNU make の組み込みの規則と同じく，`TARGET_ARCH` をコンパイラに，`LDFLAGS` / `LDLIBS` をリンカに渡します．サンプル自身が要るライブラリ（diffusion の `-lm`）は，コマンド行で `LDLIBS` を与えても残ります．nbody は `SET_NMIN` と `SET_NMAX` が `0 < SET_NMIN <= SET_NMAX` を満たさないとビルドを止めます（以前は見出しだけの CSV ファイルを書いていました）
+* **サンプルの作図スクリプト（使い方が変わりました）**: `samples/C/nbody/jl/` と `samples/C/diffusion/jl/` の Julia のスクリプトは `jl/` の環境で動き（最初に 1 回 `julia jl/package.jl`，その後 `julia --project=jl jl/plot/<script>.jl`），引数で渡した結果のディレクトリを描きます（既定はサンプルのディレクトリにある結果のディレクトリすべて）．スクリプトに書いてあった機種の名前を外し，nbody の `--compare` は `--reference <glob>`（ディレクトリごとに 1 回）と `--reference-label` に，diffusion の最適化の段は `--opt`（既定 4）になりました．`diffusion_mode.jl` の行は引数の順に並びます（最初が上）．LaTeX は `--usetex` のときだけ使います．`nbody.jl` は図を `fig/` ではなく `plot/` に書きます（nbody のジョブスクリプトが `fig/` の図を前の実行の残り物と見なして止まっていました）．読めない CSV（空，列の欠け）は止まらずに note を出して飛ばします．パネルに収まらないキャプションは 2 行にするか字を小さくします（[サンプルの実行方法](#サンプルの実行方法)）
+* **移行スクリプト**: 書き換えずに残した v1.x の名前（ビルドのファイルの変数と代入，`#pragma` や `!$omp` などの生の指示文の行）を知らせます．行末の空白の後で続く `#pragma` を GCC と同じく続けて読み，UTF-8 のバイト順マークの後の `#include` と `#pragma` も見つけ，たどり着けないファイルを知らせます
+* **文書**: 空の引数を指示節の上限に数えないという注記に，33 個以上続く場合への参照を足しました．必須の指示節の無いまま直接書いた OpenMP の data 系の指示文（とそれを拒否するコンパイラ），OpenACC に対応物の無い指示節（`OMP_TARGET_CLAUSE_LINEAR(...)`，`OMP_TARGET_CLAUSE_LASTPRIVATE(...)`），Clang と icx / icpx に `openacc.h` が無いこと，`-DPRINT_GENERATED_PRAGMA` のときの `SOLOMON_EMIT_WARNING(...)`，AMD と Intel の GPU で `get_offloaded_stream_id*` を定義しない理由（Intel の GPU で SYCL のキューと `target` 構文の順序を付ける例つき），`SOLOMON_SYNCHRONIZE(...)` に指示節のマクロを渡すとコンパイラが止まること，作図スクリプトの説明を足しました
+* **同梱のファイル**: `.editorconfig` が JSON，YAML，TOML，gnuplot，Vim script，Emacs Lisp のファイルも扱い，`solomon/util/jl/` の生成器はシンボリックリンクから実行しても自分の隣にヘッダを書きます
 
 ### v2.0.0（2026-11-04）
 
@@ -240,6 +257,7 @@
         * `simd` だけが取る節（`OMP_CLAUSE_SIMDLEN(...)`・`OMP_CLAUSE_SAFELEN(...)`・`OMP_CLAUSE_ALIGNED(...)`・`OMP_CLAUSE_NONTEMPORAL(...)`）は，名前に `simd` の無い指示文では並べ替えで `simd` が付いても捨てます．`OMP_CLAUSE_IF(simd: ...)` は残り（`if` はほかの構文の節でもあるため），`simd` が付かない所（`teams loop` の形では常に）ではコンパイラが拒否します．Solomon の記法では，代わりに `SOLOMON_CLAUSE_SIMDLEN(length)`・`SOLOMON_CLAUSE_SAFELEN(length)`・`SOLOMON_CLAUSE_ALIGNED(...)`・`SOLOMON_CLAUSE_NONTEMPORAL(...)`・`SOLOMON_CLAUSE_IF_SIMD(condition)` を `SOLOMON_CLAUSE_INDEPENDENT` と一緒に書いてください．`simd` が付く所に出て，付かない所では捨てます（簡易記法の表を参照）
       * 指示文に対応していない指示節・指示句については，Solomon が自動的に無視します
         * OpenMP target 使用時，OpenMP の指示文に必須の指示節（`map` / `use_device_*`，`update` では `to` / `from`）になる指示節を持たない OpenACC の data 系の指示文（`data`，`host_data`，`enter data`，`exit data`，`update`．例: `present` だけ，`if` だけ）は，指示文そのものを出しません（v2.0.0 以降）
+        * OpenMP target 使用時，OpenMP の data 系の指示文を直接書いたもの（`PRAGMA_OMP_TARGET_DATA(...)`，`PRAGMA_OMP_TARGET_ENTER_DATA(...)`，`PRAGMA_OMP_TARGET_EXIT_DATA(...)`，`PRAGMA_OMP_TARGET_UPDATE(...)`）で，その指示文に必須の指示節が 1 つも残らないもの（例: `OMP_TARGET_CLAUSE_IF(...)` だけ，`ACC_CLAUSE_PRESENT(...)` だけ，その指示文が取らない指示節だけ）は，必須の指示節の無いまま書いたとおりに出します．GCC・Clang・Intel のコンパイラ（icx / icpx）は拒否し，NVIDIA HPC SDK（nvc / nvc++）は受理します
         * OpenACC 使用時，指示節がどれもその指示文の必須の節でない OpenACC の data 系の指示文（`data`，`host_data`，`enter data`，`exit data`，`update`．例: `ACC_CLAUSE_IF(...)` だけ）は，Solomon のエラーで止まります（v2.0.0 以降）
         * declare の指示節（`copy`，`copyin`，`copyout`，`create`，`present`，`deviceptr`，`device_resident`，`link`）が 1 つも無い `PRAGMA_ACC_DECLARE(...)` は，`_OPENACC` によらず `Solomon: the OpenACC specification requires at least one clause on a declare directive (...)`（Fortran は `SOLOMON_ERROR_OPENACC_REQUIRES_A_CLAUSE_ON_DECLARE_DIRECTIVE`）で止まります（v2.0.0 以降）．OpenACC はどの版でも declare に指示節を 1 つ以上求めます（2.6・2.7 の 2.13 節の構文 "declare clause-list"．3.0 以降は制限としても明記）
         * Solomon の map の修飾子の誤用もビルドを止めます（v2.0.0 以降）: `OMP_TARGET_CLAUSE_MAP(...)` の外に書いた `OMP_TARGET_MAP_MODIFIER_*`，後ろに入れ子の指示節の無い修飾子，入れ子の指示節の後ろの入れ子の指示節でない並び，1 つの `OMP_TARGET_CLAUSE_MAP(...)` の 7 個以上の修飾子．GCC・Clang・Intel のコンパイラ（C/C++）は `error: Solomon: ...` を，NVIDIA HPC SDK（C/C++）は `invalid text in pragma` を出します．Fortran では `SOLOMON_ERROR_` で始まる名前が指示文に残り，Fortran のコンパイラがそこで構文エラーを出します
@@ -283,7 +301,7 @@
      | 使用可能なマクロ | 出力 | 使用されるバックエンド | 備考 |
      | ---- | ---- | ---- | ---- |
      | **`SOLOMON_CLAUSE_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | <br> `async(__VA_ARGS__)` <br> `nowait` | <br> OpenACC <br> OpenMP | 両バックエンドで共通して非同期実行される <br> OpenACC においてはキューIDを指定可能 <br> OpenMP においてはキューIDは無視される <br> 引数なしでは OpenACC で括弧の無い `async` になる（`async(acc_async_noval)` と同じ） |
-     | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `_Pragma("acc wait __VA_ARGS__")` <br> `_Pragma("omp taskwait __VA_ARGS__")` | <br> OpenACC <br> OpenMP | 両バックエンドで共通して同期処理が実行される．`SOLOMON_CLAUSE_ASYNC(...)` に対応して記述する <br> OpenACC（`SOLOMON_SYNCHRONIZE`，`PRAGMA_ACC_WAIT`）: 引数なしは `acc wait`，引数ありは `acc wait (__VA_ARGS__)` になる．引数はキューIDの並び（wait-argument）だけで，指示節は渡せない <br> OpenMP target（`SOLOMON_SYNCHRONIZE`，`PRAGMA_ACC_WAIT`）: 引数は数によらず無視され `omp taskwait` になる <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)`: OpenMP target では引数（指示節）がそのまま `omp taskwait` に渡り，`PRAGMA_OMP_TARGET_TASKWAIT(1, 2)` のようなキューIDは前処理エラーになる．OpenACC 使用時には `acc wait` になる <br> 縮退モード（演算加速器を用いないCPU実行）: 3 つとも何も出さない |
+     | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `_Pragma("acc wait __VA_ARGS__")` <br> `_Pragma("omp taskwait __VA_ARGS__")` | <br> OpenACC <br> OpenMP | 両バックエンドで共通して同期処理が実行される．`SOLOMON_CLAUSE_ASYNC(...)` に対応して記述する <br> OpenACC（`SOLOMON_SYNCHRONIZE`，`PRAGMA_ACC_WAIT`）: 引数なしは `acc wait`，引数ありは `acc wait (__VA_ARGS__)` になる．引数はキューIDの並び（wait-argument）だけで，指示節は渡せない（`SOLOMON_CLAUSE_ASYNC(3)` などの指示節のマクロを渡しても Solomon は見分けず，`acc wait (...)` の中に残ってコンパイラが Solomon の内部名（`SOLOMON_INTERNAL_TAG_...`）を含むエラーで止まる） <br> OpenMP target（`SOLOMON_SYNCHRONIZE`，`PRAGMA_ACC_WAIT`）: 引数は数によらず無視され `omp taskwait` になる <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)`: OpenMP target では引数（指示節）がそのまま `omp taskwait` に渡り，`PRAGMA_OMP_TARGET_TASKWAIT(1, 2)` のようなキューIDは前処理エラーになる．OpenACC 使用時には `acc wait` になる <br> 縮退モード（演算加速器を用いないCPU実行）: 3 つとも何も出さない |
      | **`SOLOMON_CLAUSE_ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | <br> `async(id)` <br> N/A（OpenMP target 使用時には無視される） | <br> OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して非同期実行 <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した非同期実行がサポートされていないため，無視される |
      | **`SOLOMON_CLAUSE_WAIT_QUEUE(...)`** <br> `ACC_CLAUSE_WAIT(...)` | <br> `wait(__VA_ARGS__)` <br> N/A（OpenMP target 使用時には無視される） | <br> OpenACC <br> OpenMP | OpenACC でのみ，指定したキューIDの処理の完了を待ってから指示文を始める（v2.0.0 以降） <br> キューIDを 1 個以上渡す（`SOLOMON_WAIT_QUEUE(id)` と違い並びを渡せる）．空にすると OpenACC では全てのキューを待つ `wait` になるが，全てを待つときは指示文の前に `SOLOMON_SYNCHRONIZE()` を置くことを推奨する <br> OpenMP では無視される．`SOLOMON_CLAUSE_ASYNC(...)` と組み合わせると OpenMP target では待たない <br> 同じ指示文の複数の `wait` 節はまとめる（`ACC_CLAUSE_WAIT(...)` の行を参照） |
      | **`SOLOMON_WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | <br> `acc wait (id)` <br> N/A（OpenMP target 使用時には無視される） | <br> OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して同期処理を実行．`SOLOMON_CLAUSE_ASYNC_QUEUE(id)` に対応して記述する <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した同期処理がサポートされていないため，無視される |
@@ -296,6 +314,7 @@
     * NVIDIA HPC SDKでのOpenMP targetを用いてGPU化するためのオプションは`-mp=gpu -gpu=[target GPU architecture]`です
     * AMD ROCmでのOpenMP targetを用いてGPU化するためのオプションは`-fopenmp --offload-arch=[target GPU architecture]`です
     * Intel oneAPIでのOpenMP targetを用いてGPU化するためのオプションは`-fiopenmp -fopenmp-targets=spir64_gen -Xs "-device [target GPU architecture]"`です
+    * Clang と Intel oneAPI の C/C++ コンパイラ（icx / icpx）は `-fopenacc` を受け付けますが `openacc.h` が無いため，OpenACC 使用時は `fatal error: 'openacc.h' file not found` で止まります．これらのコンパイラでは OpenMP target を使ってください
 
 * Solomon のパス（`solomon.hpp` があるディレクトリ）を確認し，コンパイル時に `-I/path/to/solomon` などとして指定してください
   * コンパイルするディレクトリからの相対パス(`../../../solomon`など)による指定，絶対パス( `/usr/local/solomon/include`など)はどちらでも受け付けられます
@@ -317,6 +336,7 @@
 
 * コンパイルフラグとして `-DPRINT_GENERATED_PRAGMA` を追加すると，実際に生成される指示文を，その指示文の直前のコンパイル時メッセージ（`#pragma message`）として出力できます．GCC は note として，LLVM 系のコンパイラ（clang，icx / icpx）は warning として表示します．NVIDIA HPC SDK は何も表示しません（26.9）
   * LLVM 系のコンパイラでは `-Werror` を指定してもこのメッセージは warning のままです．明示するときは `-Wno-error=#pragma-messages` を渡してください（`-Wno-error=pragma-messages` というオプションは無く，ビルドが止まります）
+  * このフラグは `SOLOMON_EMIT_WARNING("message")` も定義します．メッセージをコンパイル時の警告として出します（GCC・LLVM 系のコンパイラ（clang，icx / icpx）・NVIDIA HPC SDK では `#pragma GCC warning`，ほかのコンパイラでは `#pragma message`）．フラグが無いときは定義されないので，`#if defined(PRINT_GENERATED_PRAGMA)` の中で使ってください
 * フラグの使用例： [N体計算用の Makefile](samples/C/nbody/Makefile) および [拡散方程式用の Makefile](samples/C/diffusion/Makefile)
 
 ### v1.x との後方互換性（v2.0.0 以降）
@@ -329,15 +349,15 @@
 * シリアル実行（OpenACC・OpenMP のいずれも有効でない場合）では，`SOLOMON_APPEND_ARGS(...)` と v1.x の名前 `APPEND_ARGS(...)` は空に展開され，引数は消えます（例: `f(0 SOLOMON_APPEND_ARGS(1, 2))` は `f(0)` になります）
 * 引数なしの `SOLOMON_APPEND_ARGS()` は空に展開されます．ただし gcc / g++ の厳密モード（`-std=c99`，`-std=c++17` など）で C23 / C++20 より前の版ではカンマが残ります（`f(0 SOLOMON_APPEND_ARGS())` は `f(0 ,)` になります）．その場合は GNU モードか C23 / C++20 を使ってください
 * `-pedantic` を付けても，C23 / C++20（`-std=c2x`，`-std=c++20`）以降と，gcc / g++ の GNU モードでは Solomon のマクロは警告されません．C23 / C++20 より前の版では，指示文マクロごとに「可変長マクロの `...` に引数が無い」旨の警告が出ることがあります．clang 系のコンパイラ（clang，icx / icpx）はどのモードでも出し（`-Wno-variadic-macro-arguments-omitted` で抑えられます），gcc / g++ は厳密モード（`-std=c99`，`-std=c++17` など）で出します（抑えるオプションはありません．`-pedantic -Werror` を使うときは GNU モードか C23 / C++20 を使ってください）
-* `OMP_TARGET_CLAUSE_MAP(...)`: 入れ子でない並びの 3 番目以降の要素が，引数 1 個では呼べない関数形式マクロの名前のとき（例: `#define fm2(x, y) ...` と `OMP_TARGET_CLAUSE_MAP(a, b, fm2)`）は前処理が失敗し，引数 1 個で呼ぶとトップレベルのカンマを含む形に展開される関数形式マクロの名前のとき（例: `#define fc1(x) x, x`）は内部のマクロの名前を挙げる Solomon のエラーでビルドが止まるようになりました．その要素を 1 番目か 2 番目に置くか，配列の部分（`fm2[0:n]`）として書いてください
+* `OMP_TARGET_CLAUSE_MAP(...)`（OpenACC と OpenMP target のとき．縮退モードとシリアルモードでは節を出さないので起きません）: 入れ子でない並びの 3 番目以降の要素が，引数 1 個では呼べない関数形式マクロの名前のとき（例: `#define fm2(x, y) ...` と `OMP_TARGET_CLAUSE_MAP(a, b, fm2)`）は前処理が失敗し，引数 1 個で呼ぶとトップレベルのカンマを含む形に展開される関数形式マクロの名前のとき（例: `#define fc1(x) x, x`）は内部のマクロの名前を挙げる Solomon のエラーでビルドが止まるようになりました．その要素を 1 番目か 2 番目に置くか，配列の部分（`fm2[0:n]`）として書いてください
 * 設定マクロには新しい綴り `-DSOLOMON_OFFLOAD_BY_*` が追加されました．従来の `-DOFFLOAD_BY_*` は無条件で使用し続けられます（`SOLOMON_WITH_SHORT_NAMES` の定義は不要です）
-* `AS_BLOCK` / `NUM_BLOCKS(n)`（`SOLOMON_CLAUSE_BLOCK` / `SOLOMON_CLAUSE_NUM_BLOCKS(n)`）は OpenACC での意味が変わりました: `gang` / `num_gangs(n)` を出力します（v1.x: `worker` / `num_workers(n)`）．ブロックを OpenACC では gang に，OpenMP target では team にそろえるための変更です．コンパイルは通りますが OpenACC での並列化の対応付けが変わるので，v1.x の意味を OpenACC で保つには代わりに `ACC_CLAUSE_WORKER` / `ACC_CLAUSE_NUM_WORKERS(n)` を書いてください．同様に，`NUM_GRIDS(n)`（`SOLOMON_CLAUSE_NUM_GRIDS(n)`．`SOLOMON_CLAUSE_NUM_BLOCKS(n)` の別名）は OpenMP target でも `num_teams(n)` を出力するようになった（v1.x では捨てられていた）ため，`NUM_GRIDS(n)` と `NUM_BLOCKS(m)` を併用すると同じ指示節が 2 つ出力されます（例は [misc/migrate/MIGRATION.md](misc/migrate/MIGRATION.md)）．移行スクリプトは，これらを書き換えるファイルについて注意を表示します
+* `AS_BLOCK` / `NUM_BLOCKS(n)`（`SOLOMON_CLAUSE_BLOCK` / `SOLOMON_CLAUSE_NUM_BLOCKS(n)`）は OpenACC での意味が変わりました: `gang` / `num_gangs(n)` を出力します（v1.x: `worker` / `num_workers(n)`）．ブロックを OpenACC では gang に，OpenMP target では team にそろえるための変更です．コンパイルは通りますが OpenACC での並列化の対応付けが変わるので，v1.x の意味を OpenACC で保つには代わりに `ACC_CLAUSE_WORKER` / `ACC_CLAUSE_NUM_WORKERS(n)` を書いてください．同様に，`NUM_GRIDS(n)`（`SOLOMON_CLAUSE_NUM_GRIDS(n)`．`SOLOMON_CLAUSE_NUM_BLOCKS(n)` の別名）は OpenMP target でも `num_teams(n)` を出力するようになった（v1.x では捨てられていた）ため，`NUM_GRIDS(n)` と `NUM_BLOCKS(m)` を併用すると同じ指示節が 2 つ出力されます（例は [misc/migrate/MIGRATION.md](misc/migrate/MIGRATION.md)）．移行スクリプトは，これらを含むファイルについて注意を表示します（書き換えずに残す生の指示文の行にだけある場合も）
 * 新旧 API の完全な対応表は [misc/migrate/MIGRATION.md](misc/migrate/MIGRATION.md) を参照してください
 * 移行スクリプト `misc/migrate/solomon_migrate_v1_to_v2.sh` を同梱しています．v1.x のソースコード（およびファイル引数として明示したビルドスクリプト）を v2.0.0 の綴りに書き換えます．デフォルトは dry-run（diff 表示のみ）で，`--apply` を付けるとバックアップ（`*.v1.bak`）を残して書き換えます．デフォルトでは `solomon.hpp` を読み込むソースだけを書き換えます（それ以外は，`solomon.hpp` を読み込まずに v1.x の名前を使う利用者のヘッダも含めて，飛ばして表示します．`--all` を付けるとそれらも書き換えます）．bash と GNU sed が必要で，bash 4 以降と GNU の道具で確かめています
 
 ### Solomon の拡張方法（コードジェネレータを用いた更新方法）
 
-* Solomon では，1つの指示文ごとに 32 個の指示節・指示句（候補）を受け付ける仕様となっています（指示文に合わない指示節と Solomon の指示節マクロでない名前も数えます．空の引数は数えません）．超えるとビルドが止まります（v2.0.0 以降）: GCC・Clang・Intel のコンパイラ（C/C++）は `error: Solomon: too many clauses for one directive (limit 32)` を，NVIDIA HPC SDK（C/C++）はマクロの行で `invalid text in pragma` を出します．Fortran では指示文に `SOLOMON_ERROR_TOO_MANY_CLAUSES_FOR_ONE_DIRECTIVE` が残り，Fortran のコンパイラがそこで構文エラーを出します
+* Solomon では，1つの指示文ごとに 32 個の指示節・指示句（候補）を受け付ける仕様となっています（指示文に合わない指示節と Solomon の指示節マクロでない名前も数えます．空の引数は数えません．ただし 33 個以上続く場合は下記）．超えるとビルドが止まります（v2.0.0 以降）: GCC・Clang・Intel のコンパイラ（C/C++）は `error: Solomon: too many clauses for one directive (limit 32)` を，NVIDIA HPC SDK（C/C++）はマクロの行で `invalid text in pragma` を出します．Fortran では指示文に `SOLOMON_ERROR_TOO_MANY_CLAUSES_FOR_ONE_DIRECTIVE` が残り，Fortran のコンパイラがそこで構文エラーを出します
   * 候補 2 個に数えられる指示節があります: OpenMP target の引数ありの `ACC_CLAUSE_SELF(...)`（縮退モードでは計算構文のものだけ．引数なしの `ACC_CLAUSE_SELF()` は 1 個）と，OpenACC の `OMP_TARGET_CLAUSE_MAP(...)` の `present` の付いた入れ子の指示節（`OMP_TARGET_MAP_MODIFIER_PRESENT` の後ろのもの，入れ子の `OMP_TARGET_CLAUSE_TO_PRESENT(...)` / `OMP_TARGET_CLAUSE_FROM_PRESENT(...)`．update に直接書いたものは 1 個）．C/C++ の OpenMP の各バックエンド（OpenMP 6.0 より前）の `SOLOMON_CLAUSE_IF(...)`（ほかの `if` の指示節も）と，縮退モードの `SOLOMON_CLAUSE_NUM_THREADS(...)`（`ACC_CLAUSE_VECTOR_LENGTH(...)` も）も 2 個に数えます
   * OpenACC では，`SOLOMON_OFFLOAD_OUTER_LOOP(...)` と `SOLOMON_PARALLELIZE_INNER_LOOP(...)` は `loop` に `gang` / `vector` を足すので，指示節を 31 個まで受け付けます．同じく `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(...)` は 30 個まで（`gang` と `independent` を足す），`OMP_TARGET_CLAUSE_MAP_DELETE(...)` を含む exit data は 31 個まで（`finalize` を足す）です
   * ほかの引数の前に続けて書いた空の引数は，33 個ごとに候補 1 個に数えられます（33〜65 個で 1 個，66〜98 個で 2 個，…）
@@ -426,12 +446,13 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
   * `verify.sh` は結果を判定し，誤った結果があるとジョブが失敗します（v2.0.0 以降）: diffusion はすべての大きさ（32，37，64，…．37 は時間ステップ数が奇数になり，1 ステップ前のまま残った結果を不合格にします）で `Error < 2.0e-4`，nbody は `0 < |E(t=10)/E(0) - 1| <= 1.0e-2` を求めます
   * ジョブスクリプトは引数を取りません（設定は `config.sh` にあります）．現在のディレクトリに `config.sh` が無いとき，Slurm と PBS のジョブスクリプトはまず `SLURM_SUBMIT_DIR` / `PBS_O_WORKDIR` へ移ります
   * `DETECT_NUMA=1` のとき，ジョブスクリプトは `CUDA_VISIBLE_DEVICES`（`ROCR_VISIBLE_DEVICES`）を `config.sh` の `GPU_ID` にしますが，既に値があれば（ジョブスケジューラやシェルで設定した場合など）それを保ちます（そのときは 1 行出し，`GPU_ID` は使いません）
-  * diffusion の 1 回の実行は `config.sh` の `RUN_TIMEOUT`（既定 600s．`timeout` の時間の書き方，例えば 10m）で打ち切り，超えた実行は失敗に数えます（`timed out after RUN_TIMEOUT=...`）
+  * diffusion の各実行と nbody の性能調査（`survey.sh`）の各実行は `config.sh` の `RUN_TIMEOUT`（既定は diffusion が 600s，nbody が 40s．`timeout` の時間の書き方，例えば 10m）で打ち切り，超えた実行は失敗に数えます（`timed out after RUN_TIMEOUT=...`）
   * ジョブスクリプトは bash 4.1 以降，Environment Modules，`timeout`（GNU coreutils），`numactl` を要します（各手順が使うコマンドを最初に確かめ，見つからなければ止まります）．`flock`（util-linux）があれば下のロックに使います（無ければ警告を出してロックなしで動きます）
   * nbody: `verify.sh` は gnuplot があれば図を描きます（描画の失敗は警告として出し，失敗には数えません）
   * 同じサンプルのディレクトリで 2 つのジョブスクリプト（`verify.sh` と `iterate.sh` など）を同時に投入しないでください．2 つ目は `another job script is running` で止まります（1 つ目が `sh/.lock` を持っています）．同時に動かすときはサンプルのディレクトリの写しを使ってください（`samples/C/` の外に写したときは Solomon の場所が要ります: ジョブスクリプトに見えるように `SOLOMON_DIR=/path/to/solomon` を export してください）
   * 前の実行の生成物がサンプルのディレクトリに残っていると，ジョブスクリプトは止まります．外へ移してから実行し直してください（消しはしません）
-* 作図のスクリプト（`samples/C/nbody/jl/`，`samples/C/diffusion/jl/`）は作者の測定のためのもので，作者のデータのディレクトリの構成とシステムの名前を前提にしています．`jl/package.jl` は既定の Julia の環境を更新します（`Pkg.update()` を呼びます）．専用の Julia の環境で実行してください
+* 作図のスクリプト（`samples/C/nbody/jl/`，`samples/C/diffusion/jl/`．Julia）はジョブスクリプトの結果を描きます．サンプルのディレクトリで一度 `julia jl/package.jl` を実行してパッケージを入れ（`jl/` の環境に入ります．既定の Julia の環境は変えません），サンプルのディレクトリで例えば `julia --project=jl jl/plot/nbody.jl`（`scaling.sh` の結果）や `julia --project=jl jl/plot/diffusion.jl`（`iterate.sh` の結果．ほかに `diffusion_iterate.jl`，`diffusion_mode.jl`，`verify.sh` の結果には `diffusion_verify.jl`）を実行してください．そこにある結果のディレクトリ（`<host>_<target>_<arch>/`）を全部，または引数に与えたディレクトリを描き，図を `fig/`（nbody は `plot/`．nbody のジョブスクリプトが `fig/` を使うため）に書きます．長いキャプション（既定はディレクトリ名）はパネルに収まるよう 2 行にするか字を小さくします．`--caption` で短い名前を与えられます．オプション（`--caption`，`--opt`，nbody を別の実装と比べる `--reference` など）は `--help` で表示されます．`--usetex` は文字を LaTeX で組みます（`latex`，`dvipng` と LaTeX のパッケージ `physics`・`siunitx` が要ります）
+  * 例: `julia --project=jl jl/plot/nbody.jl hostA_nvhpc_nvidia_90 hostB_amdclang_amd_gfx90a --caption 'NVIDIA H100' --caption 'AMD MI210'` は 2 つの機械の結果を並べて描きます．ディレクトリごとに 1 回 `--reference '<CSV ファイルの glob>'`（と `--reference-label CUDA`）を足すと，nbody の別の実装（CSV の列 `N` と `N_pairs/s`）との比の図も描きます
 * システムを追加するときは，`sh/local/`（または同じジョブスケジューラのシステムのディレクトリ）を `sh/<your-system>/` にコピーし，`config.sh` の値とスケジューラの指示行を書き換えてください
 * Miyabi-G の課金グループ名は，`sh/miyabi-g/` の各ジョブスクリプトの `#PBS -W group_list=` の行（スケジューラの指示行ではシェルの変数を使えません）と，`samples/C/nbody/sh/miyabi-g/config.sh` の `PBS_GROUP`（`module use` のパスがこれを参照します）に書かれています．まとめて書き換えるには，`YOUR_GROUP` を利用者の課金グループ名にしてから Solomon のトップディレクトリで次を実行してください: `sed -i -E 's/^(#PBS -W group_list=|PBS_GROUP=).*/\1YOUR_GROUP/' samples/*/*/sh/miyabi-g/*.sh`
 
@@ -439,7 +460,7 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
 
 * サンプルのディレクトリで `make` を実行してください．nbody は nvc++ で `bin/nbody_pragma`・`bin/acc_pragma`・`bin/omp_pragma` を作り，`bin/obj/` と出力用のディレクトリ `dat/`・`fig/`・`log/` も作ります（`make dir` は要りません）．diffusion（`samples/C/diffusion/`，`samples/C/diffusion/padding/`）と declare は nvc で `./run` を作ります．対象の GPU の既定は `GPU_ARCH=90`（H100）です．ほかの GPU はコマンド行で指定してください（例: `make GPU_ARCH=120`）
 * ほかのコンパイラは `AMDCLANG=1` か `ICPX=1` で選びます（例: `make AMDCLANG=1 GPU_ARCH=gfx90a`，`make ICPX=1 GPU_ARCH=pvc`）．AMD と Intel の GPU には `GPU_ARCH` の既定がありません．選べるコンパイラは 1 つまでで，OpenACC（`USE_OPENACC=1`）には NVIDIA HPC SDK が要り，`ACPP=1` にはまだ対応していません．`NVHPC=0` でほかのコンパイラも選ばないと，`$(CXX)`（nbody）または `$(CC)`（diffusion，declare）でオフロードしないホストの実行ファイルを作ります
-* `SOLOMON_DIR`（既定 `../../../solomon`）は Solomon の `solomon/` ディレクトリです．サンプルのディレクトリを別の場所に置いたときは，コマンド行か環境変数で与えてください（例: `make SOLOMON_DIR=/path/to/solomon`）．export した `SOLOMON_DIR` も使われます．パスに空白，引用符，`$`，バッククォート，`\ ( ) ; & | < >` のどれも含めないでください．そこに `solomon.hpp` が無ければ `make` が止まります
+* `SOLOMON_DIR`（既定 `../../../solomon`）は Solomon の `solomon/` ディレクトリです．サンプルのディレクトリを別の場所に置いたときは，コマンド行か環境変数で与えてください（例: `make SOLOMON_DIR=/path/to/solomon`）．export した `SOLOMON_DIR` も使われます．パスに空白，引用符，`$`，バッククォート，`\ ( ) ; & | < > : [ ] * ?` のどれも含めないでください．そこに `solomon.hpp` が無ければ `make` が止まります
 * nbody は Boost のヘッダを include します（`src/gen_ic.cpp`）．Boost のヘッダがコンパイラの探す場所に無いときは，そのディレクトリを `BOOST_INC` に入れてください（Makefile は `-isystem=$(BOOST_INC)` を渡します）．ジョブスクリプトはそのために `config.sh` の `BOOST_MODULE` の module を読み込みます
 * make の変数やヘッダ（Solomon のものも）を変えると，オブジェクトと実行ファイルを作り直します．`make clean` は要りません．比べるのは変数の値だけです（`bin/obj/settings.txt` または `settings.txt` に記録し，`make clean` で消えます）．同じ名前の別のコンパイラ（別の module や `PATH`）に切り替えたときは `make clean` を実行してください
 * diffusion: `./run N`（`padding/` では `./run N [padding]`）で実行します．`N` は 1 次元あたりの格子点の数です（3 <= N で，N^3 が `int` に収まる，つまり N <= 1290．padding では N^2 (N + padding) が `int` に収まる）．引数が無い・多い・不正なときは使い方を表示して終了コード 1 で終わります．`OPT_LEVEL` は 0（最適化のフラグなし），1（`-O1`），2（`-O2`），3（`-O3`），4（既定．nvc では `-Ofast`，ほかでは `-O3 -ffast-math`）をとります．それ以外の値では `make` がエラーで止まります．`USE_MANAGED=1` / `USE_UNIFIED=1` は `-gpu=mem:managed` / `-gpu=mem:unified` を渡します（`mem:` を知らない NVIDIA HPC SDK では `-gpu=managed` / `-gpu=unified`）
@@ -598,8 +619,8 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
   | `PRAGMA_ACC_EXIT_DATA(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA(...)` | `_Pragma("acc exit data __VA_ARGS__")` <br> `_Pragma("omp target exit data __VA_ARGS__")` | OpenACC <br> OpenMP |
   | `PRAGMA_ACC_EXIT_DATA_COPYOUT(...)` <br> `PRAGMA_OMP_TARGET_EXIT_DATA_MAP_FROM(...)` | `_Pragma("acc exit data copyout(__VA_ARGS__)")` <br> `_Pragma("omp target exit data map(from: __VA_ARGS__)")` | OpenACC <br> OpenMP |
   | `PRAGMA_ACC_UPDATE(...)` <br> `PRAGMA_OMP_TARGET_UPDATE(...)` | `_Pragma("acc update __VA_ARGS__")` <br> `_Pragma("omp target update __VA_ARGS__")` | OpenACC <br> OpenMP <br> データの更新には `SOLOMON_MEMCPY_H2D(list)` / `SOLOMON_MEMCPY_D2H(list)` を第一に推奨します．指示節が要るときは `PRAGMA_OMP_TARGET_UPDATE(OMP_TARGET_CLAUSE_TO(list))` / `PRAGMA_OMP_TARGET_UPDATE(OMP_TARGET_CLAUSE_FROM(list))` を使います．これらを `OMP_TARGET_CLAUSE_MAP(...)` で包まないでください（update 指示文に `map` 節は無く，包んだ節は捨てられます） |
-  | **`SOLOMON_DATA_ACCESS_BY_DEVICE(...)`** <br> `PRAGMA_ACC_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | <br> `_Pragma("acc data __VA_ARGS__")` <br> N/A（`map` か `use_device_*` になる指示節が無いとき）．それ以外は `_Pragma("omp target data __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
-  | **`SOLOMON_DATA_ACCESS_BY_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | <br> `_Pragma("acc host_data __VA_ARGS__")` <br> N/A（`map` か `use_device_*` になる指示節が無いとき）．それ以外は `_Pragma("omp target data __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
+  | **`SOLOMON_DATA_ACCESS_BY_DEVICE(...)`** <br> `PRAGMA_ACC_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | <br> `_Pragma("acc data __VA_ARGS__")` <br> N/A（`map` か `use_device_*` になる指示節が無いとき．直接書いた `PRAGMA_OMP_TARGET_DATA(...)` はそのときも必須の指示節の無いまま出ます: 「指示文に対応していない指示節・指示句については，Solomon が自動的に無視します」の項）．それ以外は `_Pragma("omp target data __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
+  | **`SOLOMON_DATA_ACCESS_BY_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA(...)` <br> `PRAGMA_OMP_TARGET_DATA(...)` | <br> `_Pragma("acc host_data __VA_ARGS__")` <br> N/A（`map` か `use_device_*` になる指示節が無いとき．直接書いた `PRAGMA_OMP_TARGET_DATA(...)` はそのときも必須の指示節の無いまま出ます: 「指示文に対応していない指示節・指示句については，Solomon が自動的に無視します」の項）．それ以外は `_Pragma("omp target data __VA_ARGS__")` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_USE_DEVICE_DATA_FROM_HOST(...)`** <br> `PRAGMA_ACC_HOST_DATA_USE_DEVICE(...)` <br> `PRAGMA_OMP_TARGET_DATA_USE_DEVICE_ADDR(...)` | <br> `_Pragma("acc host_data use_device(__VA_ARGS__)")` <br> `_Pragma("omp target data use_device_addr(__VA_ARGS__)")` | <br> OpenACC <br> OpenMP |
   | **`SOLOMON_DECLARE_DATA_ON_DEVICE(...)`** <br> `PRAGMA_ACC_DATA_PRESENT(...)` | <br> `_Pragma("acc data present(__VA_ARGS__)")` | <br> OpenACC (only) |
 
@@ -670,7 +691,7 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
   | `ACC_CLAUSE_SELF(...)` | 引数なしは `self`，引数ありは後ろに括弧で付く `(__VA_ARGS__)` | 計算構文では引数なしは `if (target : 0)`，引数ありは `if(target: !(condition))`（OpenMP target 使用時は同じ指示文に `if` 節を書けない）．`OMP_TARGET_CLAUSE_FROM(__VA_ARGS__)`（`PRAGMA_ACC_UPDATE`．引数なしの `ACC_CLAUSE_SELF()` は捨てる） | 引数なしでは OpenACC で括弧の無い `self` になる．NVIDIA HPC SDK 26.9 と GCC 13 は計算構文の `self` を受け付けない（OpenACC 2.7） <br> 引数なしの `ACC_CLAUSE_SELF()` は `PRAGMA_ACC_UPDATE(...)` の必須の節に数えない: ほかの指示節が無いと，OpenACC では必須の節の Solomon のエラーで止まり，OpenMP target では出力されない（v2.0.0 以降） <br> 引数 2 個以上は `PRAGMA_ACC_UPDATE(...)` の並び．計算構文に渡すと OpenMP target 使用時に Solomon のエラーで止まる（計算構文の `self` は条件 1 つ） |
   | `ACC_CLAUSE_DEFAULT(mode)` | `default(mode)` | N/A（OpenMP target 使用時には無視される） | data 構文（`PRAGMA_ACC_DATA(...)`）の `default` は，GCC 13 が拒否し，NVIDIA HPC SDK 26.9 はほかのデータ節が無いと拒否する |
   | `ACC_CLAUSE_DEFAULT_NONE` | `default(none)` | `OMP_TARGET_CLAUSE_DEFAULTMAP_NONE` | data 構文の `default` は，GCC 13 が拒否し，NVIDIA HPC SDK 26.9 はほかのデータ節が無いと拒否する |
-  | `ACC_CLAUSE_DEFAULT_PRESENT` | `default(present)` | `OMP_TARGET_CLAUSE_DEFAULTMAP_PRESENT` | data 構文の `default` は，GCC 13 が拒否し，NVIDIA HPC SDK 26.9 はほかのデータ節が無いと拒否する <br> OpenMP target 使用時，GCC 13 と nvc++ 26.9（`-mp=gpu`，`not supported yet`）は `defaultmap(present)` を拒否する（Clang 23 と Intel 2026.1 は受理する）．nvc++ では代わりに `OMP_TARGET_CLAUSE_MAP(OMP_TARGET_MAP_MODIFIER_PRESENT, ...)` を書く（GCC 13 はこれも拒否する） |
+  | `ACC_CLAUSE_DEFAULT_PRESENT` | `default(present)` | `OMP_TARGET_CLAUSE_DEFAULTMAP_PRESENT` | data 構文の `default` は，GCC 13 が拒否し，NVIDIA HPC SDK 26.9 はほかのデータ節が無いと拒否する <br> OpenMP target 使用時，GCC 13 と nvc / nvc++ 26.9（`-mp=gpu`，`not supported yet`）は `defaultmap(present)` を拒否する（Clang 23 と Intel 2026.1 は受理する）．nvc / nvc++ では代わりに `OMP_TARGET_CLAUSE_MAP(OMP_TARGET_MAP_MODIFIER_PRESENT, ...)` を書く（GCC 13 はこれも拒否する） |
   | `ACC_CLAUSE_DEVICE_TYPE(...)` | `device_type(__VA_ARGS__)` | N/A（OpenMP のバックエンドでは無視される） | data 構文と `update` にも付く（NVIDIA HPC SDK 26.9 の Fortran は拒否する） <br> 1 つの並びを 2 つの指示文に渡すマクロ（`SOLOMON_OFFLOAD`，`SOLOMON_OFFLOAD_OUTER_LOOP`，`PRAGMA_ACC_KERNELS_LOOP` / `PRAGMA_ACC_PARALLEL_LOOP`，OpenACC 使用時の `PRAGMA_OMP_TARGET_*` の計算の指示文）では，並びが計算構文と `loop` 構文の両方に渡るので，`device_type` の後ろの指示節は両方でそのデバイス用になる（`kernels loop` と同じ） <br> `device_type` の後ろには，その指示節を受け取る指示文で `device_type` の後ろに書ける指示節だけを書く（OpenACC 3.3）: 計算構文は `async`，`wait`，`num_gangs`，`num_workers`，`vector_length`，`loop` は `collapse`，`gang`，`worker`，`vector`，`seq`，`independent`，`auto`，`tile`，data 構文と `update` は `async`，`wait`，`routine` は `gang`，`worker`，`vector`，`seq`，`bind`．それ以外の指示節（`private`，`reduction`，`copyin` など）はどの `device_type` よりも前に書く．2 つの指示文に渡すマクロは各指示節を受け取れる指示文にだけ渡すので，`device_type` の後ろには両方の一覧の指示節を書ける: `SOLOMON_OFFLOAD(SOLOMON_CLAUSE_COLLAPSE(2), ACC_CLAUSE_DEVICE_TYPE(nvidia), ACC_CLAUSE_NUM_GANGS(4))` は `kernels device_type(nvidia) num_gangs(4)` と `loop collapse(2) device_type(nvidia)` になる <br> OpenMP のバックエンド（OpenMP target と縮退モード）では `device_type` は捨てられ，その後ろの指示節は全デバイス向けになる（`PRAGMA_ACC_ROUTINE(...)` / `SOLOMON_DECLARE_OFFLOADED(...)` でも） |
   | `ACC_CLAUSE_ASYNC(...)` | 引数なしは `async`，引数ありは後ろに括弧で付く `(__VA_ARGS__)` | `OMP_TARGET_CLAUSE_NOWAIT` | data 構文（`PRAGMA_ACC_DATA`，`SOLOMON_DATA_ACCESS_BY_DEVICE`）にも付く（OpenACC 3.2 以降．GCC 13 は拒否する）．OpenMP target の `target data` には付かない（`nowait` / `depend` が無い）ので，待ちが要るときは data 構文の前に `SOLOMON_SYNCHRONIZE()` を置く <br> data 構文の `async` は data 構文自身の転送（出口の copyout を含む）を非同期にする．data 構文の後でホストが結果を読む前に待ちを置く <br> 引数なしでは OpenACC で括弧の無い `async` になる（`async(acc_async_noval)` と同じ） <br> gcc / g++ の厳密モードで C23 / C++20 より前の版では，[Solomon を用いたコードの開発方法](#solomon-を用いたコードの開発方法) の空の判定の注記を参照 |
   | `ACC_CLAUSE_WAIT(...)` | 引数なしは `wait`，引数ありは後ろに括弧で並びが付く `(__VA_ARGS__)` | N/A（引数なし．指示節は捨てられる）．引数ありは `OMP_TARGET_CLAUSE_DEPEND_IN(__VA_ARGS__)` | 引数なしは OpenACC で `wait`（全てのキューを待つ）．OpenMP target では無視されるので，待ちが要るときは前に `SOLOMON_SYNCHRONIZE()` を置く <br> OpenMP target では引数が `depend(in : ...)` の対象になるので変数を渡す．キュー番号（整数）は OpenACC でしか通らない．バックエンドによらない非同期実行には `SOLOMON_CLAUSE_ASYNC(...)` と `SOLOMON_SYNCHRONIZE(...)` などを推奨する．バックエンドによらないキューの待ちには `SOLOMON_CLAUSE_WAIT_QUEUE(...)` を使う <br> 同じ指示文の `wait` 節は `device_type` の区切りごとにまとめる．引数なしの `wait` があれば今のデバイスの待ちはその `wait` 1 つに，無ければ番号の並びを 1 つの `wait(..., ...)` にする．`devnum:` / `queues:` の待ちは残す．空の `wait()` は `wait` と同じ．`wait` 節を 2 つ以上書くときは，引数の先頭を名前・整数・括弧にする（例: `(*p)`）．まとめた引数は 32 個までで，超えると `error: Solomon: too many arguments of the wait clauses merged into one (limit 32)` でビルドが止まる（[Solomon の拡張方法](#solomon-の拡張方法コードジェネレータを用いた更新方法) を参照）．1 つの `wait` 節に書いた引数はまとめないので，この上限を受けない <br> 引数に空の要素があると（余分なカンマ．`ACC_CLAUSE_WAIT(1, )`・`ACC_CLAUSE_WAIT(, 2)` など），OpenACC と OpenMP target 使用時に `Solomon: ACC_CLAUSE_WAIT(...) has an empty argument (...); remove the extra comma, and write ACC_CLAUSE_WAIT() to wait without a list`（Fortran は `SOLOMON_ERROR_EMPTY_ARGUMENT_IN_ACC_CLAUSE_WAIT`）で止まる．余分なカンマを消し，並び無しで待つなら引数の無い形で書く（v2.0.0 以降．33 個の引数まで調べる） <br> data 構文（`PRAGMA_ACC_DATA`，`SOLOMON_DATA_ACCESS_BY_DEVICE`）にも付く（OpenACC 3.2 以降．GCC 13 は拒否する）．OpenMP target の `target data` には付かない（`nowait` / `depend` が無い）ので，待ちが要るときは data 構文の前に `SOLOMON_SYNCHRONIZE()` を置く |
@@ -740,7 +761,7 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
   | `OMP_TARGET_CLAUSE_USE_DEVICE_ADDR(...)` | `use_device_addr(__VA_ARGS__)` | `ACC_CLAUSE_USE_DEVICE(__VA_ARGS__)` | N/A（縮退モードでは無視される） | |
   | `OMP_TARGET_CLAUSE_DEFAULTMAP(...)` | `defaultmap(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | N/A（縮退モードでは無視される） | |
   | `OMP_TARGET_CLAUSE_DEFAULTMAP_NONE` | `OMP_TARGET_CLAUSE_DEFAULTMAP(none)` | `ACC_CLAUSE_DEFAULT_NONE` | N/A（縮退モードでは無視される） | |
-  | `OMP_TARGET_CLAUSE_DEFAULTMAP_PRESENT` | `OMP_TARGET_CLAUSE_DEFAULTMAP(present)` | `ACC_CLAUSE_DEFAULT_PRESENT` | N/A（縮退モードでは無視される） | GCC 13 と nvc++ 26.9（`-mp=gpu`，`not supported yet`）は `defaultmap(present)` を拒否する（Clang 23 と Intel 2026.1 は受理する）．nvc++ では代わりに `OMP_TARGET_CLAUSE_MAP(OMP_TARGET_MAP_MODIFIER_PRESENT, ...)` を書く（GCC 13 はこれも拒否する） |
+  | `OMP_TARGET_CLAUSE_DEFAULTMAP_PRESENT` | `OMP_TARGET_CLAUSE_DEFAULTMAP(present)` | `ACC_CLAUSE_DEFAULT_PRESENT` | N/A（縮退モードでは無視される） | GCC 13 と nvc / nvc++ 26.9（`-mp=gpu`，`not supported yet`）は `defaultmap(present)` を拒否する（Clang 23 と Intel 2026.1 は受理する）．nvc / nvc++ では代わりに `OMP_TARGET_CLAUSE_MAP(OMP_TARGET_MAP_MODIFIER_PRESENT, ...)` を書く（GCC 13 はこれも拒否する） |
   | `OMP_TARGET_CLAUSE_HAS_DEVICE_ADDR(...)` | `has_device_addr(__VA_ARGS__)` | `ACC_CLAUSE_DEVICEPTR(__VA_ARGS__)` | N/A（縮退モードでは無視される） | |
   | `OMP_TARGET_CLAUSE_IS_DEVICE_PTR(...)` | `is_device_ptr(__VA_ARGS__)` | `ACC_CLAUSE_DEVICEPTR(__VA_ARGS__)` | N/A（縮退モードでは無視される） | |
   | `OMP_TARGET_CLAUSE_USES_ALLOCATORS(...)` | `uses_allocators(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | N/A（縮退モードでは無視される） | |
@@ -775,8 +796,8 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
   | `OMP_TARGET_CLAUSE_SHARED(...)` | `OMP_CLAUSE_SHARED(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_SHARED(__VA_ARGS__)` | |
   | `OMP_TARGET_CLAUSE_PRIVATE(...)` | `OMP_CLAUSE_PRIVATE(__VA_ARGS__)` | `ACC_CLAUSE_PRIVATE(__VA_ARGS__)` | `OMP_CLAUSE_PRIVATE(__VA_ARGS__)` | |
   | `OMP_TARGET_CLAUSE_FIRSTPRIVATE(...)` | `OMP_CLAUSE_FIRSTPRIVATE(__VA_ARGS__)` | `ACC_CLAUSE_FIRSTPRIVATE(__VA_ARGS__)` | `OMP_CLAUSE_FIRSTPRIVATE(__VA_ARGS__)` | |
-  | `OMP_TARGET_CLAUSE_LASTPRIVATE(...)` | `OMP_CLAUSE_LASTPRIVATE(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_LASTPRIVATE(__VA_ARGS__)` | |
-  | `OMP_TARGET_CLAUSE_LINEAR(...)` | `OMP_CLAUSE_LINEAR(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_LINEAR(__VA_ARGS__)` | |
+  | `OMP_TARGET_CLAUSE_LASTPRIVATE(...)` | `OMP_CLAUSE_LASTPRIVATE(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_LASTPRIVATE(__VA_ARGS__)` | OpenACC に対応物が無く，OpenACC 使用時はループの後の値が保証されない．OpenACC でも動かすコードでは頼らない |
+  | `OMP_TARGET_CLAUSE_LINEAR(...)` | `OMP_CLAUSE_LINEAR(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_LINEAR(__VA_ARGS__)` | OpenACC に対応物が無い．OpenACC 使用時は，`simd` を含む指示文（`loop independent` を出す），指示節の `SOLOMON_CLAUSE_INDEPENDENT`・`ACC_CLAUSE_INDEPENDENT`・`OMP_TARGET_CLAUSE_SIMD`，`SOLOMON_OFFLOAD_BY_OPENACC_PARALLEL`（OpenACC 3.3 の 2.9.6 節）のどれかがあると，ループは independent（反復をどの順にも，同時にも実行してよい）とみなされる．それ以外（既定の `kernels` 構文）はコンパイラが判断する．OpenACC でも動かすコードでは，変数を各反復で更新せずループの添字から計算する（NVIDIA HPC SDK 26.9 は `j += 1` の形を正しく扱った．ほかの OpenACC のコンパイラは未確認） |
   | `OMP_TARGET_CLAUSE_ALLOCATE(...)` | `OMP_CLAUSE_ALLOCATE(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_ALLOCATE(__VA_ARGS__)` | |
   | `OMP_TARGET_CLAUSE_COLLAPSE(n)` | `OMP_CLAUSE_COLLAPSE(n)` | `ACC_CLAUSE_COLLAPSE(n)` | `OMP_CLAUSE_COLLAPSE(n)` | |
   | `OMP_TARGET_CLAUSE_DEPEND(...)` | `OMP_CLAUSE_DEPEND(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_DEPEND(__VA_ARGS__)` | |
@@ -893,6 +914,31 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
   * OpenACC: `acc_get_cuda_stream(...)` を呼びます．コンパイラがこのルーチンを提供している必要があります
   * OpenMP target: nvc / nvc++ でコンパイルしたとき（`__NVCOMPILER`）だけ定義されます
   * 縮退モードとシリアルモードでは定義されません（デバイスのストリームが無いため）
+  * AMD・Intel の GPU では定義されません．OpenMP の API には `target` 構文が使うストリームを返すルーチンが無く（`ompx_get_cuda_stream` は NVIDIA HPC SDK の拡張です），`interop` 構文（OpenMP 5.1 の 2.15.1 節）が用意するのは別の外部のキュー（`omp_get_interop_ptr` で取り出します）で，`target` 構文との順序は `interop` 構文の `depend` 節でだけ付きます
+    * AMD: ROCm 10.0・7.2.4 の amdclang++ は `init(targetsync : ...)` に `omp_interop_none` を返すので HIP のストリームは取れません（LLVM の上流も 2026-11 の時点で AMD GPU の `targetsync` を実装していません）．amdflang は `interop` 構文を実装していません
+    * Intel: icpx は Level Zero のハンドルを，`prefer_type("sycl")` では in-order の SYCL のキューを返します．このキューは `target` 構文が使うものではなく，下の `depend` 付きの `interop` 構文を書かないと，キューに積んだ仕事と `target` 構文の順序は付きません（Data Center GPU Max 1100 で oneAPI 2025.3・2026.1 で実測．2025.3 では `nowait` 付きの `interop` 構文でも順序が付きませんでした）．Solomon では `interop` 構文を下のように `PRAGMA_OMP_INTEROP(...)` で書きます（`-fiopenmp -fopenmp-targets=spir64 -fsycl`）．`omp.h` は `solomon.hpp` より前に自分で include してください．SYCL のデバイス側のコンパイルでは `_OPENMP` が定義されず，`solomon.hpp` が OpenMP の無いモードに落ちて `omp.h` を読まないためです
+    * NVIDIA HPC SDK 26.9 では，nvc / nvc++ は `interop` 構文を拒否し（`invalid text in pragma`），nvfortran は警告 `NVFORTRAN-W-0287-Unrecognized OpenMP directive - interop` を出して無視します（構文は何もしません）
+
+  ```c++
+  #include <omp.h> // solomon.hpp より前に（上の説明）
+  #include <solomon.hpp>
+  #include <sycl/sycl.hpp>
+
+  omp_interop_t obj = omp_interop_none;
+  char dep = 0;
+  PRAGMA_OMP_INTEROP(OMP_CLAUSE_INIT(prefer_type("sycl"), targetsync : obj))
+  auto *q = static_cast<sycl::queue *>(omp_get_interop_ptr(obj, omp_ipr_targetsync, nullptr)); // キューが無いときは nullptr
+  float *d = static_cast<float *>(omp_target_alloc(sizeof(float) * n, omp_get_default_device()));
+  q->parallel_for(sycl::range<1>(n), [=](sycl::id<1> i) { d[i] = static_cast<float>(i); });
+  PRAGMA_OMP_INTEROP(OMP_CLAUSE_USE(obj), OMP_CLAUSE_DEPEND(out : dep)) // dep に依存する構文は，ここまでに q に積んだ仕事の後に始まる
+  SOLOMON_OFFLOAD(SOLOMON_CLAUSE_INDEPENDENT, OMP_TARGET_CLAUSE_IS_DEVICE_PTR(d), OMP_TARGET_CLAUSE_NOWAIT, OMP_TARGET_CLAUSE_DEPEND(in : dep), OMP_TARGET_CLAUSE_DEPEND(out : dep))
+  for (int i = 0; i < n; i++) d[i] *= 2.0f;
+  PRAGMA_OMP_INTEROP(OMP_CLAUSE_USE(obj), OMP_CLAUSE_DEPEND(in : dep)) // これ以降に q に積む仕事は，dep が依存する構文の後に始まる
+  q->memcpy(x, d, sizeof(float) * n).wait(); // x: n 要素のホストの配列
+  PRAGMA_OMP_TARGET_TASKWAIT()
+  omp_target_free(d, omp_get_default_device());
+  PRAGMA_OMP_INTEROP(OMP_CLAUSE_DESTROY(obj)) // これ以降 q は使えない
+  ```
 
   ```c++
   int n = get_num_devices_for_offloading();

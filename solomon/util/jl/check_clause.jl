@@ -94,7 +94,7 @@ function main()
     argv = parse_cmd()
     N_max = argv["max"]
 
-    output = joinpath(@__DIR__, "..", "impl", "check_clause.hpp")
+    output = joinpath(dirname(realpath(@__FILE__)), "..", "impl", "check_clause.hpp")
     output_dir = dirname(output)
     if !isdir(output_dir)
         mkpath(output_dir)

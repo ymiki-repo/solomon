@@ -59,14 +59,14 @@ function generate(io::IO, N_max::Int)
         println(io, "#define SOLOMON_INTERNAL_IE_ANY_$k(e, ...) SOLOMON_INTERNAL_CLOAK_BITOR(SOLOMON_INTERNAL_IS_EMPTY(e))(SOLOMON_INTERNAL_IE_ANY_$(k-1)(__VA_ARGS__))")
     end
     println(io)
-    println(io, "#endif // !defined(SOLOMON_UTIL_IMPL_IS_EMPTY_HPP)")
+    println(io, "#endif  // !defined(SOLOMON_UTIL_IMPL_IS_EMPTY_HPP)")
 end
 
 function main()
     argv = parse_cmd()
     N_max = argv["max"]
 
-    output = joinpath(@__DIR__, "..", "impl", "is_empty.hpp")
+    output = joinpath(dirname(realpath(@__FILE__)), "..", "impl", "is_empty.hpp")
     output_dir = dirname(output)
     if !isdir(output_dir)
         mkpath(output_dir)

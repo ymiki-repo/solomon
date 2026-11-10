@@ -1,16 +1,5 @@
+# Installs the packages of the plotting scripts (jl/Project.toml) into the environment of jl/ (writes jl/Manifest.toml);
+# the default Julia environment is not changed. Run in the sample directory: julia jl/package.jl
 using Pkg
-Pkg.update()
-
-Pkg.add("ArgParse")
-Pkg.add("BenchmarkTools")
-Pkg.add("CSV")
-Pkg.add("DataFrames")
-Pkg.add("FilePaths")
-Pkg.add("Glob")
-Pkg.add("HDF5")
-Pkg.add("MPIPreferences")
-Pkg.add("MPI")
-Pkg.add("Parameters")
-Pkg.add("PyCall")
-Pkg.add("PyPlot")
-Pkg.add("StatsBase")
+Pkg.activate(@__DIR__)
+Pkg.instantiate()

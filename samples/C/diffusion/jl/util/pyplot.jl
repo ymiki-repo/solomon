@@ -1,15 +1,23 @@
 module util_pyplot
 
 using PyPlot
-function config(; pkg="\\usepackage{physics,siunitx}")
+# usetex: typeset the texts with LaTeX (needs latex, dvipng, and the LaTeX packages in pkg); false: the mathtext of matplotlib
+function config(; usetex::Bool=false, pkg="\\usepackage{physics,siunitx}")
     rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
     # embed fonts
     rcParams["ps.useafm"] = true
     rcParams["pdf.use14corefonts"] = true
-    rcParams["text.usetex"] = true
-    # use packages
-    rcParams["text.latex.preamble"] = pkg
+    rcParams["text.usetex"] = usetex
+    if usetex
+        # use packages
+        rcParams["text.latex.preamble"] = pkg
+    end
     return nothing
+end
+
+# plain text (e.g., a directory name) to be shown in a figure: escapes the characters special to LaTeX when usetex is true
+function plain_text(str::AbstractString; usetex::Bool=false)
+    return usetex ? replace(str, r"([_%&#$])" => s"\\\1") : str
 end
 
 

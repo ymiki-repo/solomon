@@ -68,7 +68,7 @@ function generate(io::IO, N_max::Int)
     println(io, "///")
 
     println(io)
-    println(io, "#endif // !defined(SOLOMON_UTIL_IMPL_NUM_ARGS_HPP)")
+    println(io, "#endif  // !defined(SOLOMON_UTIL_IMPL_NUM_ARGS_HPP)")
 end
 
 function main()
@@ -76,7 +76,7 @@ function main()
     argv = parse_cmd()
     N_max = argv["max"]
 
-    output = joinpath(@__DIR__, "..", "impl", "num_args.hpp")
+    output = joinpath(dirname(realpath(@__FILE__)), "..", "impl", "num_args.hpp")
     output_dir = dirname(output)
     if !isdir(output_dir)
         mkpath(output_dir)

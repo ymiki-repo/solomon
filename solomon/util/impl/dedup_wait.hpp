@@ -443,4 +443,4 @@
 ///       - Run: cd solomon/util && julia jl/dedup_wait.jl --max N
 ///
 
-#endif // !defined(SOLOMON_UTIL_IMPL_DEDUP_WAIT_HPP)
+#endif  // !defined(SOLOMON_UTIL_IMPL_DEDUP_WAIT_HPP)

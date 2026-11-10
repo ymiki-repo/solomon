@@ -44,6 +44,8 @@
 #define NMAX_SADDLE (524288)
 #define NINC_SADDLE (256)
 #define NMAX_CRIT (256)
+#else   // BENCHMARK_SADDLE_REGION
+static_assert((0 < NMIN) && (NMIN <= NMAX), "NMIN and NMAX (SET_NMIN and SET_NMAX in Makefile) must satisfy 0 < NMIN <= NMAX");
 #endif  // BENCHMARK_SADDLE_REGION
 
 #endif  // BENCHMARK_MODE

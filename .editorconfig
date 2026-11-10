@@ -1,4 +1,6 @@
 # EditorConfig for Solomon (the headers, the samples, and their scripts)
+# Every file takes the [*] section; C/C++, shell, Julia, Markdown, Fortran, Makefiles, JSON, YAML, TOML, gnuplot, Vim script,
+# and Emacs Lisp also take their own section below
 
 # top-most EditorConfig file
 root = true
@@ -43,3 +45,37 @@ indent_size = 2
 [{Makefile,*.mk}]
 indent_style = tab
 tab_width = 4
+
+# configuration for JSON files (the editor settings and the VS Code extension in misc/editor/vscode/)
+[*.json]
+indent_style = space
+indent_size = 4
+
+# the VS Code settings of this repository
+[.vscode/settings.json]
+indent_size = 2
+
+# configuration for YAML files (the GitHub Actions workflow)
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# configuration for TOML files (the Julia environments of the samples)
+[*.toml]
+indent_style = space
+indent_size = 4
+
+# configuration for gnuplot scripts
+[*.gp]
+indent_style = space
+indent_size = 4
+
+# configuration for Vim scripts (misc/editor/vim/)
+[*.vim]
+indent_style = space
+indent_size = 2
+
+# configuration for Emacs Lisp (misc/editor/emacs/)
+[*.el]
+indent_style = space
+indent_size = 2

@@ -11,6 +11,8 @@ mercury/
 milan2/
 spr2/
 nbody_stats.csv
+# figures of jl/plot/nbody.jl (/: not jl/plot/)
+/plot/
 sh/.lock
 # job outputs of PBS (Miyabi-G: <job name>.o<job ID>, <job name>.e<job ID>)
 verify.[oe][0-9]*
@@ -20,3 +22,5 @@ scaling.[oe][0-9]*
 /verify/
 /survey/
 /scaling/
+# environment of jl/ written by julia jl/package.jl
+jl/Manifest.toml

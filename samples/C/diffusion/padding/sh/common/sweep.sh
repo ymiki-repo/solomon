@@ -12,8 +12,8 @@ guard_leftovers ./run_* ./*.csv "${DUMP}"
 
 # upper bound of the time of one run (RUN_TIMEOUT of sh/<system>/config.sh; 600s when not set): a longer run fails (exit 124)
 RUN_TIMEOUT=${RUN_TIMEOUT:-600s}
-if ! [[ $RUN_TIMEOUT =~ ^[0-9]+(\.[0-9]+)?[smhd]?$ ]]; then
-	guard_die "RUN_TIMEOUT='${RUN_TIMEOUT}' in ${CONFIG:-sh/<system>/config.sh}: set a duration of timeout, e.g. 600s or 10m"
+if ! [[ $RUN_TIMEOUT =~ ^[0-9]+(\.[0-9]+)?[smhd]?$ && $RUN_TIMEOUT =~ [1-9] ]]; then
+	guard_die "RUN_TIMEOUT='${RUN_TIMEOUT}' in ${CONFIG:-sh/<system>/config.sh}: set a positive duration of timeout (0 would mean no limit), e.g. 600s or 10m"
 fi
 guard_command timeout numactl
 PADDING=1
@@ -102,12 +102,12 @@ for MODEL_ID in "${MODEL_ID_LIST[@]}"; do
 	OUTPUTS=("${BINARY}"_* ./*.csv)
 	shopt -u nullglob
 	if [ ${#OUTPUTS[@]} -gt 0 ]; then
-		mv --backup=numbered -- "${OUTPUTS[@]}" "${DUMP}/model${MODEL_ID}/"
+		mv --backup=numbered -- "${OUTPUTS[@]}" "${DUMP}/model${MODEL_ID}/" || guard_fail "move: the outputs of model ${MODEL_ID} into ${DUMP}/model${MODEL_ID}/"
 	fi
 done
 
 HOST=$(guard_host)
 DEST=${HOST}_${TARGET}_${ARCH}
 mkdir -p "${DEST}"
-mv --backup=numbered "${DUMP}" "${DEST}"
+mv --backup=numbered "${DUMP}" "${DEST}/" || guard_fail "move: ${DUMP}/ into ${DEST}/ (the results stay in ${PWD}/${DUMP}/)"
 guard_finish

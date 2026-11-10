@@ -62,7 +62,7 @@ function generate(io::IO, N_max::Int)
     end
 
     println(io)
-    println(io, "#endif // !defined(SOLOMON_UTIL_IMPL_PICKUP_CLAUSE_HPP)")
+    println(io, "#endif  // !defined(SOLOMON_UTIL_IMPL_PICKUP_CLAUSE_HPP)")
 end
 
 function main()
@@ -70,7 +70,7 @@ function main()
     argv = parse_cmd()
     N_max = argv["max"]
 
-    output = joinpath(@__DIR__, "..", "impl", "pickup_clause.hpp")
+    output = joinpath(dirname(realpath(@__FILE__)), "..", "impl", "pickup_clause.hpp")
     output_dir = dirname(output)
     if !isdir(output_dir)
         mkpath(output_dir)

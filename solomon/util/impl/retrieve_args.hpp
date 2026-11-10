@@ -276,4 +276,4 @@
 ///                   (where N >= your required argument count)
 ///
 
-#endif // !defined(SOLOMON_UTIL_IMPL_RETRIEVE_ARGS_HPP)
+#endif  // !defined(SOLOMON_UTIL_IMPL_RETRIEVE_ARGS_HPP)

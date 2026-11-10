@@ -468,7 +468,9 @@
 /// @brief add OpenMP clause "private (list)" if applicable
 /// @details Creates a new variable for each item in list that is private to each thread or explicit task. The private variable is not given an initial value.
 ///
+// clang-format off: clang-format reads private as the C++ access specifier and splits the clause (permanent)
 #define OMP_CLAUSE_PRIVATE(...) private(__VA_ARGS__), SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_DISTRIBUTE, SOLOMON_INTERNAL_TAG_OMP_FOR, SOLOMON_INTERNAL_TAG_OMP_LOOP, SOLOMON_INTERNAL_TAG_OMP_PARALLEL, SOLOMON_INTERNAL_TAG_OMP_SCOPE, SOLOMON_INTERNAL_TAG_OMP_SECTIONS, SOLOMON_INTERNAL_TAG_OMP_SIMD, SOLOMON_INTERNAL_TAG_OMP_SINGLE, SOLOMON_INTERNAL_TAG_OMP_TARGET, SOLOMON_INTERNAL_TAG_OMP_TASK, SOLOMON_INTERNAL_TAG_OMP_TASKLOOP, SOLOMON_INTERNAL_TAG_OMP_TEAMS)
+// clang-format on
 
 ///
 /// @brief add OpenMP clause "firstprivate (list)" if applicable

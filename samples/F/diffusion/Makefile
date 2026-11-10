@@ -1,9 +1,9 @@
 # the directory solomon/ of Solomon; ?= takes the environment variable SOLOMON_DIR as well
 # (a copy of this sample outside samples/F/ needs it, e.g. make SOLOMON_DIR=/path/to/solomon)
 SOLOMON_DIR	?= ../../../solomon
-SPECIAL_CHARS	:= ' " \ ( ) ; & | < > `
+SPECIAL_CHARS	:= ' " \ ( ) ; & | < > : [ ] * ? `
 ifneq ($(word 2,$(SOLOMON_DIR))$(strip $(foreach c,$(SPECIAL_CHARS),$(findstring $(c),$(SOLOMON_DIR)))),)
-$(error SOLOMON_DIR='$(SOLOMON_DIR)' holds a space, a quote, or one of \ ( ) ; & | < > and the backquote, which the compile commands cannot take: move Solomon to a path without them)
+$(error SOLOMON_DIR='$(SOLOMON_DIR)' holds a space, a quote, or one of \ ( ) ; & | < > : [ ] * ? and the backquote, which the compile commands and the rules of make cannot take: move Solomon to a path without them)
 endif
 ifeq ($(wildcard $(SOLOMON_DIR)/fortran.mk),)
 $(error $(SOLOMON_DIR)/fortran.mk is not found: set SOLOMON_DIR to the directory solomon/ of Solomon, e.g. make SOLOMON_DIR=/path/to/solomon)
@@ -96,7 +96,9 @@ else
 	endif
 	ARGS_NV	:= -mp=gpu -Minfo=accel,opt,mp
 	ARGS_AMD	:= -fopenmp --offload-arch=$(GPU_ARCH)
-	ARGS_INTEL	:= -fiopenmp -fopenmp-targets=spir64_gen -Xs "-device $(GPU_ARCH)"
+	ARGS_INTEL	:= -fiopenmp -fopenmp-targets=spir64_gen
+	# -Xs "-device pvc" is for Ahead-of-Time compilation (used at the link)
+	LINK_INTEL	:= -Xs "-device $(GPU_ARCH)"
 endif
 
 # memory mode of nvfortran: -gpu=mem:managed / mem:unified (-gpu=managed / unified for nvfortran that does not know mem:)
@@ -165,12 +167,16 @@ else
 		ifeq ($(IFX), 1)
 			FC	:= ifx
 			FFLAGS	+= $(ARGS_INTEL)
+			LINK_ARGS	:= $(LINK_INTEL)
 		endif
 	endif
 endif
 LDFLAGS	:=
+LDLIBS	:=
+# libraries that the sample itself needs, linked after LDLIBS: they stay when LDLIBS is given on the command line
+SAMPLE_LIBS	:=
 ifeq ($(AMDFLANG), 1)
-	LDFLAGS	+= -lm
+	SAMPLE_LIBS	+= -lm
 endif
 # the compiler name in the CSV file name (no directory, no option)
 PARAM	+= -DCOMPILER="\"$(notdir $(firstword $(FC)))\"" -DMODEL_ID="($(MODEL_ID))"
@@ -184,7 +190,7 @@ SOLOMON_FLAGS	= $(FFLAGS) $(PARAM) $(INC)
 
 # settings of the last build: the sources are preprocessed, compiled, and linked again when the settings (make variables) change
 STAMP	:= settings.txt
-SETTINGS	:= $(FC) $(FFLAGS) $(PARAM) $(INC) $(LDFLAGS)
+SETTINGS	:= $(FC) $(FFLAGS) $(PARAM) $(INC) $(TARGET_ARCH) $(LINK_ARGS) $(LDFLAGS) $(LDLIBS) $(SAMPLE_LIBS)
 MAKEFILE_DEPS	:= $(MAKEFILE_LIST)
 # the headers of Solomon, read by the preprocessing of every source
 SOLOMON_HEADERS	:= $(shell find $(SOLOMON_DIR) -name '*.hpp')
@@ -198,10 +204,10 @@ all : $(TARGET)
 .SECONDARY:
 
 $(TARGET): $(OBJS) $(STAMP)
-	$(FC) $(FFLAGS) $(OBJS) -o $@ $(LDFLAGS)
+	$(FC) $(FFLAGS) $(TARGET_ARCH) $(OBJS) -o $@ $(LINK_ARGS) $(LDFLAGS) $(LDLIBS) $(SAMPLE_LIBS)
 
 %.o: spp/%.f90 $(STAMP) $(MAKEFILE_DEPS)
-	$(FC) -c $(FFLAGS) $< -o $@
+	$(FC) -c $(FFLAGS) $(TARGET_ARCH) $< -o $@
 
 $(SRCS:%=spp/%): $(STAMP) $(MAKEFILE_DEPS) $(SOLOMON_DIR)/fortran.mk $(SOLOMON_HEADERS)
 

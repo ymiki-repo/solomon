@@ -1,5 +1,7 @@
 # Solomon: Simple Off-LOading Macros Orchestrating multiple Notations
 
+[![ci](https://github.com/ymiki-repo/solomon/actions/workflows/ci.yml/badge.svg)](https://github.com/ymiki-repo/solomon/actions/workflows/ci.yml)
+
 | | English | 日本語 |
 | ---- | ---- | ---- |
 | Fortran（**v2.0.0から追加**） | [README](README_f90.md) | [このファイル](README_f90_jp.md) |
@@ -8,7 +10,7 @@
 ## 概要
 
 * GPU向け指示文（OpenACC, OpenMP target）統合マクロ
-* 現在のバージョン: v2.0.0（`solomon/solomon.hpp` 内の `SOLOMON_VERSION` として定義）
+* 現在のバージョン: v2.0.1（`solomon/solomon.hpp` 内の `SOLOMON_VERSION` として定義）
 * 詳細については [Miki & Hanawa (2024, IEEE Access, vol. 12, pp. 181644-181665)](https://doi.org/10.1109/ACCESS.2024.3509380) を参照してください
 * 使用した際には [Miki & Hanawa (2024, IEEE Access, vol. 12, pp. 181644-181665)](https://doi.org/10.1109/ACCESS.2024.3509380) を引用してください
 * Released under the MIT license, see LICENSE.txt
@@ -21,6 +23,7 @@
   * [背景](#背景)
   * [開発方針と特徴](#開発方針と特徴)
 * [変更履歴（Changelog）](#変更履歴changelog)
+  * [v2.0.1（2026-11-10）](#v2012026-11-10)
   * [v2.0.0（2026-11-04）](#v2002026-11-04)
 * [使い方](#使い方)
   * [Solomon を用いたコードの開発方法](#solomon-を用いたコードの開発方法)
@@ -65,6 +68,19 @@
   * ユーザーサイドでマクロを付け足すことも簡単です
 
 ## 変更履歴（Changelog）
+
+### v2.0.1（2026-11-10）
+
+`solomon/` のマクロの展開は v2.0.0 と同じです（ヘッダは `solomon.hpp` の `SOLOMON_VERSION` を除いて clang-format で書式を整えただけです）．このリリースはサンプル，同梱の道具，文書，リポジトリの検査を変えます．
+
+* **継続的インテグレーション**: GitHub Actions で，サンプルをホストのコンパイラ（GCC と gfortran．C/C++ のサンプルは Clang でも．逐次とホストの OpenMP）でビルドして展開結果を確かめ，シェルスクリプトに shellcheck を掛け，移行スクリプトを dry-run で試します．GPU は使いません．結果は各 README の冒頭のバッジに出ます．同じ検査は `bash misc/ci/run_tests.sh` で手元でも実行できます（bash 4.4 以降と GNU make）
+* **サンプルの Makefile の `SOLOMON_DIR`**: `:` や glob の文字（`[ ] * ?`）を含むパスでは，`make` がメッセージを出して止まるようになりました
+* **Intel コンパイラでの Fortran のサンプル**: 事前コンパイルのオプション `-Xs "-device ..."` を，C のサンプルと同じくリンクのときだけ渡します
+* **サンプルのジョブスクリプト**: `rocm-smi` / `nvidia-smi` が無いときは `numactl --show` が示す NUMA ノードを使い，diffusion は `DETECT_NUMA=1` のとき先に `numactl` の有無を確かめます．`module load` に失敗したときは `MODULE_USE` も確かめるよう促します．`RUN_TIMEOUT=0` は受け付けません（正の上限が要ります）．結果の移動に失敗するとジョブは失敗します．bash の POSIX モード（bash である `sh` など）で実行したジョブスクリプトがロックファイル `sh/.lock` に書けないときは，何も出さずに終わらずにそれを知らせます
+* **サンプルの Makefile**: すべてのサンプルの Makefile が，GNU make の組み込みの規則と同じく，`TARGET_ARCH` をコンパイラに，`LDFLAGS` / `LDLIBS` をリンカに渡します．サンプル自身が要るライブラリ（diffusion の `-lm`）は，コマンド行で `LDLIBS` を与えても残ります
+* **移行スクリプト**: 書き換えずに残した v1.x の名前（ビルドのファイルの変数と代入，`#pragma` や `!$omp` などの生の指示文の行）を知らせます．行末の空白の後で続く `#pragma` を GCC と同じく続けて読み，UTF-8 のバイト順マークの後の `#include` と `#pragma` も見つけ，たどり着けないファイルを知らせます
+* **文書**: 空の引数を指示節の上限に数えないという注記に，33 個以上続く場合への参照を足しました．必須の指示節の無いまま直接書いた OpenMP の data 系の指示文，OpenACC に対応物の無い指示節（`OMP_TARGET_CLAUSE_LINEAR(...)`，`OMP_TARGET_CLAUSE_LASTPRIVATE(...)`），ifx の `interop` 構文，`SOLOMON_SYNCHRONIZE(...)` に指示節のマクロを渡すとコンパイラが止まることの説明を足しました
+* **同梱のファイル**: `.editorconfig` が JSON，YAML，TOML，gnuplot，Vim script，Emacs Lisp のファイルも扱い，`solomon/util/jl/` の生成器はシンボリックリンクから実行しても自分の隣にヘッダを書きます
 
 ### v2.0.0（2026-11-04）
 
@@ -263,7 +279,8 @@
         * **[更新 v1.1.0]** この制約は自動的に処理されるようになりました．OpenMP のバックエンド（`simd` が指示文名の一部になる）では，どの順番で記述されていても，`SOLOMON_CLAUSE_INDEPENDENT`（及びその同義語）を Solomon が自動的に先頭に並び替えます．OpenACC でも `independent` を先頭に並べ替えます（v2.0.0 以降．OpenACC では指示節の順序は意味を持ちません: OpenACC 3.3 の 2.1 節）．`simd` / `independent` 節は 1 つだけ出力するので，指示文自身が付ける所に `SOLOMON_CLAUSE_INDEPENDENT` を書いても（例: `PRAGMA_OMP_TARGET_SIMD(...)`）害はありません（NVIDIA HPC SDK では，名前に `simd` を持つ OpenMP target の指示文に `simd` 節が続くことがありますが，受理されます）．`ACC_CLAUSE_DEVICE_TYPE(...)` より後ろに書いた指示節はその device 用なので，動かさず，まとめもしません（OpenACC 3.3 の 2.4 節）．ほかの指示節は，どのバックエンドでも記述した順のままです
         * `simd` だけが取る節（`OMP_CLAUSE_SIMDLEN(...)`・`OMP_CLAUSE_SAFELEN(...)`・`OMP_CLAUSE_ALIGNED(...)`・`OMP_CLAUSE_NONTEMPORAL(...)`）は，名前に `simd` の無い指示文では並べ替えで `simd` が付いても捨てます．`OMP_CLAUSE_IF(simd: ...)` は残り（`if` はほかの構文の節でもあるため），`simd` が付かない所（`teams loop` の形では常に）ではコンパイラが拒否します．Solomon の記法では，代わりに `SOLOMON_CLAUSE_SIMDLEN(length)`・`SOLOMON_CLAUSE_SAFELEN(length)`・`SOLOMON_CLAUSE_ALIGNED(...)`・`SOLOMON_CLAUSE_NONTEMPORAL(...)`・`SOLOMON_CLAUSE_IF_SIMD(condition)` を `SOLOMON_CLAUSE_INDEPENDENT` と一緒に書いてください．`simd` が付く所に出て，付かない所では捨てます（簡易記法の表を参照）
       * 指示文に対応していない指示節・指示句については，Solomon が自動的に無視します
-        * OpenMP target 使用時，OpenMP の指示文に必須の指示節（`map`，`update` では `to` / `from`）になる指示節を持たない OpenACC の `enter data`，`exit data`，`update`（例: `attach` だけ，`if` だけ）は，指示文そのものを出しません（v2.0.0 以降）．`PRAGMA_ACC_DATA(...)` / `PRAGMA_ACC_HOST_DATA(...)` は必須の指示節の無い `!$omp target data` を残し，gfortran が拒否します．OpenMP target でも通すときは，`map` になる指示節（`PRAGMA_ACC_DATA(...)`．例: `ACC_CLAUSE_COPYIN(...)`）か `use_device_*` になる指示節（`PRAGMA_ACC_HOST_DATA(...)`．例: `ACC_CLAUSE_USE_DEVICE(...)`）を 1 つ以上入れてください
+        * OpenMP target 使用時，OpenMP の指示文に必須の指示節（`map`，`update` では `to` / `from`）になる指示節を持たない OpenACC の `enter data`，`exit data`，`update`（例: `attach` だけ，`if` だけ）は，指示文そのものを出しません（v2.0.0 以降）．`PRAGMA_ACC_DATA(...)` / `PRAGMA_ACC_HOST_DATA(...)` は必須の指示節の無い `!$omp target data` を残し，gfortran が拒否します（nvfortran と ifx は受理します）．OpenMP target でも通すときは，`map` になる指示節（`PRAGMA_ACC_DATA(...)`．例: `ACC_CLAUSE_COPYIN(...)`）か `use_device_*` になる指示節（`PRAGMA_ACC_HOST_DATA(...)`．例: `ACC_CLAUSE_USE_DEVICE(...)`）を 1 つ以上入れてください
+        * OpenMP target 使用時，OpenMP の data 系の指示文を直接書いたもの（`PRAGMA_OMP_TARGET_DATA(...)`，`PRAGMA_OMP_TARGET_ENTER_DATA(...)`，`PRAGMA_OMP_TARGET_EXIT_DATA(...)`，`PRAGMA_OMP_TARGET_UPDATE(...)`）で，その指示文に必須の指示節が 1 つも残らないもの（例: `OMP_TARGET_CLAUSE_IF(...)` だけ，`ACC_CLAUSE_PRESENT(...)` だけ，その指示文が取らない指示節だけ）は，必須の指示節の無いまま書いたとおりに出します．gfortran は拒否し，nvfortran は受理し，ifx は `target data` と `target update` を受理して `target enter data` と `target exit data` を拒否します
         * OpenACC 使用時，指示節がどれもその指示文の必須の節でない OpenACC の data 系の指示文（`data`，`host_data`，`enter data`，`exit data`，`update`．例: `ACC_CLAUSE_IF(...)` だけ）は，Solomon のエラーで止まります（v2.0.0 以降）
         * declare の指示節（`copy`，`copyin`，`copyout`，`create`，`present`，`deviceptr`，`device_resident`，`link`）が 1 つも無い `PRAGMA_ACC_DECLARE(...)` は，`_OPENACC` によらず `Solomon: the OpenACC specification requires at least one clause on a declare directive (...)`（Fortran は `SOLOMON_ERROR_OPENACC_REQUIRES_A_CLAUSE_ON_DECLARE_DIRECTIVE`）で止まります（v2.0.0 以降）．OpenACC はどの版でも declare に指示節を 1 つ以上求めます（2.6・2.7 の 2.13 節の構文 "declare clause-list"．3.0 以降は制限としても明記）
         * Solomon の map の修飾子の誤用もビルドを止めます（v2.0.0 以降）: `OMP_TARGET_CLAUSE_MAP(...)` の外に書いた `OMP_TARGET_MAP_MODIFIER_*`，後ろに入れ子の指示節の無い修飾子，入れ子の指示節の後ろの入れ子の指示節でない並び，1 つの `OMP_TARGET_CLAUSE_MAP(...)` の 7 個以上の修飾子．GCC・Clang・Intel のコンパイラ（C/C++）は `error: Solomon: ...` を，NVIDIA HPC SDK（C/C++）は `invalid text in pragma` を出します．Fortran では `SOLOMON_ERROR_` で始まる名前が指示文に残り，Fortran のコンパイラがそこで構文エラーを出します
@@ -308,7 +325,7 @@
      | 使用可能なマクロ | 出力 | 使用されるバックエンド | 備考 |
      | ---- | ---- | ---- | ---- |
      | **`SOLOMON_CLAUSE_ASYNC(...)`** <br> `ACC_CLAUSE_ASYNC(...)` <br> `OMP_TARGET_CLAUSE_NOWAIT` | <br> `async(__VA_ARGS__)` <br> `nowait` | <br> OpenACC <br> OpenMP | 両バックエンドで共通して非同期実行される <br> OpenACC においてはキューIDを指定可能 <br> OpenMP においてはキューIDは無視される <br> 引数なしでは OpenACC で括弧の無い `async` になる（`async(acc_async_noval)` と同じ） |
-     | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | <br> OpenACC <br> OpenMP | 両バックエンドで共通して同期処理が実行される．`SOLOMON_CLAUSE_ASYNC(...)` に対応して記述する <br> OpenACC（`SOLOMON_SYNCHRONIZE`，`PRAGMA_ACC_WAIT`）: 引数なしは `!$acc wait`，引数ありは `!$acc wait (__VA_ARGS__)` になる．引数はキューIDの並び（wait-argument）だけで，指示節は渡せない <br> OpenMP target（`SOLOMON_SYNCHRONIZE`，`PRAGMA_ACC_WAIT`）: 引数は数によらず無視され `!$omp taskwait` になる <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)`: OpenMP target では引数（指示節）がそのまま `!$omp taskwait` に渡り，`PRAGMA_OMP_TARGET_TASKWAIT(1, 2)` のようなキューIDは前処理エラーになる．OpenACC 使用時には `!$acc wait` になる <br> 縮退モード（演算加速器を用いないCPU実行）: 3 つとも何も出さない |
+     | **`SOLOMON_SYNCHRONIZE(...)`** <br> `PRAGMA_ACC_WAIT(...)` <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)` | <br> `!$acc wait __VA_ARGS__` <br> `!$omp taskwait __VA_ARGS__` | <br> OpenACC <br> OpenMP | 両バックエンドで共通して同期処理が実行される．`SOLOMON_CLAUSE_ASYNC(...)` に対応して記述する <br> OpenACC（`SOLOMON_SYNCHRONIZE`，`PRAGMA_ACC_WAIT`）: 引数なしは `!$acc wait`，引数ありは `!$acc wait (__VA_ARGS__)` になる．引数はキューIDの並び（wait-argument）だけで，指示節は渡せない（`SOLOMON_CLAUSE_ASYNC(3)` などの指示節のマクロを渡しても Solomon は見分けず，`!$acc wait (...)` の中に残ってコンパイラが Solomon の内部名（`SOLOMON_INTERNAL_TAG_...`）を含むエラーで止まる） <br> OpenMP target（`SOLOMON_SYNCHRONIZE`，`PRAGMA_ACC_WAIT`）: 引数は数によらず無視され `!$omp taskwait` になる <br> `PRAGMA_OMP_TARGET_TASKWAIT(...)`: OpenMP target では引数（指示節）がそのまま `!$omp taskwait` に渡り，`PRAGMA_OMP_TARGET_TASKWAIT(1, 2)` のようなキューIDは前処理エラーになる．OpenACC 使用時には `!$acc wait` になる <br> 縮退モード（演算加速器を用いないCPU実行）: 3 つとも何も出さない |
      | **`SOLOMON_CLAUSE_ASYNC_QUEUE(id)`** <br> `ACC_CLAUSE_ASYNC(id)` | <br> `async(id)` <br> N/A（OpenMP target 使用時には無視される） | <br> OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して非同期実行 <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した非同期実行がサポートされていないため，無視される |
      | **`SOLOMON_CLAUSE_WAIT_QUEUE(...)`** <br> `ACC_CLAUSE_WAIT(...)` | <br> `wait(__VA_ARGS__)` <br> N/A（OpenMP target 使用時には無視される） | <br> OpenACC <br> OpenMP | OpenACC でのみ，指定したキューIDの処理の完了を待ってから指示文を始める（v2.0.0 以降） <br> キューIDを 1 個以上渡す（`SOLOMON_WAIT_QUEUE(id)` と違い並びを渡せる）．空にすると OpenACC では全てのキューを待つ `wait` になるが，全てを待つときは指示文の前に `SOLOMON_SYNCHRONIZE()` を置くことを推奨する <br> OpenMP では無視される．`SOLOMON_CLAUSE_ASYNC(...)` と組み合わせると OpenMP target では待たない <br> 同じ指示文の複数の `wait` 節はまとめる（`ACC_CLAUSE_WAIT(...)` の行を参照） |
      | **`SOLOMON_WAIT_QUEUE(id)`** <br> `PRAGMA_ACC_WAIT(id)` | <br> `acc wait (id)` <br> N/A（OpenMP target 使用時には無視される） | <br> OpenACC <br> OpenMP | OpenACC でのみキューIDを指定して同期処理を実行．`SOLOMON_CLAUSE_ASYNC_QUEUE(id)` に対応して記述する <br> キューIDの指定が必須 <br> OpenMP ではキューIDを指定した同期処理がサポートされていないため，無視される |
@@ -475,15 +492,15 @@
 * v1.x 向けに書かれたコードは，`SOLOMON_WITH_SHORT_NAMES` を定義する（例: コンパイルフラグに `-DSOLOMON_WITH_SHORT_NAMES` を追加する）ことで従来の接頭辞なしの綴りが有効になり，そのまま動作します（デフォルト: OFF）
 * `_Pragma` を組み立てる下請けの `PRAGMA(...)`，`PRAGMA_STR(x)`，`PRAGMA_STR1(x)`，`SHOW_PRAGMA(...)` は，v2.0.0 では内部名（`SOLOMON_INTERNAL_` 接頭辞）になり，デフォルトでは定義されません．`SOLOMON_WITH_SHORT_NAMES` を定義すると v1.x の名前 `PRAGMA(...)` が使えます．`PRAGMA_STR(x)`・`PRAGMA_STR1(x)`・`SHOW_PRAGMA(...)` は，v1.x と同じくさらに `PRINT_GENERATED_PRAGMA` を定義したときだけ定義されます．自前の指示文マクロの部品にしている場合は，定義（`solomon/short_names.hpp`）を自分のコードにコピーしてください
 * シリアル実行（OpenACC・OpenMP のいずれも有効でない場合）では，`SOLOMON_APPEND_ARGS(...)` と v1.x の名前 `APPEND_ARGS(...)` は空に展開され，引数は消えます（例: `call f(0 SOLOMON_APPEND_ARGS(1, 2))` は `call f(0)` になります）
-* `OMP_TARGET_CLAUSE_MAP(...)`: 入れ子でない並びの 3 番目以降の要素が，引数 1 個では呼べない関数形式マクロの名前のとき（例: `#define fm2(x, y) ...` と `OMP_TARGET_CLAUSE_MAP(a, b, fm2)`）は前処理が失敗し，引数 1 個で呼ぶとトップレベルのカンマを含む形に展開される関数形式マクロの名前のとき（例: `#define fc1(x) x, x`）は内部のマクロの名前を挙げる Solomon のエラーでビルドが止まるようになりました．その要素を 1 番目か 2 番目に置いてください
+* `OMP_TARGET_CLAUSE_MAP(...)`（OpenACC と OpenMP target のとき．縮退モードとシリアルモードでは節を出さないので起きません）: 入れ子でない並びの 3 番目以降の要素が，引数 1 個では呼べない関数形式マクロの名前のとき（例: `#define fm2(x, y) ...` と `OMP_TARGET_CLAUSE_MAP(a, b, fm2)`）は前処理が失敗し，引数 1 個で呼ぶとトップレベルのカンマを含む形に展開される関数形式マクロの名前のとき（例: `#define fc1(x) x, x`）は内部のマクロの名前を挙げる Solomon のエラーでビルドが止まるようになりました．その要素を 1 番目か 2 番目に置いてください
 * 設定マクロには新しい綴り `-DSOLOMON_OFFLOAD_BY_*` が追加されました．従来の `-DOFFLOAD_BY_*` は無条件で使用し続けられます（`SOLOMON_WITH_SHORT_NAMES` の定義は不要です）
-* `AS_BLOCK` / `NUM_BLOCKS(n)`（`SOLOMON_CLAUSE_BLOCK` / `SOLOMON_CLAUSE_NUM_BLOCKS(n)`）は OpenACC での意味が変わりました: `gang` / `num_gangs(n)` を出力します（v1.x: `worker` / `num_workers(n)`）．ブロックを OpenACC では gang に，OpenMP target では team にそろえるための変更です．コンパイルは通りますが OpenACC での並列化の対応付けが変わるので，v1.x の意味を OpenACC で保つには代わりに `ACC_CLAUSE_WORKER` / `ACC_CLAUSE_NUM_WORKERS(n)` を書いてください．同様に，`NUM_GRIDS(n)`（`SOLOMON_CLAUSE_NUM_GRIDS(n)`．`SOLOMON_CLAUSE_NUM_BLOCKS(n)` の別名）は OpenMP target でも `num_teams(n)` を出力するようになった（v1.x では捨てられていた）ため，`NUM_GRIDS(n)` と `NUM_BLOCKS(m)` を併用すると同じ指示節が 2 つ出力されます（例は [misc/migrate/MIGRATION.md](misc/migrate/MIGRATION.md)）．移行スクリプトは，これらを書き換えるファイルについて注意を表示します
+* `AS_BLOCK` / `NUM_BLOCKS(n)`（`SOLOMON_CLAUSE_BLOCK` / `SOLOMON_CLAUSE_NUM_BLOCKS(n)`）は OpenACC での意味が変わりました: `gang` / `num_gangs(n)` を出力します（v1.x: `worker` / `num_workers(n)`）．ブロックを OpenACC では gang に，OpenMP target では team にそろえるための変更です．コンパイルは通りますが OpenACC での並列化の対応付けが変わるので，v1.x の意味を OpenACC で保つには代わりに `ACC_CLAUSE_WORKER` / `ACC_CLAUSE_NUM_WORKERS(n)` を書いてください．同様に，`NUM_GRIDS(n)`（`SOLOMON_CLAUSE_NUM_GRIDS(n)`．`SOLOMON_CLAUSE_NUM_BLOCKS(n)` の別名）は OpenMP target でも `num_teams(n)` を出力するようになった（v1.x では捨てられていた）ため，`NUM_GRIDS(n)` と `NUM_BLOCKS(m)` を併用すると同じ指示節が 2 つ出力されます（例は [misc/migrate/MIGRATION.md](misc/migrate/MIGRATION.md)）．移行スクリプトは，これらを含むファイルについて注意を表示します（書き換えずに残す生の指示文の行にだけある場合も）
 * 新旧 API の完全な対応表は [misc/migrate/MIGRATION.md](misc/migrate/MIGRATION.md) を参照してください
 * 移行スクリプト `misc/migrate/solomon_migrate_v1_to_v2.sh` を同梱しています．v1.x のソースコード（およびファイル引数として明示したビルドスクリプト）を v2.0.0 の綴りに書き換えます．デフォルトは dry-run（diff 表示のみ）で，`--apply` を付けるとバックアップ（`*.v1.bak`）を残して書き換えます．デフォルトでは `solomon.hpp` を読み込むソースだけを書き換えます（それ以外は，`solomon.hpp` を読み込まずに v1.x の名前を使う利用者のヘッダも含めて，飛ばして表示します．`--all` を付けるとそれらも書き換えます）．bash と GNU sed が必要で，bash 4 以降と GNU の道具で確かめています
 
 ### Solomon の拡張方法（コードジェネレータを用いた更新方法）
 
-* Solomon では，1つの指示文ごとに 32 個の指示節・指示句（候補）を受け付ける仕様となっています（指示文に合わない指示節と Solomon の指示節マクロでない名前も数えます．空の引数は数えません）．超えるとビルドが止まります（v2.0.0 以降）: GCC・Clang・Intel のコンパイラ（C/C++）は `error: Solomon: too many clauses for one directive (limit 32)` を，NVIDIA HPC SDK（C/C++）はマクロの行で `invalid text in pragma` を出します．Fortran では指示文に `SOLOMON_ERROR_TOO_MANY_CLAUSES_FOR_ONE_DIRECTIVE` が残り，Fortran のコンパイラがそこで構文エラーを出します
+* Solomon では，1つの指示文ごとに 32 個の指示節・指示句（候補）を受け付ける仕様となっています（指示文に合わない指示節と Solomon の指示節マクロでない名前も数えます．空の引数は数えません．ただし 33 個以上続く場合は下記）．超えるとビルドが止まります（v2.0.0 以降）: GCC・Clang・Intel のコンパイラ（C/C++）は `error: Solomon: too many clauses for one directive (limit 32)` を，NVIDIA HPC SDK（C/C++）はマクロの行で `invalid text in pragma` を出します．Fortran では指示文に `SOLOMON_ERROR_TOO_MANY_CLAUSES_FOR_ONE_DIRECTIVE` が残り，Fortran のコンパイラがそこで構文エラーを出します
   * 候補 2 個に数えられる指示節があります: OpenMP target の引数ありの `ACC_CLAUSE_SELF(...)`（縮退モードでは計算構文のものだけ．引数なしの `ACC_CLAUSE_SELF()` は 1 個）と，OpenACC の `OMP_TARGET_CLAUSE_MAP(...)` の `present` の付いた入れ子の指示節（`OMP_TARGET_MAP_MODIFIER_PRESENT` の後ろのもの，入れ子の `OMP_TARGET_CLAUSE_TO_PRESENT(...)` / `OMP_TARGET_CLAUSE_FROM_PRESENT(...)`．update に直接書いたものは 1 個）．縮退モードの `SOLOMON_CLAUSE_NUM_THREADS(...)`（`ACC_CLAUSE_VECTOR_LENGTH(...)` も）も 2 個に数えます
   * OpenACC では，`SOLOMON_OFFLOAD_OUTER_LOOP(...)` と `SOLOMON_PARALLELIZE_INNER_LOOP(...)` は `loop` に `gang` / `vector` を足すので，指示節を 31 個まで受け付けます．同じく `PRAGMA_OMP_TARGET_TEAMS_DISTRIBUTE(...)` は 30 個まで（`gang` と `independent` を足す），`OMP_TARGET_CLAUSE_MAP_DELETE(...)` を含む exit data は 31 個まで（`finalize` を足す）です
   * ほかの引数の前に続けて書いた空の引数は，33 個ごとに候補 1 個に数えられます（33〜65 個で 1 個，66〜98 個で 2 個，…）
@@ -578,7 +595,7 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
 
 * サンプルのディレクトリ（`samples/F/diffusion/`，`samples/F/declare/`）で `make` を実行してください．nvfortran で `./run` を作ります．対象の GPU の既定は `GPU_ARCH=90`（H100）です．ほかの GPU はコマンド行で指定してください（例: `make GPU_ARCH=120`）
 * ほかのコンパイラは `AMDFLANG=1` か `IFX=1` で選びます（例: `make AMDFLANG=1 GPU_ARCH=gfx90a`，`make IFX=1 GPU_ARCH=pvc`）．AMD と Intel の GPU には `GPU_ARCH` の既定がありません．選べるコンパイラは 1 つまでで，OpenACC（`USE_OPENACC=1`）には NVIDIA HPC SDK が要ります．`NVHPC=0` でほかのコンパイラも選ばないと，`$(FC)`（指定しなければ gfortran）でオフロードしないホストの実行ファイルを作ります．ホストでも Makefile は OpenMP target のオフロードを要求するので，OpenMP のフラグが無いと `fortran.mk` がソースごとに「OpenMP target のバックエンドは無効」という note を出し，指示文はシリアルのコードに展開されます．OpenMP のフラグ（例: `FC='gfortran -fopenmp'`）を与えると，target 領域はホストで実行されます（ホストへのフォールバック）
-* `SOLOMON_DIR`（既定 `../../../solomon`）は Solomon の `solomon/` ディレクトリです．サンプルのディレクトリを別の場所に置いたときは，コマンド行か環境変数で与えてください（例: `make SOLOMON_DIR=/path/to/solomon`）．export した `SOLOMON_DIR` も使われます．パスに空白，引用符，`$`，バッククォート，`\ ( ) ; & | < >` のどれも含めないでください．そこに `fortran.mk` が無ければ `make` が止まります
+* `SOLOMON_DIR`（既定 `../../../solomon`）は Solomon の `solomon/` ディレクトリです．サンプルのディレクトリを別の場所に置いたときは，コマンド行か環境変数で与えてください（例: `make SOLOMON_DIR=/path/to/solomon`）．export した `SOLOMON_DIR` も使われます．パスに空白，引用符，`$`，バッククォート，`\ ( ) ; & | < > : [ ] * ?` のどれも含めないでください．そこに `fortran.mk` が無ければ `make` が止まります
 * make の変数やヘッダ（Solomon のものも）を変えると，前処理・コンパイル・リンクをやり直します．`make clean` は要りません．比べるのは変数の値だけです（`settings.txt` に記録し，`make clean` で消えます）．同じ名前の別のコンパイラ（別の module や `PATH`）に切り替えたときは `make clean` を実行してください
 * diffusion: `./run N` で実行します．`N` は 1 次元あたりの格子点の数です（3 <= N で，N^3 が既定の整数に収まる，つまり N <= 1290）．引数が無い・多い・不正なときは使い方を標準エラーに出してコード 1 で止まります．`OPT_LEVEL` は 0（最適化のフラグなし），1（`-O1`），2（`-O2`），3（`-O3`），4（既定．nvfortran では `-Ofast`，ほかでは `-O3 -ffast-math`）をとります．それ以外の値では `make` がエラーで止まります．`USE_MANAGED=1` / `USE_UNIFIED=1` は `-gpu=mem:managed` / `-gpu=mem:unified` を渡します（`mem:` を知らない NVIDIA HPC SDK では `-gpu=managed` / `-gpu=unified`）
 * diffusion: 実行ごとに，カレントディレクトリの `diffusion_benchmark_<compiler><MODEL_ID>.csv` に 1 行を足します．`<compiler>` は `FC` のファイル名です（例: `nvfortran`）
@@ -938,8 +955,8 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
   | `OMP_TARGET_CLAUSE_SHARED(...)` | `OMP_CLAUSE_SHARED(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_SHARED(__VA_ARGS__)` | |
   | `OMP_TARGET_CLAUSE_PRIVATE(...)` | `OMP_CLAUSE_PRIVATE(__VA_ARGS__)` | `ACC_CLAUSE_PRIVATE(__VA_ARGS__)` | `OMP_CLAUSE_PRIVATE(__VA_ARGS__)` | |
   | `OMP_TARGET_CLAUSE_FIRSTPRIVATE(...)` | `OMP_CLAUSE_FIRSTPRIVATE(__VA_ARGS__)` | `ACC_CLAUSE_FIRSTPRIVATE(__VA_ARGS__)` | `OMP_CLAUSE_FIRSTPRIVATE(__VA_ARGS__)` | |
-  | `OMP_TARGET_CLAUSE_LASTPRIVATE(...)` | `OMP_CLAUSE_LASTPRIVATE(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_LASTPRIVATE(__VA_ARGS__)` | |
-  | `OMP_TARGET_CLAUSE_LINEAR(...)` | `OMP_CLAUSE_LINEAR(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_LINEAR(__VA_ARGS__)` | |
+  | `OMP_TARGET_CLAUSE_LASTPRIVATE(...)` | `OMP_CLAUSE_LASTPRIVATE(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_LASTPRIVATE(__VA_ARGS__)` | OpenACC に対応物が無く，OpenACC 使用時はループの後の値が保証されない．OpenACC でも動かすコードでは頼らない |
+  | `OMP_TARGET_CLAUSE_LINEAR(...)` | `OMP_CLAUSE_LINEAR(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_LINEAR(__VA_ARGS__)` | OpenACC に対応物が無い．OpenACC 使用時は，`simd` を含む指示文（`loop independent` を出す），指示節の `SOLOMON_CLAUSE_INDEPENDENT`・`ACC_CLAUSE_INDEPENDENT`・`OMP_TARGET_CLAUSE_SIMD`，`SOLOMON_OFFLOAD_BY_OPENACC_PARALLEL`（OpenACC 3.3 の 2.9.6 節）のどれかがあると，ループは independent（反復をどの順にも，同時にも実行してよい）とみなされる．それ以外（既定の `kernels` 構文）はコンパイラが判断する．OpenACC でも動かすコードでは，変数を各反復で更新せずループの添字から計算する（NVIDIA HPC SDK 26.9 は `j = j + 1` の形を正しく扱った．ほかの OpenACC のコンパイラは未確認） |
   | `OMP_TARGET_CLAUSE_ALLOCATE(...)` | `OMP_CLAUSE_ALLOCATE(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_ALLOCATE(__VA_ARGS__)` | |
   | `OMP_TARGET_CLAUSE_COLLAPSE(n)` | `OMP_CLAUSE_COLLAPSE(n)` | `ACC_CLAUSE_COLLAPSE(n)` | `OMP_CLAUSE_COLLAPSE(n)` | |
   | `OMP_TARGET_CLAUSE_DEPEND(...)` | `OMP_CLAUSE_DEPEND(__VA_ARGS__)` | N/A（OpenACC 使用時には無視される） | `OMP_CLAUSE_DEPEND(__VA_ARGS__)` | |
@@ -1057,6 +1074,7 @@ Solomon は単なるプリプロセッサマクロのため，エディタは既
   * OpenACC: `acc_get_cuda_stream(...)` を呼びます．コンパイラがこのルーチンを提供している必要があります（gfortran の `openacc` モジュールにはありません）．nvfortran ではストリームを `integer(8)` の変数で受けてください
   * OpenMP target: Fortran では定義されません．`spp.sh` / `fortran.mk` は GNU の `cpp` で前処理し，GNU の `cpp` は `__NVCOMPILER` を定義しないためです（C/C++ では nvc / nvc++ のときだけ定義されます）
   * 縮退モードとシリアルモードでは定義されません（デバイスのストリームが無いため）
+  * AMD・Intel の GPU でも定義されません．ifx は `interop` 構文（`PRAGMA_OMP_INTEROP(...)`）と `omp_lib` の `omp_get_interop_ptr` を受け付け，Level Zero のハンドルを返します（`target` 構文が使うキューではありません．C/C++ の README を参照）．amdflang は `interop` 構文を拒否し，nvfortran 26.9 は警告 `NVFORTRAN-W-0287-Unrecognized OpenMP directive - interop` を出して無視します（構文は何もしません）
 
   ```Fortran
   integer :: n, id

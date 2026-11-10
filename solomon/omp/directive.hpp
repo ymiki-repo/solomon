@@ -342,7 +342,9 @@
 /// @note An empty argument emits "omp flush" in every language mode (gcc / g++ in a strict mode such as -std=c99 or -std=c++17 included).
 ///
 // a Solomon clause macro as the first argument (its second element is a tag count) stops the build; anything else is the list
+// clang-format off: the text of the message is kept as written (clang-format would put spaces around the colon and the hyphen) (permanent)
 #define SOLOMON_INTERNAL_OMP_FLUSH_CLAUSE(...) SOLOMON_INTERNAL_PICKUP_STOP(SOLOMON_ERROR_CLAUSE_IN_FLUSH_LIST, Solomon: PRAGMA_OMP_FLUSH takes a list of variables; a memory-order clause cannot be passed)
+// clang-format on
 #define SOLOMON_INTERNAL_OMP_FLUSH_LIST(...) SOLOMON_INTERNAL_APPEND_CLAUSES_WITHOUT_SORTING(SOLOMON_INTERNAL_ARGS_WITH_NUM(SOLOMON_INTERNAL_TAG_OMP_FLUSH), OMP_PASS_LIST(__VA_ARGS__))
 #define SOLOMON_INTERNAL_OMP_FLUSH_ARGS(...) SOLOMON_INTERNAL_CLOAK_IIF(SOLOMON_INTERNAL_PICKUP_IS_WELL_FORMED(__VA_ARGS__))(SOLOMON_INTERNAL_OMP_FLUSH_CLAUSE, SOLOMON_INTERNAL_OMP_FLUSH_LIST)(__VA_ARGS__)
 #if defined(SOLOMON_INTERNAL_USE_VA_OPT)
